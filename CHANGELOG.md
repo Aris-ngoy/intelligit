@@ -4,6 +4,21 @@ All notable changes to the IntelliGit extension are documented here. This projec
 follows [Keep a Changelog](http://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.0] - 2026-06-19
+
+### Added
+- Full-screen Git Log editor panel (`intelligit.gitLogPanel`) with a roomy layout
+  instead of the narrow activity-bar rail.
+- "Open Git Log in Editor (Full Screen)" command and a view title button to launch
+  the full-screen panel.
+
+### Changed
+- Opening the IntelliGit activity-bar view now promotes the full-screen Git Log
+  editor once per session, and the extension lands users there by default.
+- Renamed "Open Git Log" to "Open Git Log (Full Screen)"; it now opens the
+  full-screen editor panel.
+- New dedicated sidebar icon for the IntelliGit activity-bar container.
+
 ## [0.1.1] - 2026-06-19
 
 ### Added

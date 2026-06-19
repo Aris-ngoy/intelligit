@@ -61,14 +61,19 @@ suite('GitLogViewProvider', () => {
 
 	test('resolveWebviewView sets panel HTML and registers the webview', () => {
 		const router = new MessageRouter();
-		const provider = new GitLogViewProvider(vscode.Uri.file('/ext'), router);
+		let fullScreenOpens = 0;
+		const provider = new GitLogViewProvider(vscode.Uri.file('/ext'), router, () => {
+			fullScreenOpens += 1;
+		});
 
 		const posted: Array<Record<string, unknown>> = [];
 		const webview = fakeWebview(posted);
 
 		const view = {
 			webview,
+			visible: false,
 			onDidDispose: () => ({ dispose() {} }),
+			onDidChangeVisibility: () => ({ dispose() {} }),
 		} as unknown as vscode.WebviewView;
 
 		provider.resolveWebviewView(
@@ -83,5 +88,8 @@ suite('GitLogViewProvider', () => {
 		router.broadcastEvent('gitStateChanged', { ok: true });
 		assert.equal(posted.length, 1);
 		assert.equal((posted[0] as { event: string }).event, 'gitStateChanged');
+
+		// Hidden on resolve, so the full-screen panel is not auto-opened yet.
+		assert.equal(fullScreenOpens, 0);
 	});
 });

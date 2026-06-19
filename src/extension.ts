@@ -14,6 +14,7 @@ import {
 import { GitLogViewProvider } from './views/gitLogViewProvider';
 import {
 	ConflictsManager,
+	GitLogPanelManager,
 	InteractiveRebaseManager,
 	MergeEditorManager,
 	RebaseDialogManager,
@@ -24,6 +25,7 @@ let interactiveRebaseManager: InteractiveRebaseManager;
 let rebaseDialogManager: RebaseDialogManager;
 let conflictsManager: ConflictsManager;
 let mergeEditorManager: MergeEditorManager;
+let gitLogPanelManager: GitLogPanelManager;
 
 const rebaseService = createRebaseService(gitService);
 
@@ -59,8 +61,13 @@ export function activate(context: vscode.ExtensionContext): void {
 	rebaseDialogManager = new RebaseDialogManager(context.extensionUri, messageRouter);
 	conflictsManager = new ConflictsManager(context.extensionUri, messageRouter);
 	mergeEditorManager = new MergeEditorManager(context.extensionUri, messageRouter);
+	gitLogPanelManager = new GitLogPanelManager(context.extensionUri, messageRouter);
 
-	const logProvider = new GitLogViewProvider(context.extensionUri, messageRouter);
+	const logProvider = new GitLogViewProvider(
+		context.extensionUri,
+		messageRouter,
+		() => gitLogPanelManager.open(),
+	);
 	context.subscriptions.push(
 		vscode.window.registerWebviewViewProvider(
 			GitLogViewProvider.viewType,
@@ -82,6 +89,8 @@ export function activate(context: vscode.ExtensionContext): void {
 	if (workspaceRoot) {
 		void gitService.findRepositoryRoot(workspaceRoot).then((repoRoot) => {
 			if (repoRoot) {
+				// Land users in the roomy full-screen Git Log by default.
+				gitLogPanelManager.open();
 				context.subscriptions.push(
 					new GitWatcher(repoRoot, messageRouter, () => {
 						conflictsManager.open();
@@ -101,7 +110,11 @@ export function activate(context: vscode.ExtensionContext): void {
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('intelligit.openGitLog', () => {
-			void vscode.commands.executeCommand('intelligit.gitLog.focus');
+			gitLogPanelManager.open();
+		}),
+
+		vscode.commands.registerCommand('intelligit.openGitLogInEditor', () => {
+			gitLogPanelManager.open();
 		}),
 
 		vscode.commands.registerCommand('intelligit.refreshGitLog', () => {

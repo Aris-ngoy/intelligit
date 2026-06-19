@@ -3,6 +3,50 @@ import * as vscode from 'vscode';
 import type { MessageRouter } from '../messages/messageRouter';
 import { getWebviewHtml } from './html';
 
+export class GitLogPanelManager {
+	private panel: vscode.WebviewPanel | undefined;
+
+	constructor(
+		private readonly extensionUri: vscode.Uri,
+		private readonly messageRouter: MessageRouter,
+	) {}
+
+	open(): void {
+		if (this.panel) {
+			this.panel.reveal(vscode.ViewColumn.Active);
+			return;
+		}
+
+		this.panel = vscode.window.createWebviewPanel(
+			'intelligit.gitLogPanel',
+			'IntelliGit — Git Log',
+			vscode.ViewColumn.Active,
+			{
+				enableScripts: true,
+				retainContextWhenHidden: true,
+				localResourceRoots: [vscode.Uri.joinPath(this.extensionUri, 'dist')],
+			},
+		);
+
+		this.panel.iconPath = vscode.Uri.joinPath(
+			this.extensionUri,
+			'media',
+			'icon.png',
+		);
+
+		this.panel.webview.html = getWebviewHtml(this.panel.webview, this.extensionUri, {
+			mode: 'panel',
+		});
+
+		const routerDisposable = this.messageRouter.registerWebview(this.panel.webview);
+
+		this.panel.onDidDispose(() => {
+			routerDisposable.dispose();
+			this.panel = undefined;
+		});
+	}
+}
+
 export class InteractiveRebaseManager {
 	private panel: vscode.WebviewPanel | undefined;
 
