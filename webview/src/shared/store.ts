@@ -27,6 +27,9 @@ interface GitLogStore {
 	openContextMenu: (x: number, y: number, hash: string) => void;
 	runContextAction: (action: string) => Promise<void>;
 	openDiffEditor: (commitHash: string, filePath: string) => Promise<void>;
+	revertCommit: (hash: string) => Promise<void>;
+	copyHash: (hash: string) => Promise<void>;
+	openExternal: (url: string) => Promise<void>;
 }
 
 export const useGitLogStore = create<GitLogStore>((set, get) => ({
@@ -129,6 +132,12 @@ export const useGitLogStore = create<GitLogStore>((set, get) => ({
 				case 'interactiveRebase':
 					await bridge.request('interactiveRebaseFromHere', { hash });
 					break;
+				case 'rebase':
+					await bridge.request('openRebaseDialog', { fromHash: hash });
+					break;
+				case 'copyHash':
+					await get().copyHash(hash);
+					break;
 				case 'cherryPick':
 					await bridge.request('cherryPick', { hash });
 					break;
@@ -149,6 +158,35 @@ export const useGitLogStore = create<GitLogStore>((set, get) => ({
 			await bridge.request('openDiffEditor', { commit: commitHash, filePath });
 		} catch (err) {
 			set({ error: err instanceof Error ? err.message : String(err) });
+		}
+	},
+
+	async revertCommit(hash) {
+		try {
+			await bridge.request('revertCommit', { hash });
+			await get().fetchAll();
+		} catch (err) {
+			set({ error: err instanceof Error ? err.message : String(err) });
+		}
+	},
+
+	async copyHash(hash) {
+		try {
+			await bridge.request('copyToClipboard', { text: hash });
+		} catch {
+			try {
+				await navigator.clipboard.writeText(hash);
+			} catch {
+				// Clipboard unavailable in this webview context.
+			}
+		}
+	},
+
+	async openExternal(url) {
+		try {
+			await bridge.request('openExternal', { url });
+		} catch {
+			window.open(url, '_blank', 'noopener,noreferrer');
 		}
 	},
 }));

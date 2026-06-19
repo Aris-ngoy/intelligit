@@ -34,6 +34,7 @@ export class RebaseService {
 			hash: c.hash,
 			shortHash: c.shortHash,
 			message: c.message,
+			timestamp: c.timestamp,
 			action: 'pick' as const,
 		}));
 	}

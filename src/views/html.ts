@@ -11,6 +11,7 @@ export interface WebviewHtmlOptions {
 	mode?: WebviewMode;
 	fromHash?: string;
 	file?: string;
+	rebaseFromHash?: string;
 }
 
 export function getWebviewHtml(
@@ -29,6 +30,7 @@ export function getWebviewHtml(
 	const mode = options.mode ?? 'panel';
 	const fromHash = options.fromHash ?? '';
 	const file = options.file ?? '';
+	const rebaseFromHash = options.rebaseFromHash ?? '';
 
 	return `<!DOCTYPE html>
 <html lang="en">
@@ -40,7 +42,7 @@ export function getWebviewHtml(
   <title>IntelliGit</title>
 </head>
 <body>
-  <div id="root" data-mode="${mode}" data-from-hash="${escapeAttr(fromHash)}" data-file="${escapeAttr(file)}"></div>
+  <div id="root" data-mode="${mode}" data-from-hash="${escapeAttr(fromHash)}" data-file="${escapeAttr(file)}" data-rebase-from-hash="${escapeAttr(rebaseFromHash)}"></div>
   <script type="module" nonce="${nonce}" src="${scriptUri}"></script>
 </body>
 </html>`;

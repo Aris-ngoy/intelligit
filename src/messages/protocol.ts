@@ -36,6 +36,9 @@ export type CommandType =
 	| 'interactiveRebaseFromHere'
 	| 'checkoutRevision'
 	| 'cherryPick'
+	| 'revertCommit'
+	| 'copyToClipboard'
+	| 'openExternal'
 	| 'getMergeState'
 	| 'getConflictFiles'
 	| 'getFileVersions'
@@ -47,12 +50,14 @@ export type CommandType =
 	| 'closeMergeEditor'
 	| 'continueOperation'
 	| 'abortOperation'
-	| 'openConflicts';
+	| 'openConflicts'
+	| 'openRebaseDialog';
 
 export type EventType =
 	| 'gitStateChanged'
 	| 'themeChanged'
 	| 'openInteractiveRebase'
+	| 'openRebaseDialog'
 	| 'closeRebaseDialog'
 	| 'mergeStateChanged';
 

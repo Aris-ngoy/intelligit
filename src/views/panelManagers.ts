@@ -20,7 +20,7 @@ export class InteractiveRebaseManager {
 
 		this.panel = vscode.window.createWebviewPanel(
 			'intelligit.interactiveRebase',
-			'Interactive Rebase',
+			'Tidy up my changes',
 			vscode.ViewColumn.One,
 			{
 				enableScripts: true,
@@ -47,6 +47,15 @@ export class InteractiveRebaseManager {
 			data: { fromCommitHash },
 		});
 	}
+
+	close(): void {
+		this.panel?.dispose();
+	}
+}
+
+export interface RebaseDialogOptions {
+	/** Commit hash to rebase from (inclusive). Uses parent as upstream for --onto rebase. */
+	fromHash?: string;
 }
 
 export class RebaseDialogManager {
@@ -57,15 +66,20 @@ export class RebaseDialogManager {
 		private readonly messageRouter: MessageRouter,
 	) {}
 
-	open(): void {
+	open(options: RebaseDialogOptions = {}): void {
 		if (this.panel) {
 			this.panel.reveal(vscode.ViewColumn.Active);
+			void this.panel.webview.postMessage({
+				type: 'event',
+				event: 'openRebaseDialog',
+				data: { fromHash: options.fromHash ?? '' },
+			});
 			return;
 		}
 
 		this.panel = vscode.window.createWebviewPanel(
 			'intelligit.rebaseDialog',
-			'Rebase',
+			'Move my work',
 			vscode.ViewColumn.Active,
 			{
 				enableScripts: true,
@@ -76,6 +90,7 @@ export class RebaseDialogManager {
 
 		this.panel.webview.html = getWebviewHtml(this.panel.webview, this.extensionUri, {
 			mode: 'rebaseDialog',
+			rebaseFromHash: options.fromHash ?? '',
 		});
 
 		const routerDisposable = this.messageRouter.registerWebview(this.panel.webview);
@@ -108,7 +123,7 @@ export class ConflictsManager {
 
 		this.panel = vscode.window.createWebviewPanel(
 			'intelligit.conflicts',
-			'Conflicts',
+			'Two versions don\'t agree',
 			vscode.ViewColumn.One,
 			{
 				enableScripts: true,

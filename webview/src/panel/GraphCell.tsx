@@ -1,8 +1,9 @@
 import type { ReactElement } from 'react';
+
 import type { CommitDto } from '../shared/types';
 import { laneColor } from '../shared/format';
 
-const ROW_HEIGHT = 24;
+const ROW_HEIGHT = 28;
 const LANE_WIDTH = 14;
 const PADDING = 4;
 
@@ -10,15 +11,33 @@ interface GraphCellProps {
 	commit: CommitDto;
 	nextCommit?: CommitDto;
 	maxLane: number;
+	selected?: boolean;
 }
 
-export function GraphCell({ commit, nextCommit, maxLane }: GraphCellProps) {
+export function GraphCell({ commit, nextCommit, maxLane, selected }: GraphCellProps) {
 	const lane = commit.graphLane ?? 0;
 	const width = (maxLane + 1) * LANE_WIDTH + PADDING * 2;
 	const cx = PADDING + lane * LANE_WIDTH + LANE_WIDTH / 2;
 	const color = laneColor(lane);
 
 	const lines: ReactElement[] = [];
+
+	// Vertical lane tracks for visual continuity
+	for (let i = 0; i <= maxLane; i++) {
+		const trackCx = PADDING + i * LANE_WIDTH + LANE_WIDTH / 2;
+		lines.push(
+			<line
+				key={`track-${i}`}
+				x1={trackCx}
+				y1={0}
+				x2={trackCx}
+				y2={ROW_HEIGHT}
+				stroke={laneColor(i)}
+				strokeWidth={1}
+				opacity={0.15}
+			/>,
+		);
+	}
 
 	if (nextCommit) {
 		const nextLane = nextCommit.graphLane ?? 0;
@@ -52,14 +71,16 @@ export function GraphCell({ commit, nextCommit, maxLane }: GraphCellProps) {
 	}
 
 	return (
-		<svg
-			width={width}
-			height={ROW_HEIGHT}
-			className="block shrink-0"
-			aria-hidden
-		>
+		<svg width={width} height={ROW_HEIGHT} className="block shrink-0" aria-hidden>
 			{lines}
-			<circle cx={cx} cy={ROW_HEIGHT / 2} r={4} fill={color} />
+			<circle
+				cx={cx}
+				cy={ROW_HEIGHT / 2}
+				r={selected ? 5 : 4}
+				fill={color}
+				stroke={selected ? 'var(--color-accent)' : 'none'}
+				strokeWidth={selected ? 2 : 0}
+			/>
 		</svg>
 	);
 }

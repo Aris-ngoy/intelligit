@@ -5,6 +5,8 @@ import { ConflictsApp } from './conflicts/ConflictsApp';
 import { InteractiveRebaseApp } from './interactive/InteractiveRebaseApp';
 import { MergeEditorApp } from './merge/MergeEditorApp';
 import { GitLogApp } from './panel/GitLogApp';
+import { getPreviewScreen } from './preview/previewBridge';
+import { previewInteractiveCommits, previewMergeFile } from './preview/mockData';
 import { RebaseDialogApp } from './rebase/RebaseDialogApp';
 import './index.css';
 
@@ -13,21 +15,33 @@ if (!rootEl) {
 	throw new Error('Root element not found');
 }
 
-const mode = (rootEl.dataset.mode ?? 'panel') as
+const preview = getPreviewScreen();
+const mode = (preview
+	? preview === 'gitlog'
+		? 'panel'
+		: preview === 'rebase'
+			? 'rebaseDialog'
+			: preview === 'tidy'
+				? 'interactiveRebase'
+				: preview
+	: (rootEl.dataset.mode ?? 'panel')) as
 	| 'panel'
 	| 'interactiveRebase'
 	| 'rebaseDialog'
 	| 'conflicts'
 	| 'merge';
-const fromHash = rootEl.dataset.fromHash ?? '';
-const file = rootEl.dataset.file ?? '';
+
+const fromHash =
+	rootEl.dataset.fromHash ?? previewInteractiveCommits[0]?.hash ?? '';
+const rebaseFromHash = rootEl.dataset.rebaseFromHash ?? '';
+const file = rootEl.dataset.file ?? (preview === 'merge' ? previewMergeFile : '');
 
 function renderApp(): ReactNode {
 	switch (mode) {
 		case 'interactiveRebase':
 			return <InteractiveRebaseApp initialFromHash={fromHash} />;
 		case 'rebaseDialog':
-			return <RebaseDialogApp />;
+			return <RebaseDialogApp initialFromHash={rebaseFromHash} />;
 		case 'conflicts':
 			return <ConflictsApp />;
 		case 'merge':

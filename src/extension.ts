@@ -177,14 +177,38 @@ function registerMessageHandlers(messageRouter: MessageRouter): void {
 		return gitService.getCommitFiles(repoRoot, params.hash as string);
 	});
 
-	messageRouter.handle('getRebaseRefs', async () => {
+	messageRouter.handle('getRebaseRefs', async (params) => {
 		const repoRoot = await getActiveRepository();
 		if (!repoRoot) {
 			return NOT_GIT_REPO;
 		}
 		const info = await gitService.getRepositoryInfo(repoRoot);
 		const refs = await gitService.listRebaseRefs(repoRoot);
-		return { refs, currentBranch: info.currentBranch, root: info.root };
+
+		const fromHash = params.fromHash as string | undefined;
+		let rebaseFrom: string | undefined;
+		let rebaseFromLabel: string | undefined;
+		let commitCount: number | undefined;
+
+		if (fromHash) {
+			rebaseFrom = await rebaseService.resolveRebaseUpstream(repoRoot, fromHash);
+			const range = await gitService.getRebaseCommitRange(repoRoot, fromHash);
+			commitCount = range.length;
+			const first = range[0];
+			if (first) {
+				rebaseFromLabel = `${first.shortHash} — ${first.message}`;
+			}
+		}
+
+		return {
+			refs,
+			currentBranch: info.currentBranch,
+			root: info.root,
+			fromHash: fromHash ?? '',
+			rebaseFrom,
+			rebaseFromLabel,
+			commitCount,
+		};
 	});
 
 	messageRouter.handle('getInteractiveRebaseCommits', async (params) => {
@@ -209,6 +233,7 @@ function registerMessageHandlers(messageRouter: MessageRouter): void {
 
 		try {
 			await rebaseService.runInteractiveRebase(repoRoot, fromHash, commits, flags);
+			interactiveRebaseManager.close();
 			messageRouter.broadcastEvent('gitStateChanged', { scope: 'all' });
 			void vscode.window.showInformationMessage('Rebase completed successfully.');
 			return { success: true };
@@ -240,6 +265,7 @@ function registerMessageHandlers(messageRouter: MessageRouter): void {
 			});
 			rebaseDialogManager.close();
 			messageRouter.broadcastEvent('gitStateChanged', { scope: 'all' });
+			messageRouter.broadcastEvent('closeRebaseDialog', {});
 			void vscode.window.showInformationMessage('Rebase completed successfully.');
 			return { success: true };
 		} catch (err) {
@@ -415,9 +441,46 @@ function registerMessageHandlers(messageRouter: MessageRouter): void {
 		return { success: true };
 	});
 
+	messageRouter.handle('revertCommit', async (params) => {
+		const repoRoot = await getActiveRepository();
+		if (!repoRoot) {
+			return NOT_GIT_REPO;
+		}
+		const hash = params.hash as string;
+		const choice = await vscode.window.showWarningMessage(
+			`Revert commit ${hash.slice(0, 7)}? This creates a new commit that undoes those changes.`,
+			{ modal: true },
+			'Revert',
+		);
+		if (choice !== 'Revert') {
+			return { cancelled: true };
+		}
+		await gitService.revertCommit(repoRoot, hash);
+		messageRouter.broadcastEvent('gitStateChanged', { scope: 'all' });
+		void vscode.window.showInformationMessage('Commit reverted successfully.');
+		return { success: true };
+	});
+
+	messageRouter.handle('copyToClipboard', async (params) => {
+		await vscode.env.clipboard.writeText(params.text as string);
+		return { success: true };
+	});
+
+	messageRouter.handle('openExternal', async (params) => {
+		const url = params.url as string;
+		await vscode.env.openExternal(vscode.Uri.parse(url));
+		return { success: true };
+	});
+
 	messageRouter.handle('interactiveRebaseFromHere', async (params) => {
 		const hash = params.hash as string;
 		await vscode.commands.executeCommand('intelligit.interactiveRebaseFromHere', hash);
+		return { success: true };
+	});
+
+	messageRouter.handle('openRebaseDialog', async (params) => {
+		const fromHash = params.fromHash as string | undefined;
+		rebaseDialogManager.open(fromHash ? { fromHash } : {});
 		return { success: true };
 	});
 }

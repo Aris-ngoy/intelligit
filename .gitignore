@@ -3,4 +3,5 @@ dist
 node_modules
 .pnpm-store/
 .vscode-test/
+.test-sandbox/
 *.vsix

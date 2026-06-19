@@ -1,3 +1,5 @@
+import { createPreviewBridge, isPreviewMode } from '../preview/previewBridge';
+
 export interface RequestMessage {
 	type: 'request';
 	id: string;
@@ -28,7 +30,7 @@ declare function acquireVsCodeApi(): {
 	postMessage(msg: unknown): void;
 };
 
-export function createVSCodeBridge(): Bridge {
+function createVSCodeBridge(): Bridge {
 	const vscode = acquireVsCodeApi();
 	const pendingRequests = new Map<
 		string,
@@ -86,4 +88,6 @@ export function createVSCodeBridge(): Bridge {
 	};
 }
 
-export const bridge = createVSCodeBridge();
+export const bridge: Bridge = isPreviewMode()
+	? createPreviewBridge()
+	: createVSCodeBridge();

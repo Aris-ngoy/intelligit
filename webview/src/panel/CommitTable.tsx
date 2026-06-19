@@ -1,5 +1,6 @@
 import { useGitLogStore } from '../shared/store';
-import { formatCommitDate } from '../shared/format';
+import { formatRelativeDate } from '../shared/format';
+import { EmptyState } from '../shared/ui';
 import { CommitTableRow } from './CommitTableRow';
 import { computeMaxLane } from './GraphCell';
 
@@ -11,11 +12,21 @@ export function CommitTable() {
 
 	const maxLane = computeMaxLane(commits);
 
+	if (commits.length === 0) {
+		return (
+			<EmptyState
+				icon="🔍"
+				title="No commits found"
+				description="Try changing your branch, author, or date filters."
+			/>
+		);
+	}
+
 	return (
 		<div className="flex h-full flex-col overflow-hidden">
-			<div className="grid shrink-0 grid-cols-[auto_1fr_minmax(100px,140px)_minmax(120px,160px)] border-b border-[var(--color-border)] px-1 py-1 text-[11px] text-[var(--color-muted)]">
-				<span className="px-1">Graph</span>
-				<span>Commit</span>
+			<div className="sticky top-0 z-10 grid shrink-0 grid-cols-[auto_1fr_minmax(88px,112px)_minmax(72px,96px)] border-b border-[var(--color-border)] bg-[var(--color-app-bg)] px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--color-muted)]">
+				<span>Graph</span>
+				<span>Message</span>
 				<span>Author</span>
 				<span>Date</span>
 			</div>
@@ -32,7 +43,7 @@ export function CommitTable() {
 							e.preventDefault();
 							openContextMenu(e.clientX, e.clientY, commit.hash);
 						}}
-						dateLabel={formatCommitDate(commit.timestamp)}
+						dateLabel={formatRelativeDate(commit.timestamp)}
 					/>
 				))}
 			</div>

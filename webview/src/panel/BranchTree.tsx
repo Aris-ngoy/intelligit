@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 
 import { useGitLogStore } from '../shared/store';
 import type { GitBranchDto } from '../shared/types';
+import { SectionHeader } from '../shared/ui';
 
 function groupBranches(branches: GitBranchDto[]) {
 	const current = branches.filter((b) => b.current);
@@ -14,6 +15,7 @@ export function BranchTree() {
 	const repoInfo = useGitLogStore((s) => s.repoInfo);
 	const filters = useGitLogStore((s) => s.filters);
 	const setFilters = useGitLogStore((s) => s.setFilters);
+	const openExternal = useGitLogStore((s) => s.openExternal);
 
 	if (!repoInfo) {
 		return null;
@@ -23,66 +25,76 @@ export function BranchTree() {
 	const selected = filters.branchScope;
 
 	return (
-		<div className="flex h-full flex-col overflow-y-auto p-2 text-xs">
-			<Section title="All">
-				<BranchItem
-					name="All branches"
-					value="all"
-					selected={selected === 'all'}
-					onSelect={() => setFilters({ branchScope: 'all' })}
-				/>
-				<BranchItem
-					name="Local"
-					value="local"
-					selected={selected === 'local'}
-					onSelect={() => setFilters({ branchScope: 'local' })}
-				/>
-				<BranchItem
-					name="Remote"
-					value="remote"
-					selected={selected === 'remote'}
-					onSelect={() => setFilters({ branchScope: 'remote' })}
-				/>
-			</Section>
+		<div className="flex h-full flex-col border-r border-[var(--color-border)] text-xs">
+			<div className="flex items-center gap-2 border-b border-[var(--color-border)] px-3 py-2.5">
+				<span className="flex h-6 w-6 items-center justify-center rounded-md bg-[var(--color-accent)] text-[10px] font-bold text-white">
+					IG
+				</span>
+				<span className="font-semibold">IntelliGit</span>
+			</div>
 
-			{current.length > 0 && (
-				<Section title="Current">
-					{current.map((b) => (
-						<BranchItem
-							key={b.name}
-							name={b.name}
-							value={b.name}
-							selected={selected === b.name}
-							onSelect={() => setFilters({ branchScope: b.name })}
-							bold
-						/>
-					))}
+			<div className="min-h-0 flex-1 overflow-y-auto py-2">
+				<Section title="All">
+					<BranchItem
+						name="All History"
+						selected={selected === 'all'}
+						onSelect={() => setFilters({ branchScope: 'all' })}
+					/>
 				</Section>
-			)}
 
-			<Section title="Local">
-				{local.map((b) => (
-					<BranchItem
-						key={b.name}
-						name={b.name}
-						value={b.name}
-						selected={selected === b.name}
-						onSelect={() => setFilters({ branchScope: b.name })}
-					/>
-				))}
-			</Section>
+				{current.length > 0 && (
+					<Section title="Current">
+						{current.map((b) => (
+							<BranchItem
+								key={b.name}
+								name={b.name}
+								selected={selected === b.name}
+								onSelect={() => setFilters({ branchScope: b.name })}
+								current
+							/>
+						))}
+					</Section>
+				)}
 
-			<Section title="Remote">
-				{remote.map((b) => (
-					<BranchItem
-						key={b.name}
-						name={b.name}
-						value={b.name}
-						selected={selected === b.name}
-						onSelect={() => setFilters({ branchScope: b.name })}
-					/>
-				))}
-			</Section>
+				{local.length > 0 && (
+					<Section title="Local">
+						{local.map((b) => (
+							<BranchItem
+								key={b.name}
+								name={b.name}
+								selected={selected === b.name}
+								onSelect={() => setFilters({ branchScope: b.name })}
+							/>
+						))}
+					</Section>
+				)}
+
+				{remote.length > 0 && (
+					<Section title="Remote">
+						{remote.map((b) => (
+							<BranchItem
+								key={b.name}
+								name={b.name}
+								selected={selected === b.name}
+								onSelect={() => setFilters({ branchScope: b.name })}
+							/>
+						))}
+					</Section>
+				)}
+			</div>
+
+			<div className="border-t border-[var(--color-border)] p-2">
+				<button
+					type="button"
+					className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[var(--color-muted)] transition hover:bg-[var(--color-hover)] hover:text-[var(--color-app-fg)]"
+					onClick={() =>
+						void openExternal('https://github.com/Aris-ngoy/intelligit#readme')
+					}
+				>
+					<SettingsIcon />
+					Settings
+				</button>
+			</div>
 		</div>
 	);
 }
@@ -90,10 +102,8 @@ export function BranchTree() {
 function Section({ title, children }: { title: string; children: ReactNode }) {
 	return (
 		<div className="mb-3">
-			<div className="mb-1 px-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--color-muted)]">
-				{title}
-			</div>
-			<div className="space-y-0.5">{children}</div>
+			<SectionHeader>{title}</SectionHeader>
+			<div className="space-y-0.5 px-1">{children}</div>
 		</div>
 	);
 }
@@ -102,22 +112,45 @@ function BranchItem({
 	name,
 	selected,
 	onSelect,
-	bold,
+	current,
 }: {
 	name: string;
-	value: string;
 	selected: boolean;
 	onSelect: () => void;
-	bold?: boolean;
+	current?: boolean;
 }) {
 	return (
 		<button
 			type="button"
-			className={`block w-full truncate rounded px-2 py-1 text-left hover:bg-[var(--color-hover)] ${selected ? 'bg-[var(--color-selected)] text-[var(--color-selected-fg)]' : ''} ${bold ? 'font-semibold' : ''}`}
+			className={`flex w-full items-center gap-2 truncate rounded-lg px-2 py-1.5 text-left transition focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/50 ${
+				selected
+					? 'bg-[var(--color-selected)] font-medium text-[var(--color-selected-fg)]'
+					: 'hover:bg-[var(--color-hover)]'
+			}`}
 			onClick={onSelect}
 			title={name}
 		>
-			{name}
+			{current && (
+				<span
+					className="h-2 w-2 shrink-0 rounded-full bg-green-500"
+					aria-label="Current branch"
+				/>
+			)}
+			<span className="min-w-0 truncate">{name}</span>
 		</button>
+	);
+}
+
+function SettingsIcon() {
+	return (
+		<svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
+			<circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" />
+			<path
+				d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
+				stroke="currentColor"
+				strokeWidth="2"
+				strokeLinecap="round"
+			/>
+		</svg>
 	);
 }

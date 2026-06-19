@@ -48,3 +48,21 @@ body,
 	background: var(--color-selected);
 	color: var(--color-selected-fg);
 }
+.selectable-row.selected:hover {
+	background: var(--color-selected);
+}
+.selectable-row.selected .text-\[var\(--color-muted\)\] {
+	color: color-mix(in srgb, var(--color-selected-fg) 75%, transparent);
+}
+
+.sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border-width: 0;
+}

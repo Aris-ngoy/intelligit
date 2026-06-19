@@ -1,62 +1,95 @@
 // See https://go.microsoft.com/fwlink/?LinkId=733558
-// for the documentation about the tasks.json format
 {
 	"version": "2.0.0",
+	"problemMatchers": [
+		{
+			"name": "esbuild-watch",
+			"owner": "esbuild",
+			"source": "esbuild",
+			"applyTo": "closedDocuments",
+			"fileLocation": "relative",
+			"pattern": [
+				{
+					"regexp": "^[✘▲] \\[([A-Z]+)\\] (.+)",
+					"severity": 1,
+					"message": 2
+				},
+				{
+					"regexp": "^(?:\\t| {4})(?!\\s)([^:]+)(?::([0-9]+))?(?::([0-9]+))?:$",
+					"file": 1,
+					"line": 2,
+					"column": 3
+				}
+			],
+			"background": {
+				"activeOnStart": true,
+				"beginsPattern": "\\[watch\\] build started",
+				"endsPattern": "\\[watch\\] build finished"
+			}
+		},
+		{
+			"name": "vite-watch",
+			"owner": "vite",
+			"background": {
+				"activeOnStart": true,
+				"beginsPattern": "building client environment",
+				"endsPattern": "built in"
+			}
+		}
+	],
 	"tasks": [
 		{
-            "label": "watch",
-            "dependsOn": [
-                "npm: watch:tsc",
-                "npm: watch:esbuild",
-                "npm: watch:webview"
-            ],
-            "presentation": {
-                "reveal": "never"
-            },
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            }
-        },
-        {
-            "type": "npm",
-            "script": "watch:esbuild",
-            "group": "build",
-            "problemMatcher": "$esbuild-watch",
-            "isBackground": true,
-            "label": "npm: watch:esbuild",
-            "presentation": {
-                "group": "watch",
-                "reveal": "never"
-            }
-        },
+			"label": "watch",
+			"dependsOn": ["watch:tsc", "watch:esbuild", "watch:webview"],
+			"dependsOrder": "parallel",
+			"presentation": {
+				"reveal": "never"
+			},
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			}
+		},
 		{
-            "type": "npm",
-            "script": "watch:webview",
-            "group": "build",
-            "problemMatcher": "$esbuild-watch",
-            "isBackground": true,
-            "label": "npm: watch:webview",
-            "presentation": {
-                "group": "watch",
-                "reveal": "never"
-            }
-        },
+			"label": "watch:esbuild",
+			"type": "shell",
+			"command": "pnpm run watch:esbuild",
+			"group": "build",
+			"problemMatcher": "$esbuild-watch",
+			"isBackground": true,
+			"presentation": {
+				"group": "watch",
+				"reveal": "never"
+			}
+		},
 		{
-            "type": "npm",
-            "script": "watch:tsc",
-            "group": "build",
-            "problemMatcher": "$tsc-watch",
-            "isBackground": true,
-            "label": "npm: watch:tsc",
-            "presentation": {
-                "group": "watch",
-                "reveal": "never"
-            }
-        },
+			"label": "watch:webview",
+			"type": "shell",
+			"command": "pnpm run watch:webview",
+			"group": "build",
+			"problemMatcher": "$vite-watch",
+			"isBackground": true,
+			"presentation": {
+				"group": "watch",
+				"reveal": "never"
+			}
+		},
 		{
-			"type": "npm",
-			"script": "watch-tests",
+			"label": "watch:tsc",
+			"type": "shell",
+			"command": "pnpm run watch:tsc",
+			"group": "build",
+			"problemMatcher": "$tsc-watch",
+			"isBackground": true,
+			"presentation": {
+				"group": "watch",
+				"reveal": "never"
+			}
+		},
+		{
+			"label": "watch-tests",
+			"type": "shell",
+			"command": "pnpm run watch-tests",
 			"problemMatcher": "$tsc-watch",
 			"isBackground": true,
 			"presentation": {
@@ -67,10 +100,8 @@
 		},
 		{
 			"label": "tasks: watch-tests",
-			"dependsOn": [
-				"npm: watch",
-				"npm: watch-tests"
-			],
+			"dependsOn": ["watch", "watch-tests"],
+			"dependsOrder": "parallel",
 			"problemMatcher": []
 		}
 	]

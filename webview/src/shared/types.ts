@@ -65,12 +65,15 @@ export interface InteractiveRebaseCommitDto {
 	shortHash: string;
 	message: string;
 	action: 'pick' | 'reword' | 'edit' | 'squash' | 'fixup' | 'drop';
+	timestamp?: number;
 }
 
 export type ContextMenuAction =
 	| 'interactiveRebase'
+	| 'rebase'
 	| 'cherryPick'
 	| 'checkout'
+	| 'copyHash'
 	| 'newTag'
 	| 'newBranch'
 	| 'resetSoft'

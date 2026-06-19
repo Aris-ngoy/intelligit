@@ -27,3 +27,7 @@ out/**
 
 # Repo screenshots are large; they render on the Marketplace from the repo
 media/screenshots/**
+
+# Local test fixtures & design docs (not part of the shipped extension)
+.test-sandbox/**
+design/**

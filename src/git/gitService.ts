@@ -214,11 +214,11 @@ export class GitService {
 	async getRebaseCommitRange(
 		repoRoot: string,
 		fromHash: string,
-	): Promise<{ hash: string; shortHash: string; message: string }[]> {
+	): Promise<{ hash: string; shortHash: string; message: string; timestamp: number }[]> {
 		const result = await this.exec(repoRoot, [
 			'log',
 			'--reverse',
-			'--pretty=format:%H|%h|%s',
+			'--pretty=format:%H|%h|%at|%s',
 			`${fromHash}^..HEAD`,
 		], { allowFailure: true });
 
@@ -227,7 +227,7 @@ export class GitService {
 			const single = await this.exec(repoRoot, [
 				'log',
 				'-1',
-				'--pretty=format:%H|%h|%s',
+				'--pretty=format:%H|%h|%at|%s',
 				fromHash,
 			]);
 			return parseCommitRangeLines(single.stdout);
@@ -311,6 +311,10 @@ export class GitService {
 
 	async cherryPick(repoRoot: string, hash: string): Promise<void> {
 		await this.exec(repoRoot, ['cherry-pick', hash]);
+	}
+
+	async revertCommit(repoRoot: string, hash: string): Promise<void> {
+		await this.exec(repoRoot, ['revert', '--no-edit', hash]);
 	}
 
 	async getMergeOperationState(repoRoot: string): Promise<MergeOperationState> {
@@ -475,16 +479,19 @@ function parseCommitRangeLines(stdout: string): {
 	hash: string;
 	shortHash: string;
 	message: string;
+	timestamp: number;
 }[] {
 	return stdout
 		.split('\n')
 		.filter(Boolean)
 		.map((line) => {
-			const [hash, shortHash, ...messageParts] = line.split('|');
+			const [hash, shortHash, timestampRaw, ...messageParts] = line.split('|');
+			const timestamp = Number.parseInt(timestampRaw ?? '0', 10);
 			return {
 				hash: hash ?? '',
 				shortHash: shortHash ?? '',
 				message: messageParts.join('|'),
+				timestamp: Number.isNaN(timestamp) ? 0 : timestamp,
 			};
 		})
 		.filter((c) => c.hash.length > 0);

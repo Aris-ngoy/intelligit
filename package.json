@@ -2,7 +2,7 @@
   "name": "intelligit-visual-git",
   "displayName": "IntelliGit — Visual Git Log & Rebase",
   "description": "A visual Git Log, beginner-friendly Interactive Rebase, and 3-way conflict resolution for VS Code.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "ArisNgoy",
   "license": "MIT",
   "icon": "media/icon.png",
@@ -15,7 +15,7 @@
   },
   "homepage": "https://github.com/Aris-ngoy/intelligit#readme",
   "engines": {
-    "vscode": "^1.125.0"
+    "vscode": "^1.105.0"
   },
   "categories": [
     "SCM Providers",
@@ -76,11 +76,11 @@
       }
     ],
     "viewsContainers": {
-      "panel": [
+      "activitybar": [
         {
           "id": "intelligit-panel",
           "title": "IntelliGit",
-          "icon": "$(git-branch)"
+          "icon": "media/icon.png"
         }
       ]
     },
@@ -128,7 +128,7 @@
     "test": "vscode-test"
   },
   "devDependencies": {
-    "@types/vscode": "^1.125.0",
+    "@types/vscode": "^1.105.0",
     "@types/mocha": "^10.0.10",
     "@types/node": "22.x",
     "typescript-eslint": "^8.56.1",

@@ -1,6 +1,15 @@
 import { useEffect, useState } from 'react';
 
+import { formatRelativeDate } from '../shared/format';
 import type { InteractiveRebaseCommitDto } from '../shared/types';
+import {
+	ErrorStrip,
+	LoadingState,
+	PrimaryButton,
+	ReassuranceLine,
+	SegmentedActionButton,
+	TaskHeader,
+} from '../shared/ui';
 import { useInteractiveRebaseStore } from './store';
 
 type RebaseAction = InteractiveRebaseCommitDto['action'];
@@ -10,7 +19,6 @@ interface FriendlyAction {
 	label: string;
 	icon: string;
 	help: string;
-	/** Tailwind classes for the active (selected) state. */
 	active: string;
 }
 
@@ -49,6 +57,26 @@ interface InteractiveRebaseAppProps {
 	initialFromHash: string;
 }
 
+function combineTargetMessage(
+	commits: InteractiveRebaseCommitDto[],
+	index: number,
+): string | null {
+	if (index === 0) {
+		return null;
+	}
+	const commit = commits[index];
+	if (!commit || (commit.action !== 'fixup' && commit.action !== 'squash')) {
+		return null;
+	}
+	for (let i = index - 1; i >= 0; i--) {
+		const prev = commits[i];
+		if (prev && prev.action !== 'drop') {
+			return prev.message;
+		}
+	}
+	return null;
+}
+
 export function InteractiveRebaseApp({ initialFromHash }: InteractiveRebaseAppProps) {
 	const loading = useInteractiveRebaseStore((s) => s.loading);
 	const error = useInteractiveRebaseStore((s) => s.error);
@@ -74,45 +102,43 @@ export function InteractiveRebaseApp({ initialFromHash }: InteractiveRebaseAppPr
 	}, [initialFromHash, init]);
 
 	if (loading) {
-		return (
-			<div className="flex h-full items-center justify-center text-[var(--color-muted)]">
-				Loading your changes…
-			</div>
-		);
+		return <LoadingState message="Loading your changes…" />;
 	}
 
-	// "Combine" (fixup/squash) folds into the change above, so it doesn't add
-	// a separate result; "Delete" (drop) removes it entirely.
 	const keptCount = commits.filter(
 		(c) => c.action !== 'drop' && c.action !== 'fixup' && c.action !== 'squash',
 	).length;
 
 	return (
 		<div className="flex h-full flex-col">
-			<header className="flex flex-col gap-1 border-b border-[var(--color-border)] px-4 py-3">
-				<h1 className="flex items-center gap-2 text-base font-semibold">
-					<span aria-hidden>🧹</span> Tidy up my changes
-				</h1>
-				<p className="text-xs text-[var(--color-muted)]">
-					Each box below is something you saved on{' '}
-					<strong className="text-[var(--color-app-fg)]">{currentBranch || 'your branch'}</strong>.
-					Choose what to do with each one. Drag a box (or use the arrows) to change the
-					order.
-				</p>
-			</header>
-
-			{error && (
-				<div className="border-b border-[var(--color-border)] bg-[var(--color-error)]/10 px-4 py-2 text-xs text-[var(--color-error)]">
-					⚠️ {error}
+			{currentBranch && (
+				<div className="flex shrink-0 items-center gap-2 border-b border-[var(--color-border)] px-4 py-2 text-xs">
+					<span className="rounded-full border border-[var(--color-border)] bg-[var(--color-input-bg)] px-2.5 py-0.5 font-mono">
+						{currentBranch}
+					</span>
+					{rebasing && (
+						<span className="italic text-[var(--color-muted)]">Working on it…</span>
+					)}
 				</div>
 			)}
+
+			<TaskHeader
+				icon="🧹"
+				title="Tidy up my changes"
+				description={`Each box below is something you saved on ${currentBranch || 'your branch'}. Choose what to do with each one. Drag a box (or use the arrows) to change the order.`}
+			/>
+
+			{error && <ErrorStrip>{error}</ErrorStrip>}
 
 			<div className="min-h-0 flex-1 space-y-2 overflow-y-auto p-3">
 				{commits.map((commit, index) => {
 					const isSelected = selectedIndex === index;
 					const isDropped = commit.action === 'drop';
+					const isWip = /^wip:/i.test(commit.message.trim());
 					const chosen = ACTIONS.find((a) => a.action === commit.action) ?? ACTIONS[0]!;
 					const isDragOver = dragOverIndex === index && dragIndex !== index;
+					const combineTarget = combineTargetMessage(commits, index);
+
 					return (
 						<div
 							key={commit.hash}
@@ -164,10 +190,17 @@ export function InteractiveRebaseApp({ initialFromHash }: InteractiveRebaseAppPr
 								</span>
 
 								<div className="min-w-0 flex-1">
+									<div className="mb-1 flex flex-wrap items-center gap-2 text-[10px] text-[var(--color-muted)]">
+										<span className="font-mono">{commit.shortHash}</span>
+										{commit.timestamp !== undefined && (
+											<span>{formatRelativeDate(commit.timestamp)}</span>
+										)}
+									</div>
+
 									{commit.action === 'reword' ? (
 										<input
 											autoFocus
-											className="w-full rounded-lg border border-[var(--color-input-border)] bg-[var(--color-input-bg)] px-2 py-1.5 text-sm"
+											className="w-full rounded-lg border border-[var(--color-input-border)] bg-[var(--color-input-bg)] px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/50"
 											value={commit.message}
 											onChange={(e) => setMessage(index, e.target.value)}
 											onClick={(e) => e.stopPropagation()}
@@ -175,18 +208,26 @@ export function InteractiveRebaseApp({ initialFromHash }: InteractiveRebaseAppPr
 										/>
 									) : (
 										<p
-											className={`truncate text-sm font-medium ${isDropped ? 'line-through' : ''}`}
+											className={`truncate text-sm font-medium ${
+												isDropped ? 'line-through' : ''
+											} ${isWip ? 'italic text-[var(--color-muted)]' : ''}`}
 											title={commit.message}
 										>
 											{commit.message}
 										</p>
 									)}
-									<p className="mt-0.5 text-[11px] text-[var(--color-muted)]">
-										{chosen.icon} {chosen.help}
-									</p>
+
+									{combineTarget ? (
+										<p className="mt-1 text-[11px] italic text-purple-400">
+											Will be squashed into: {combineTarget}
+										</p>
+									) : (
+										<p className="mt-0.5 text-[11px] text-[var(--color-muted)]">
+											{chosen.icon} {chosen.help}
+										</p>
+									)}
 								</div>
 
-								{/* Reorder arrows */}
 								<div className="flex shrink-0 flex-col gap-1">
 									<ArrowButton
 										label="Move up"
@@ -211,31 +252,24 @@ export function InteractiveRebaseApp({ initialFromHash }: InteractiveRebaseAppPr
 								</div>
 							</div>
 
-							{/* Friendly action chooser */}
 							<div className="mt-3 grid grid-cols-4 gap-1.5">
 								{ACTIONS.map((a) => {
 									const isActive = commit.action === a.action;
-									// "Combine" needs a box above it to merge into.
 									const disabled = a.action === 'fixup' && index === 0;
 									return (
-										<button
+										<SegmentedActionButton
 											key={a.action}
-											type="button"
+											icon={a.icon}
+											label={a.label}
+											active={isActive}
+											activeClass={a.active}
 											disabled={disabled}
 											title={disabled ? 'Nothing above to combine with' : a.help}
-											className={`flex flex-col items-center gap-0.5 rounded-lg border px-1 py-1.5 text-[11px] font-medium transition disabled:opacity-30 ${
-												isActive
-													? a.active
-													: 'border-[var(--color-border)] hover:bg-[var(--color-hover)]'
-											}`}
 											onClick={(e) => {
 												e.stopPropagation();
 												setAction(index, a.action);
 											}}
-										>
-											<span aria-hidden className="text-sm">{a.icon}</span>
-											{a.label}
-										</button>
+										/>
 									);
 								})}
 							</div>
@@ -244,19 +278,19 @@ export function InteractiveRebaseApp({ initialFromHash }: InteractiveRebaseAppPr
 				})}
 			</div>
 
-			<footer className="flex flex-col gap-2 border-t border-[var(--color-border)] px-4 py-3">
+			<footer className="flex shrink-0 flex-col gap-2 border-t border-[var(--color-border)] px-4 py-3">
 				<p className="text-center text-xs text-[var(--color-muted)]">
-					You’ll end up with <strong className="text-[var(--color-app-fg)]">{keptCount}</strong>{' '}
-					change{keptCount === 1 ? '' : 's'} when you’re done.
+					You’ll end up with{' '}
+					<strong className="text-[var(--color-app-fg)]">{keptCount}</strong> change
+					{keptCount === 1 ? '' : 's'} when you’re done.
 				</p>
-				<button
-					type="button"
-					className="w-full rounded-xl bg-[var(--color-accent)] px-4 py-3 text-base font-semibold text-white disabled:opacity-40"
+				<PrimaryButton
 					disabled={rebasing || commits.length === 0}
 					onClick={() => void startRebase()}
 				>
 					{rebasing ? 'Working on it…' : '🎉 All done — apply my changes'}
-				</button>
+				</PrimaryButton>
+				<ReassuranceLine />
 			</footer>
 		</div>
 	);
@@ -279,7 +313,7 @@ function ArrowButton({
 			aria-label={label}
 			title={label}
 			disabled={disabled}
-			className="flex h-6 w-6 items-center justify-center rounded-md border border-[var(--color-border)] text-xs hover:bg-[var(--color-hover)] disabled:opacity-30"
+			className="flex h-6 w-6 items-center justify-center rounded-md border border-[var(--color-border)] text-xs hover:bg-[var(--color-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/50 disabled:opacity-30"
 			onClick={onClick}
 		>
 			{glyph}
