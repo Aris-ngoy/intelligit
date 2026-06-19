@@ -3,7 +3,7 @@
   "displayName": "IntelliGit — Visual Git Log & Rebase",
   "description": "A visual Git Log, beginner-friendly Interactive Rebase, and 3-way conflict resolution for VS Code.",
   "version": "0.1.0",
-  "publisher": "intelligit",
+  "publisher": "ArisNgoy",
   "license": "MIT",
   "icon": "media/icon.png",
   "repository": {
