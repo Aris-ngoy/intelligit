@@ -1,5 +1,5 @@
 {
-  "name": "intelligit",
+  "name": "intelligit-visual-git",
   "displayName": "IntelliGit — Visual Git Log & Rebase",
   "description": "A visual Git Log, beginner-friendly Interactive Rebase, and 3-way conflict resolution for VS Code.",
   "version": "0.1.0",
