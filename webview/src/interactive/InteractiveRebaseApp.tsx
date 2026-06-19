@@ -1,22 +1,49 @@
 import { useEffect, useState } from 'react';
 
+import type { InteractiveRebaseCommitDto } from '../shared/types';
 import { useInteractiveRebaseStore } from './store';
 
-const ACTION_OPTIONS = [
-	'pick',
-	'reword',
-	'edit',
-	'squash',
-	'fixup',
-	'drop',
-] as const;
+type RebaseAction = InteractiveRebaseCommitDto['action'];
 
-const FLAG_OPTIONS = [
-	{ id: '--no-verify', label: '--no-verify' },
-	{ id: '--keep-empty', label: '--keep-empty' },
-	{ id: '--autosquash', label: '--autosquash' },
-	{ id: '--autostash', label: '--autostash' },
-] as const;
+interface FriendlyAction {
+	action: RebaseAction;
+	label: string;
+	icon: string;
+	help: string;
+	/** Tailwind classes for the active (selected) state. */
+	active: string;
+}
+
+const ACTIONS: FriendlyAction[] = [
+	{
+		action: 'pick',
+		label: 'Keep',
+		icon: '✅',
+		help: 'Leave this change exactly as it is.',
+		active: 'bg-green-600 text-white border-green-600',
+	},
+	{
+		action: 'reword',
+		label: 'Rename',
+		icon: '✏️',
+		help: 'Keep the change but give it a new description.',
+		active: 'bg-blue-600 text-white border-blue-600',
+	},
+	{
+		action: 'fixup',
+		label: 'Combine',
+		icon: '🔗',
+		help: 'Glue this into the box above it, like they were always one.',
+		active: 'bg-purple-600 text-white border-purple-600',
+	},
+	{
+		action: 'drop',
+		label: 'Delete',
+		icon: '🗑️',
+		help: 'Throw this change away completely.',
+		active: 'bg-red-600 text-white border-red-600',
+	},
+];
 
 interface InteractiveRebaseAppProps {
 	initialFromHash: string;
@@ -27,18 +54,18 @@ export function InteractiveRebaseApp({ initialFromHash }: InteractiveRebaseAppPr
 	const error = useInteractiveRebaseStore((s) => s.error);
 	const commits = useInteractiveRebaseStore((s) => s.commits);
 	const currentBranch = useInteractiveRebaseStore((s) => s.currentBranch);
-	const flags = useInteractiveRebaseStore((s) => s.flags);
 	const rebasing = useInteractiveRebaseStore((s) => s.rebasing);
 	const init = useInteractiveRebaseStore((s) => s.init);
 	const setAction = useInteractiveRebaseStore((s) => s.setAction);
 	const setMessage = useInteractiveRebaseStore((s) => s.setMessage);
 	const moveUp = useInteractiveRebaseStore((s) => s.moveUp);
 	const moveDown = useInteractiveRebaseStore((s) => s.moveDown);
-	const applyToolbarAction = useInteractiveRebaseStore((s) => s.applyToolbarAction);
-	const toggleFlag = useInteractiveRebaseStore((s) => s.toggleFlag);
+	const reorder = useInteractiveRebaseStore((s) => s.reorder);
 	const startRebase = useInteractiveRebaseStore((s) => s.startRebase);
 
 	const [selectedIndex, setSelectedIndex] = useState(0);
+	const [dragIndex, setDragIndex] = useState<number | null>(null);
+	const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
 	useEffect(() => {
 		if (initialFromHash) {
@@ -49,128 +76,213 @@ export function InteractiveRebaseApp({ initialFromHash }: InteractiveRebaseAppPr
 	if (loading) {
 		return (
 			<div className="flex h-full items-center justify-center text-[var(--color-muted)]">
-				Loading commits…
+				Loading your changes…
 			</div>
 		);
 	}
 
+	// "Combine" (fixup/squash) folds into the change above, so it doesn't add
+	// a separate result; "Delete" (drop) removes it entirely.
+	const keptCount = commits.filter(
+		(c) => c.action !== 'drop' && c.action !== 'fixup' && c.action !== 'squash',
+	).length;
+
 	return (
 		<div className="flex h-full flex-col">
-			<div className="flex flex-wrap items-center gap-2 border-b border-[var(--color-border)] px-3 py-2">
-				<span className="text-xs text-[var(--color-muted)]">
-					Branch: <strong className="text-[var(--color-app-fg)]">{currentBranch}</strong>
-				</span>
-				<div className="ml-auto flex flex-wrap gap-1">
-					<ToolbarButton label="Reword" onClick={() => applyToolbarAction('reword', selectedIndex)} />
-					<ToolbarButton label="Squash" onClick={() => applyToolbarAction('squash', selectedIndex)} />
-					<ToolbarButton label="Fixup" onClick={() => applyToolbarAction('fixup', selectedIndex)} />
-					<ToolbarButton label="Drop" onClick={() => applyToolbarAction('drop', selectedIndex)} />
-					<ToolbarButton label="↑" onClick={() => moveUp(selectedIndex)} />
-					<ToolbarButton label="↓" onClick={() => moveDown(selectedIndex)} />
-				</div>
-			</div>
-
-			<div className="flex flex-wrap items-center gap-3 border-b border-[var(--color-border)] px-3 py-1.5 text-xs">
-				<span className="text-[var(--color-muted)]">Modify options:</span>
-				{FLAG_OPTIONS.map((f) => (
-					<label key={f.id} className="flex items-center gap-1">
-						<input
-							type="checkbox"
-							checked={flags.includes(f.id)}
-							onChange={() => toggleFlag(f.id)}
-						/>
-						{f.label}
-					</label>
-				))}
-			</div>
+			<header className="flex flex-col gap-1 border-b border-[var(--color-border)] px-4 py-3">
+				<h1 className="flex items-center gap-2 text-base font-semibold">
+					<span aria-hidden>🧹</span> Tidy up my changes
+				</h1>
+				<p className="text-xs text-[var(--color-muted)]">
+					Each box below is something you saved on{' '}
+					<strong className="text-[var(--color-app-fg)]">{currentBranch || 'your branch'}</strong>.
+					Choose what to do with each one. Drag a box (or use the arrows) to change the
+					order.
+				</p>
+			</header>
 
 			{error && (
-				<div className="border-b border-[var(--color-border)] px-3 py-2 text-xs text-[var(--color-error)]">
-					{error}
+				<div className="border-b border-[var(--color-border)] bg-[var(--color-error)]/10 px-4 py-2 text-xs text-[var(--color-error)]">
+					⚠️ {error}
 				</div>
 			)}
 
-			<div className="min-h-0 flex-1 overflow-y-auto">
-				<table className="w-full border-collapse text-xs">
-					<thead className="sticky top-0 bg-[var(--color-app-bg)]">
-						<tr className="border-b border-[var(--color-border)] text-[var(--color-muted)]">
-							<th className="w-24 px-2 py-1 text-left">Action</th>
-							<th className="w-20 px-2 py-1 text-left">Hash</th>
-							<th className="px-2 py-1 text-left">Message</th>
-							<th className="w-16 px-2 py-1" />
-						</tr>
-					</thead>
-					<tbody>
-						{commits.map((commit, index) => (
-							<tr
-								key={commit.hash}
-								className={`border-b border-[var(--color-border)]/40 ${selectedIndex === index ? 'bg-[var(--color-selected)] text-[var(--color-selected-fg)]' : 'hover:bg-[var(--color-hover)]'} ${commit.action === 'drop' ? 'opacity-50 line-through' : ''}`}
-								onClick={() => setSelectedIndex(index)}
-							>
-								<td className="px-2 py-1">
-									<select
-										className="w-full rounded border border-[var(--color-input-border)] bg-[var(--color-input-bg)] px-1 py-0.5 text-[var(--color-input-fg)]"
-										value={commit.action}
-										onChange={(e) =>
-											setAction(index, e.target.value as typeof commit.action)
-										}
-										onClick={(e) => e.stopPropagation()}
-									>
-										{ACTION_OPTIONS.map((a) => (
-											<option key={a} value={a}>
-												{a}
-											</option>
-										))}
-									</select>
-								</td>
-								<td className="px-2 py-1 font-mono">{commit.shortHash}</td>
-								<td className="px-2 py-1">
+			<div className="min-h-0 flex-1 space-y-2 overflow-y-auto p-3">
+				{commits.map((commit, index) => {
+					const isSelected = selectedIndex === index;
+					const isDropped = commit.action === 'drop';
+					const chosen = ACTIONS.find((a) => a.action === commit.action) ?? ACTIONS[0]!;
+					const isDragOver = dragOverIndex === index && dragIndex !== index;
+					return (
+						<div
+							key={commit.hash}
+							className={`rounded-xl border p-3 transition ${
+								isSelected
+									? 'border-[var(--color-accent)] bg-[var(--color-input-bg)]/60'
+									: 'border-[var(--color-border)] bg-[var(--color-input-bg)]/20'
+							} ${isDropped ? 'opacity-50' : ''} ${
+								isDragOver ? 'ring-2 ring-[var(--color-accent)]' : ''
+							} ${dragIndex === index ? 'opacity-40' : ''}`}
+							onClick={() => setSelectedIndex(index)}
+							onDragOver={(e) => {
+								if (dragIndex !== null) {
+									e.preventDefault();
+									setDragOverIndex(index);
+								}
+							}}
+							onDrop={(e) => {
+								e.preventDefault();
+								if (dragIndex !== null && dragIndex !== index) {
+									reorder(dragIndex, index);
+									setSelectedIndex(index);
+								}
+								setDragIndex(null);
+								setDragOverIndex(null);
+							}}
+						>
+							<div className="flex items-start gap-2">
+								<span
+									draggable
+									role="button"
+									aria-label="Drag to reorder"
+									title="Drag to reorder"
+									className="mt-0.5 cursor-grab select-none px-1 text-[var(--color-muted)] active:cursor-grabbing"
+									onDragStart={() => {
+										setDragIndex(index);
+										setSelectedIndex(index);
+									}}
+									onDragEnd={() => {
+										setDragIndex(null);
+										setDragOverIndex(null);
+									}}
+									onClick={(e) => e.stopPropagation()}
+								>
+									⠿
+								</span>
+								<span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--color-border)] text-[11px] font-bold">
+									{index + 1}
+								</span>
+
+								<div className="min-w-0 flex-1">
 									{commit.action === 'reword' ? (
 										<input
-											className="w-full rounded border border-[var(--color-input-border)] bg-[var(--color-input-bg)] px-1 py-0.5"
+											autoFocus
+											className="w-full rounded-lg border border-[var(--color-input-border)] bg-[var(--color-input-bg)] px-2 py-1.5 text-sm"
 											value={commit.message}
 											onChange={(e) => setMessage(index, e.target.value)}
 											onClick={(e) => e.stopPropagation()}
+											placeholder="Type a new description…"
 										/>
 									) : (
-										commit.message
+										<p
+											className={`truncate text-sm font-medium ${isDropped ? 'line-through' : ''}`}
+											title={commit.message}
+										>
+											{commit.message}
+										</p>
 									)}
-								</td>
-								<td className="px-2 py-1 text-[var(--color-muted)]">{index + 1}</td>
-							</tr>
-						))}
-					</tbody>
-				</table>
+									<p className="mt-0.5 text-[11px] text-[var(--color-muted)]">
+										{chosen.icon} {chosen.help}
+									</p>
+								</div>
+
+								{/* Reorder arrows */}
+								<div className="flex shrink-0 flex-col gap-1">
+									<ArrowButton
+										label="Move up"
+										glyph="↑"
+										disabled={index === 0}
+										onClick={(e) => {
+											e.stopPropagation();
+											moveUp(index);
+											setSelectedIndex(Math.max(0, index - 1));
+										}}
+									/>
+									<ArrowButton
+										label="Move down"
+										glyph="↓"
+										disabled={index === commits.length - 1}
+										onClick={(e) => {
+											e.stopPropagation();
+											moveDown(index);
+											setSelectedIndex(Math.min(commits.length - 1, index + 1));
+										}}
+									/>
+								</div>
+							</div>
+
+							{/* Friendly action chooser */}
+							<div className="mt-3 grid grid-cols-4 gap-1.5">
+								{ACTIONS.map((a) => {
+									const isActive = commit.action === a.action;
+									// "Combine" needs a box above it to merge into.
+									const disabled = a.action === 'fixup' && index === 0;
+									return (
+										<button
+											key={a.action}
+											type="button"
+											disabled={disabled}
+											title={disabled ? 'Nothing above to combine with' : a.help}
+											className={`flex flex-col items-center gap-0.5 rounded-lg border px-1 py-1.5 text-[11px] font-medium transition disabled:opacity-30 ${
+												isActive
+													? a.active
+													: 'border-[var(--color-border)] hover:bg-[var(--color-hover)]'
+											}`}
+											onClick={(e) => {
+												e.stopPropagation();
+												setAction(index, a.action);
+											}}
+										>
+											<span aria-hidden className="text-sm">{a.icon}</span>
+											{a.label}
+										</button>
+									);
+								})}
+							</div>
+						</div>
+					);
+				})}
 			</div>
 
-			<div className="flex justify-end gap-2 border-t border-[var(--color-border)] px-3 py-2">
+			<footer className="flex flex-col gap-2 border-t border-[var(--color-border)] px-4 py-3">
+				<p className="text-center text-xs text-[var(--color-muted)]">
+					You’ll end up with <strong className="text-[var(--color-app-fg)]">{keptCount}</strong>{' '}
+					change{keptCount === 1 ? '' : 's'} when you’re done.
+				</p>
 				<button
 					type="button"
-					className="rounded bg-[var(--color-accent)] px-4 py-1.5 text-xs text-white disabled:opacity-40"
+					className="w-full rounded-xl bg-[var(--color-accent)] px-4 py-3 text-base font-semibold text-white disabled:opacity-40"
 					disabled={rebasing || commits.length === 0}
 					onClick={() => void startRebase()}
 				>
-					{rebasing ? 'Rebasing…' : 'Start Rebasing'}
+					{rebasing ? 'Working on it…' : '🎉 All done — apply my changes'}
 				</button>
-			</div>
+			</footer>
 		</div>
 	);
 }
 
-function ToolbarButton({
+function ArrowButton({
 	label,
+	glyph,
+	disabled,
 	onClick,
 }: {
 	label: string;
-	onClick: () => void;
+	glyph: string;
+	disabled: boolean;
+	onClick: (e: React.MouseEvent) => void;
 }) {
 	return (
 		<button
 			type="button"
-			className="rounded border border-[var(--color-border)] bg-[var(--color-input-bg)] px-2 py-0.5 text-xs hover:bg-[var(--color-hover)]"
+			aria-label={label}
+			title={label}
+			disabled={disabled}
+			className="flex h-6 w-6 items-center justify-center rounded-md border border-[var(--color-border)] text-xs hover:bg-[var(--color-hover)] disabled:opacity-30"
 			onClick={onClick}
 		>
-			{label}
+			{glyph}
 		</button>
 	);
 }

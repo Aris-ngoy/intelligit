@@ -18,6 +18,7 @@ interface InteractiveRebaseStore {
 	setMessage: (index: number, message: string) => void;
 	moveUp: (index: number) => void;
 	moveDown: (index: number) => void;
+	reorder: (from: number, to: number) => void;
 	applyToolbarAction: (
 		action: 'reword' | 'squash' | 'fixup' | 'drop',
 		selectedIndex: number,
@@ -113,6 +114,25 @@ export const useInteractiveRebaseStore = create<InteractiveRebaseStore>((set, ge
 		}
 		commits[index] = next;
 		commits[index + 1] = curr;
+		set({ commits });
+	},
+
+	reorder(from, to) {
+		const commits = [...get().commits];
+		if (
+			from === to ||
+			from < 0 ||
+			to < 0 ||
+			from >= commits.length ||
+			to >= commits.length
+		) {
+			return;
+		}
+		const [moved] = commits.splice(from, 1);
+		if (!moved) {
+			return;
+		}
+		commits.splice(to, 0, moved);
 		set({ commits });
 	},
 

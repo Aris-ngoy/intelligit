@@ -21,22 +21,26 @@ export function ConflictsApp() {
 	if (loading && files.length === 0) {
 		return (
 			<div className="flex h-full items-center justify-center text-[var(--color-muted)]">
-				Loading conflicts…
+				Looking for disagreements…
 			</div>
 		);
 	}
 
 	if (files.length === 0 && !loading) {
 		return (
-			<div className="flex h-full flex-col items-center justify-center gap-2 p-6 text-[var(--color-muted)]">
-				<p>No merge conflicts detected.</p>
+			<div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-center">
+				<div className="text-4xl" aria-hidden>🎉</div>
+				<p className="text-base font-semibold">All sorted!</p>
+				<p className="max-w-xs text-sm text-[var(--color-muted)]">
+					Every file agrees now. There’s nothing left to fix.
+				</p>
 				{operation?.isRebaseInProgress && (
 					<button
 						type="button"
-						className="rounded bg-[var(--color-accent)] px-3 py-1 text-xs text-white"
+						className="rounded-xl bg-[var(--color-accent)] px-4 py-2.5 text-sm font-semibold text-white"
 						onClick={() => void continueOp()}
 					>
-						Continue Rebase
+						✅ Finish up
 					</button>
 				)}
 			</div>
@@ -44,68 +48,117 @@ export function ConflictsApp() {
 	}
 
 	return (
-		<div className="flex h-full flex-col p-3">
-			{operation && operation.type !== 'none' && (
-				<div className="mb-3 rounded border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-2 text-xs">
-					{operation.message}
+		<div className="flex h-full flex-col">
+			<header className="flex flex-col gap-1 border-b border-[var(--color-border)] px-4 py-3">
+				<h1 className="flex items-center gap-2 text-base font-semibold">
+					<span aria-hidden>🤝</span> Two versions don’t agree
+				</h1>
+				<p className="text-xs text-[var(--color-muted)]">
+					The same thing was changed in two places. For each file, pick which version to
+					keep — or open the side-by-side helper to mix them together.
+				</p>
+			</header>
+
+			{operation && operation.type !== 'none' && operation.message && (
+				<div className="border-b border-[var(--color-border)] bg-[var(--color-input-bg)]/40 px-4 py-2 text-xs text-[var(--color-muted)]">
+					ℹ️ {operation.message}
 				</div>
 			)}
 
-			{error && <div className="mb-2 text-xs text-[var(--color-error)]">{error}</div>}
+			{error && (
+				<div className="border-b border-[var(--color-border)] bg-[var(--color-error)]/10 px-4 py-2 text-xs text-[var(--color-error)]">
+					⚠️ {error}
+				</div>
+			)}
 
-			<div className="mb-2 text-[11px] font-medium text-[var(--color-muted)]">
-				Conflict files ({files.length})
+			<div className="min-h-0 flex-1 space-y-2 overflow-y-auto p-3">
+				<p className="px-1 text-[11px] font-medium text-[var(--color-muted)]">
+					{files.length} file{files.length === 1 ? '' : 's'} need your help
+				</p>
+				{files.map((file) => {
+					const name = file.split('/').pop() ?? file;
+					const folder = file.slice(0, file.length - name.length);
+					return (
+						<div
+							key={file}
+							className="rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)]/20 p-3"
+						>
+							<div className="mb-2 flex items-center gap-2">
+								<span aria-hidden className="text-base">📄</span>
+								<span className="min-w-0 flex-1 truncate font-mono text-xs" title={file}>
+									{folder && <span className="text-[var(--color-muted)]">{folder}</span>}
+									<span className="font-semibold">{name}</span>
+								</span>
+							</div>
+							<div className="grid grid-cols-3 gap-1.5">
+								<ChoiceButton
+									icon="🙋"
+									label="Keep mine"
+									onClick={() => void acceptOurs(file)}
+								/>
+								<ChoiceButton
+									icon="👥"
+									label="Keep theirs"
+									onClick={() => void acceptTheirs(file)}
+								/>
+								<ChoiceButton
+									icon="🔍"
+									label="Compare…"
+									primary
+									onClick={() => void openMerge(file)}
+								/>
+							</div>
+						</div>
+					);
+				})}
 			</div>
 
-			<ul className="min-h-0 flex-1 space-y-1 overflow-y-auto">
-				{files.map((file) => (
-					<li
-						key={file}
-						className="flex items-center gap-2 rounded border border-[var(--color-border)]/50 px-2 py-2"
-					>
-						<span className="min-w-0 flex-1 truncate font-mono text-xs">{file}</span>
-						<button
-							type="button"
-							className="shrink-0 rounded border border-[var(--color-border)] px-2 py-0.5 text-[10px] hover:bg-[var(--color-hover)]"
-							onClick={() => void acceptOurs(file)}
-						>
-							Accept Yours
-						</button>
-						<button
-							type="button"
-							className="shrink-0 rounded border border-[var(--color-border)] px-2 py-0.5 text-[10px] hover:bg-[var(--color-hover)]"
-							onClick={() => void acceptTheirs(file)}
-						>
-							Accept Theirs
-						</button>
-						<button
-							type="button"
-							className="shrink-0 rounded bg-[var(--color-accent)] px-2 py-0.5 text-[10px] text-white"
-							onClick={() => void openMerge(file)}
-						>
-							Merge…
-						</button>
-					</li>
-				))}
-			</ul>
-
-			<div className="mt-3 flex gap-2 border-t border-[var(--color-border)] pt-3">
+			<footer className="flex items-center gap-2 border-t border-[var(--color-border)] px-4 py-3">
 				<button
 					type="button"
-					className="rounded border border-[var(--color-border)] px-3 py-1 text-xs hover:bg-[var(--color-hover)]"
+					className="rounded-lg border border-[var(--color-border)] px-3 py-2 text-xs hover:bg-[var(--color-hover)]"
 					onClick={() => void abortOp()}
 				>
-					Abort
+					✖ Cancel everything
 				</button>
 				<button
 					type="button"
-					className="ml-auto rounded bg-[var(--color-accent)] px-4 py-1 text-xs text-white disabled:opacity-40"
+					className="ml-auto rounded-xl bg-[var(--color-accent)] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
 					disabled={files.length > 0}
 					onClick={() => void continueOp()}
 				>
-					{operation?.isRebaseInProgress ? 'Continue Rebase' : 'Continue Merge'}
+					{files.length > 0
+						? `Fix all ${files.length} first ☝️`
+						: '✅ Finish up'}
 				</button>
-			</div>
+			</footer>
 		</div>
+	);
+}
+
+function ChoiceButton({
+	icon,
+	label,
+	onClick,
+	primary = false,
+}: {
+	icon: string;
+	label: string;
+	onClick: () => void;
+	primary?: boolean;
+}) {
+	return (
+		<button
+			type="button"
+			className={`flex flex-col items-center gap-0.5 rounded-lg border px-1 py-2 text-[11px] font-medium transition ${
+				primary
+					? 'border-[var(--color-accent)] bg-[var(--color-accent)] text-white'
+					: 'border-[var(--color-border)] hover:bg-[var(--color-hover)]'
+			}`}
+			onClick={onClick}
+		>
+			<span aria-hidden className="text-sm">{icon}</span>
+			{label}
+		</button>
 	);
 }

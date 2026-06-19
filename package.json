@@ -1,9 +1,11 @@
 {
   "name": "intelligit",
-  "displayName": "WebStorm Git for VS Code",
-  "description": "JetBrains WebStorm-style Git Log, Interactive Rebase, and conflict resolution for VS Code",
-  "version": "0.0.1",
+  "displayName": "IntelliGit — Visual Git Log & Rebase",
+  "description": "A visual Git Log, beginner-friendly Interactive Rebase, and 3-way conflict resolution for VS Code.",
+  "version": "0.1.0",
   "publisher": "intelligit",
+  "license": "MIT",
+  "icon": "media/icon.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/intelligit/intelligit"
@@ -17,10 +19,9 @@
   ],
   "keywords": [
     "git",
-    "webstorm",
-    "intellij",
     "rebase",
     "git log",
+    "git graph",
     "interactive rebase",
     "merge conflict"
   ],

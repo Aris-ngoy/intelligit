@@ -1,14 +1,29 @@
-.vscode/**
-.vscode-test/**
-out/**
-node_modules/**
+# Source & build tooling (only dist/ ships)
 src/**
-.gitignore
-.yarnrc
+webview/**
 esbuild.js
 vsc-extension-quickstart.md
+
+# Dependencies & stores (everything is bundled into dist/)
+**/node_modules/**
+.pnpm-store/**
+**/pnpm-lock.yaml
+.yarnrc
+
+# Dev/editor/test config
+.vscode/**
+.vscode-test/**
+.vscode-test.*
+**/.vscode-test.*
+out/**
 **/tsconfig.json
 **/eslint.config.mjs
+.gitignore
+.eslintrc*
+
+# Maps & TS leftovers
 **/*.map
 **/*.ts
-**/.vscode-test.*
+
+# Repo screenshots are large; they render on the Marketplace from the repo
+media/screenshots/**

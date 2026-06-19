@@ -1,71 +1,70 @@
-# intelligit README
+# IntelliGit — Visual Git Log & Rebase
 
-This is the README for your extension "intelligit". After writing up a brief description, we recommend including the following sections.
+A visual, beginner-friendly Git companion for VS Code. IntelliGit brings a clean
+commit graph, a plain-language interactive rebase, and a side-by-side conflict
+resolver right into the editor — inspired by the focused Git tooling found in
+JetBrains IDEs, rebuilt natively for VS Code.
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+### Visual Git Log
+A branch/commit graph with author, date, and refs, plus a detail panel — open it
+from the **IntelliGit** panel or run **IntelliGit: Open Git Log**.
 
-For example if there is an image subfolder under your extension project workspace:
+### Move my work (rebase, made simple)
+A guided, two-step rebase dialog: pick the branch you're on, choose where to put
+it, and go. Advanced flags (`--autostash`, `--no-verify`, …) are tucked away
+until you need them.
 
-\!\[feature X\]\(images/feature-x.png\)
+![Rebase dialog](media/screenshots/rebase-dialog.png)
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+### Tidy up my changes (interactive rebase)
+Each commit becomes a card with four plain-language actions — **Keep**,
+**Rename**, **Combine**, **Delete** — plus arrows to reorder. No cryptic
+`pick/squash/fixup` todo file, and no surprise editor pop-ups.
+
+![Interactive rebase](media/screenshots/interactive-rebase.png)
+
+### Conflict resolution
+List every conflicted file with one-click **Accept Yours / Accept Theirs**, or
+open the 3-way merge editor to resolve line-by-line. Continue or abort the
+rebase/merge without leaving VS Code.
+
+![Conflicts](media/screenshots/conflicts.png)
+
+![Merge editor](media/screenshots/merge-editor.png)
+
+## Commands
+
+| Command | Description |
+| --- | --- |
+| `IntelliGit: Open Git Log` | Open the commit graph panel |
+| `IntelliGit: Rebase…` | Open the guided rebase dialog |
+| `IntelliGit: Interactively Rebase from Here…` | Start an interactive rebase from a commit |
+| `IntelliGit: Conflicts` | Show conflicted files |
+| `IntelliGit: Refresh` | Reload the Git log |
 
 ## Requirements
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+- VS Code `^1.125.0`
+- `git` available on your `PATH`
 
-## Extension Settings
+## Known limitations
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+- Interactive rebase exposes Keep / Rename / Combine / Delete and reordering. The
+  `edit` (stop-to-amend) action is intentionally omitted to keep the flow simple.
+- If a rebase hits a conflict mid-way, finish it from the Conflicts view.
 
-For example:
+## Development
 
-This extension contributes the following settings:
+```bash
+pnpm install
+pnpm run build      # bundle extension + webview
+pnpm test           # type-check, lint, and run the test suite
+```
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+Press `F5` in VS Code to launch the Extension Development Host.
 
-## Known Issues
+## License
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
-
-## Release Notes
-
-Users appreciate release notes as you update your extension.
-
-### 1.0.0
-
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
----
-
-## Following extension guidelines
-
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+[MIT](LICENSE)

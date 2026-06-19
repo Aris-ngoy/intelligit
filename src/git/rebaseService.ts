@@ -46,17 +46,29 @@ export class RebaseService {
 	): Promise<void> {
 		const upstream = await this.resolveRebaseUpstream(repoRoot, fromCommitHash);
 		const todoBody = buildTodoFile(commits);
-		const editorScript = await writeSequenceEditorScript(todoBody);
+		const sequenceScript = await writeSequenceEditorScript(todoBody);
+
+		// `reword`/`squash` make git open the commit-message editor. We feed the
+		// UI-provided messages to it in todo order; otherwise git would block on
+		// an interactive editor with no TTY. Actions that need no message editing
+		// fall back to `true` so git never waits for input.
+		const editorMessages = collectEditorMessages(commits);
+		const messageEditor =
+			editorMessages.length > 0
+				? await writeMessageEditorScript(editorMessages)
+				: undefined;
 
 		try {
 			const args = ['rebase', '-i', ...rebaseFlagsToArgs(flags), upstream];
 			await this.git.exec(repoRoot, args, {
 				env: {
-					GIT_SEQUENCE_EDITOR: editorScript,
+					GIT_SEQUENCE_EDITOR: sequenceScript,
+					GIT_EDITOR: messageEditor ? messageEditor.path : 'true',
 				},
 			});
 		} finally {
-			await fs.unlink(editorScript).catch(() => undefined);
+			await fs.unlink(sequenceScript).catch(() => undefined);
+			await messageEditor?.cleanup();
 		}
 	}
 
@@ -122,6 +134,56 @@ fs.writeFileSync(todoPath, ${JSON.stringify(todoBody)}, 'utf8');
 
 	await fs.writeFile(scriptPath, script, { mode: 0o755 });
 	return scriptPath;
+}
+
+/** New commit messages, in the order git will ask for them during the rebase. */
+function collectEditorMessages(commits: InteractiveRebaseCommit[]): string[] {
+	return commits
+		.filter((c) => c.action !== 'drop')
+		.filter((c) => c.action === 'reword' || c.action === 'squash')
+		.map((c) => c.message);
+}
+
+/**
+ * Writes a GIT_EDITOR shim that supplies queued commit messages one at a time.
+ * git invokes GIT_EDITOR once per reword/squash, in todo order, so we pop the
+ * next message from the queue on each call (tracking position in a sidecar file).
+ */
+async function writeMessageEditorScript(
+	messages: string[],
+): Promise<{ path: string; cleanup: () => Promise<void> }> {
+	const stamp = `${process.pid}-${Date.now()}`;
+	const indexPath = path.join(os.tmpdir(), `intelligit-msg-index-${stamp}`);
+	const scriptPath = path.join(os.tmpdir(), `intelligit-msg-editor-${stamp}.js`);
+
+	const script = `#!/usr/bin/env node
+'use strict';
+const fs = require('node:fs');
+const target = process.argv[2];
+if (!target) {
+  process.exit(0);
+}
+const messages = ${JSON.stringify(messages)};
+const indexPath = ${JSON.stringify(indexPath)};
+let index = 0;
+try {
+  index = parseInt(fs.readFileSync(indexPath, 'utf8'), 10) || 0;
+} catch {}
+if (index < messages.length) {
+  fs.writeFileSync(target, messages[index], 'utf8');
+}
+fs.writeFileSync(indexPath, String(index + 1), 'utf8');
+`;
+
+	await fs.writeFile(scriptPath, script, { mode: 0o755 });
+
+	return {
+		path: scriptPath,
+		cleanup: async () => {
+			await fs.unlink(scriptPath).catch(() => undefined);
+			await fs.unlink(indexPath).catch(() => undefined);
+		},
+	};
 }
 
 function rebaseFlagsToArgs(flags: RebaseFlag[]): string[] {
