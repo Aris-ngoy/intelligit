@@ -66,7 +66,6 @@ export function activate(context: vscode.ExtensionContext): void {
 	const logProvider = new GitLogViewProvider(
 		context.extensionUri,
 		messageRouter,
-		() => gitLogPanelManager.open(),
 	);
 	context.subscriptions.push(
 		vscode.window.registerWebviewViewProvider(
@@ -89,8 +88,6 @@ export function activate(context: vscode.ExtensionContext): void {
 	if (workspaceRoot) {
 		void gitService.findRepositoryRoot(workspaceRoot).then((repoRoot) => {
 			if (repoRoot) {
-				// Land users in the roomy full-screen Git Log by default.
-				gitLogPanelManager.open();
 				context.subscriptions.push(
 					new GitWatcher(repoRoot, messageRouter, () => {
 						conflictsManager.open();
@@ -157,6 +154,54 @@ export function activate(context: vscode.ExtensionContext): void {
 
 		vscode.commands.registerCommand('intelligit.showCommitInOutput', () => {
 			void dumpGitLogToOutput();
+		}),
+
+		vscode.commands.registerCommand('intelligit.pull', async () => {
+			const repoRoot = await getActiveRepository();
+			if (!repoRoot) {
+				void vscode.window.showWarningMessage('No Git repository found.');
+				return;
+			}
+			try {
+				const output = await gitService.pull(repoRoot);
+				messageRouter.broadcastEvent('gitStateChanged', { scope: 'all' });
+				void vscode.window.showInformationMessage(output || 'Pull completed.');
+			} catch (err) {
+				const message = err instanceof Error ? err.message : String(err);
+				void vscode.window.showErrorMessage(`Pull failed: ${message}`);
+			}
+		}),
+
+		vscode.commands.registerCommand('intelligit.push', async () => {
+			const repoRoot = await getActiveRepository();
+			if (!repoRoot) {
+				void vscode.window.showWarningMessage('No Git repository found.');
+				return;
+			}
+			try {
+				const output = await gitService.push(repoRoot);
+				messageRouter.broadcastEvent('gitStateChanged', { scope: 'all' });
+				void vscode.window.showInformationMessage(output || 'Push completed.');
+			} catch (err) {
+				const message = err instanceof Error ? err.message : String(err);
+				void vscode.window.showErrorMessage(`Push failed: ${message}`);
+			}
+		}),
+
+		vscode.commands.registerCommand('intelligit.fetch', async () => {
+			const repoRoot = await getActiveRepository();
+			if (!repoRoot) {
+				void vscode.window.showWarningMessage('No Git repository found.');
+				return;
+			}
+			try {
+				const output = await gitService.fetch(repoRoot);
+				messageRouter.broadcastEvent('gitStateChanged', { scope: 'all' });
+				void vscode.window.showInformationMessage(output || 'Fetch completed.');
+			} catch (err) {
+				const message = err instanceof Error ? err.message : String(err);
+				void vscode.window.showErrorMessage(`Fetch failed: ${message}`);
+			}
 		}),
 	);
 }
@@ -486,7 +531,7 @@ function registerMessageHandlers(messageRouter: MessageRouter): void {
 	});
 
 	messageRouter.handle('interactiveRebaseFromHere', async (params) => {
-		const hash = params.hash as string;
+		const hash = params.hash as string | undefined;
 		await vscode.commands.executeCommand('intelligit.interactiveRebaseFromHere', hash);
 		return { success: true };
 	});
@@ -495,6 +540,50 @@ function registerMessageHandlers(messageRouter: MessageRouter): void {
 		const fromHash = params.fromHash as string | undefined;
 		rebaseDialogManager.open(fromHash ? { fromHash } : {});
 		return { success: true };
+	});
+
+	messageRouter.handle('openGitLogPanel', async () => {
+		gitLogPanelManager.open();
+		return { success: true };
+	});
+
+	messageRouter.handle('gitPull', async () => {
+		const repoRoot = await getActiveRepository();
+		if (!repoRoot) {
+			return NOT_GIT_REPO;
+		}
+		const output = await gitService.pull(repoRoot);
+		messageRouter.broadcastEvent('gitStateChanged', { scope: 'all' });
+		void vscode.window.showInformationMessage(
+			output.length > 120 ? `${output.slice(0, 120)}…` : output || 'Pull completed.',
+		);
+		return { success: true, output };
+	});
+
+	messageRouter.handle('gitPush', async () => {
+		const repoRoot = await getActiveRepository();
+		if (!repoRoot) {
+			return NOT_GIT_REPO;
+		}
+		const output = await gitService.push(repoRoot);
+		messageRouter.broadcastEvent('gitStateChanged', { scope: 'all' });
+		void vscode.window.showInformationMessage(
+			output.length > 120 ? `${output.slice(0, 120)}…` : output || 'Push completed.',
+		);
+		return { success: true, output };
+	});
+
+	messageRouter.handle('gitFetch', async () => {
+		const repoRoot = await getActiveRepository();
+		if (!repoRoot) {
+			return NOT_GIT_REPO;
+		}
+		const output = await gitService.fetch(repoRoot);
+		messageRouter.broadcastEvent('gitStateChanged', { scope: 'all' });
+		void vscode.window.showInformationMessage(
+			output.length > 120 ? `${output.slice(0, 120)}…` : output || 'Fetch completed.',
+		);
+		return { success: true, output };
 	});
 }
 

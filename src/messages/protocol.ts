@@ -51,7 +51,11 @@ export type CommandType =
 	| 'continueOperation'
 	| 'abortOperation'
 	| 'openConflicts'
-	| 'openRebaseDialog';
+	| 'openRebaseDialog'
+	| 'openGitLogPanel'
+	| 'gitPull'
+	| 'gitPush'
+	| 'gitFetch';
 
 export type EventType =
 	| 'gitStateChanged'

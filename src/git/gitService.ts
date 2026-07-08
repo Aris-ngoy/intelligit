@@ -427,6 +427,21 @@ export class GitService {
 		await this.exec(repoRoot, ['commit', '--no-edit']);
 	}
 
+	async pull(repoRoot: string): Promise<string> {
+		const result = await this.exec(repoRoot, ['pull']);
+		return result.stdout.trim() || result.stderr.trim() || 'Pull completed.';
+	}
+
+	async push(repoRoot: string): Promise<string> {
+		const result = await this.exec(repoRoot, ['push']);
+		return result.stdout.trim() || result.stderr.trim() || 'Push completed.';
+	}
+
+	async fetch(repoRoot: string): Promise<string> {
+		const result = await this.exec(repoRoot, ['fetch', '--all', '--prune']);
+		return result.stdout.trim() || result.stderr.trim() || 'Fetch completed.';
+	}
+
 	private async readGitFile(
 		gitDir: string,
 		...parts: string[]

@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 
 export type WebviewMode =
 	| 'panel'
+	| 'sidebar'
 	| 'interactiveRebase'
 	| 'rebaseDialog'
 	| 'conflicts'

@@ -5,6 +5,7 @@ import { ConflictsApp } from './conflicts/ConflictsApp';
 import { InteractiveRebaseApp } from './interactive/InteractiveRebaseApp';
 import { MergeEditorApp } from './merge/MergeEditorApp';
 import { GitLogApp } from './panel/GitLogApp';
+import { SidebarHub } from './panel/SidebarHub';
 import { getPreviewScreen } from './preview/previewBridge';
 import { previewInteractiveCommits, previewMergeFile } from './preview/mockData';
 import { RebaseDialogApp } from './rebase/RebaseDialogApp';
@@ -26,6 +27,7 @@ const mode = (preview
 				: preview
 	: (rootEl.dataset.mode ?? 'panel')) as
 	| 'panel'
+	| 'sidebar'
 	| 'interactiveRebase'
 	| 'rebaseDialog'
 	| 'conflicts'
@@ -46,6 +48,8 @@ function renderApp(): ReactNode {
 			return <ConflictsApp />;
 		case 'merge':
 			return <MergeEditorApp filePath={file} />;
+		case 'sidebar':
+			return <SidebarHub />;
 		default:
 			return <GitLogApp />;
 	}

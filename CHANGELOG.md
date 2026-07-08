@@ -4,6 +4,21 @@ All notable changes to the IntelliGit extension are documented here. This projec
 follows [Keep a Changelog](http://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.3.0] - 2026-07-08
+
+### Added
+- Sidebar feature hub listing all IntelliGit actions: Git History, Refresh, Pull,
+  Push, Fetch, Rebase, Interactive Rebase, and Resolve Conflicts.
+- Pull, Push, and Fetch commands (`intelligit.pull`, `intelligit.push`,
+  `intelligit.fetch`) available from the sidebar and Command Palette.
+
+### Changed
+- The activity-bar panel is now a compact action hub instead of a cramped
+  three-column Git Log layout.
+- IntelliGit no longer auto-opens the full-screen Git Log on startup or when
+  opening the sidebar; open Git History manually when you want the graph.
+- Renamed the sidebar view from "Git Log" to "IntelliGit".
+
 ## [0.2.0] - 2026-06-19
 
 ### Added

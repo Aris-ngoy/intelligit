@@ -2,7 +2,7 @@
   "name": "intelligit-visual-git",
   "displayName": "IntelliGit — Visual Git Log & Rebase",
   "description": "A visual Git Log, beginner-friendly Interactive Rebase, and 3-way conflict resolution for VS Code.",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "publisher": "ArisNgoy",
   "license": "MIT",
   "icon": "media/icon.png",
@@ -79,6 +79,24 @@
         "command": "intelligit.openMergeEditor",
         "title": "Open Merge Editor",
         "category": "IntelliGit"
+      },
+      {
+        "command": "intelligit.pull",
+        "title": "Pull",
+        "category": "IntelliGit",
+        "icon": "$(cloud-download)"
+      },
+      {
+        "command": "intelligit.push",
+        "title": "Push",
+        "category": "IntelliGit",
+        "icon": "$(cloud-upload)"
+      },
+      {
+        "command": "intelligit.fetch",
+        "title": "Fetch",
+        "category": "IntelliGit",
+        "icon": "$(cloud)"
       }
     ],
     "viewsContainers": {
@@ -94,7 +112,7 @@
       "intelligit-panel": [
         {
           "id": "intelligit.gitLog",
-          "name": "Git Log",
+          "name": "IntelliGit",
           "type": "webview"
         }
       ]

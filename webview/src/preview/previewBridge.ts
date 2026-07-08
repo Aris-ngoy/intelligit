@@ -86,6 +86,11 @@ export function createPreviewBridge(): Bridge {
 				case 'startStandardRebase':
 				case 'openRebaseDialog':
 				case 'openConflicts':
+				case 'openGitLogPanel':
+				case 'gitPull':
+				case 'gitPush':
+				case 'gitFetch':
+				case 'interactiveRebaseFromHere':
 					return { success: true } as T;
 				default:
 					return { success: true } as T;
