@@ -4,6 +4,14 @@ All notable changes to the IntelliGit extension are documented here. This projec
 follows [Keep a Changelog](http://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.5.0] - 2026-07-09
+
+### Added
+- Commit panel to write messages, amend the last commit, and append snippets
+  (Co-authored-by, Fixes issue, last message).
+- `IntelliGit: Commit…` command with sidebar and Source Control toolbar entry.
+- Working-tree status API for staged/unstaged files and amend safety checks.
+
 ## [0.4.5] - 2026-07-09
 
 ### Fixed
