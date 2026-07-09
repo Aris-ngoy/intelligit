@@ -4,6 +4,20 @@ All notable changes to the IntelliGit extension are documented here. This projec
 follows [Keep a Changelog](http://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.4.0] - 2026-07-09
+
+### Added
+- Stashes panel to search, apply, and delete saved changes, with a sidebar shortcut
+  and SCM title-bar button.
+- Resizable Git Log commit table columns (graph, message, author, date) with widths
+  persisted in the webview.
+- Shared SVG icon set across sidebar, dialogs, context menus, and task panels.
+- Playwright end-to-end coverage for the commit table layout.
+
+### Changed
+- Replaced emoji wayfinding icons with theme-aware SVG icons throughout the UI.
+- Commit table author column now stacks name and email on separate lines.
+
 ## [0.3.0] - 2026-07-08
 
 ### Added

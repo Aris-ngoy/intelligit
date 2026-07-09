@@ -25,4 +25,5 @@ export type {
 	RebaseAction,
 	RebaseFlag,
 	RebaseOptions,
+	GitStashEntry,
 } from './types';

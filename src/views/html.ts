@@ -6,7 +6,8 @@ export type WebviewMode =
 	| 'interactiveRebase'
 	| 'rebaseDialog'
 	| 'conflicts'
-	| 'merge';
+	| 'merge'
+	| 'stash';
 
 export interface WebviewHtmlOptions {
 	mode?: WebviewMode;

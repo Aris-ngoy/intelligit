@@ -55,7 +55,12 @@ export type CommandType =
 	| 'openGitLogPanel'
 	| 'gitPull'
 	| 'gitPush'
-	| 'gitFetch';
+	| 'gitFetch'
+	| 'getStashes'
+	| 'applyStash'
+	| 'dropStash'
+	| 'clearStashes'
+	| 'openStashes';
 
 export type EventType =
 	| 'gitStateChanged'

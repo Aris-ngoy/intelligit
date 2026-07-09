@@ -10,9 +10,12 @@
     "dev:tidy": "vite --open '/?preview=tidy'",
     "dev:conflicts": "vite --open '/?preview=conflicts'",
     "dev:merge": "vite --open '/?preview=merge'",
+    "dev:stash": "vite --open '/?preview=stash'",
     "build": "tsc && vite build",
     "watch": "vite build --watch",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
     "allotment": "^1.20.5",
@@ -23,6 +26,7 @@
     "zustand": "^5.0.11"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.1",
     "@tailwindcss/vite": "^4.1.18",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",

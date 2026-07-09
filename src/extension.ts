@@ -18,6 +18,7 @@ import {
 	InteractiveRebaseManager,
 	MergeEditorManager,
 	RebaseDialogManager,
+	StashManager,
 } from './views/panelManagers';
 
 let outputChannel: vscode.OutputChannel;
@@ -26,6 +27,7 @@ let rebaseDialogManager: RebaseDialogManager;
 let conflictsManager: ConflictsManager;
 let mergeEditorManager: MergeEditorManager;
 let gitLogPanelManager: GitLogPanelManager;
+let stashManager: StashManager;
 
 const rebaseService = createRebaseService(gitService);
 
@@ -62,6 +64,7 @@ export function activate(context: vscode.ExtensionContext): void {
 	conflictsManager = new ConflictsManager(context.extensionUri, messageRouter);
 	mergeEditorManager = new MergeEditorManager(context.extensionUri, messageRouter);
 	gitLogPanelManager = new GitLogPanelManager(context.extensionUri, messageRouter);
+	stashManager = new StashManager(context.extensionUri, messageRouter);
 
 	const logProvider = new GitLogViewProvider(
 		context.extensionUri,
@@ -124,6 +127,10 @@ export function activate(context: vscode.ExtensionContext): void {
 
 		vscode.commands.registerCommand('intelligit.openConflicts', () => {
 			conflictsManager.open();
+		}),
+
+		vscode.commands.registerCommand('intelligit.openStashes', () => {
+			stashManager.open();
 		}),
 
 		vscode.commands.registerCommand('intelligit.openMergeEditor', (filePath?: string) => {
@@ -584,6 +591,68 @@ function registerMessageHandlers(messageRouter: MessageRouter): void {
 			output.length > 120 ? `${output.slice(0, 120)}…` : output || 'Fetch completed.',
 		);
 		return { success: true, output };
+	});
+
+	messageRouter.handle('getStashes', async () => {
+		const repoRoot = await getActiveRepository();
+		if (!repoRoot) {
+			return NOT_GIT_REPO;
+		}
+		return gitService.listStashes(repoRoot);
+	});
+
+	messageRouter.handle('applyStash', async (params) => {
+		const repoRoot = await getActiveRepository();
+		if (!repoRoot) {
+			return NOT_GIT_REPO;
+		}
+		await gitService.applyStash(repoRoot, params.index as number);
+		messageRouter.broadcastEvent('gitStateChanged', { scope: 'all' });
+		void vscode.window.showInformationMessage('Stash applied to your working tree.');
+		return { success: true };
+	});
+
+	messageRouter.handle('dropStash', async (params) => {
+		const repoRoot = await getActiveRepository();
+		if (!repoRoot) {
+			return NOT_GIT_REPO;
+		}
+		const index = params.index as number;
+		const choice = await vscode.window.showWarningMessage(
+			`Delete stash@{${index}}? This cannot be undone.`,
+			{ modal: true },
+			'Delete',
+		);
+		if (choice !== 'Delete') {
+			return { cancelled: true };
+		}
+		await gitService.dropStash(repoRoot, index);
+		messageRouter.broadcastEvent('gitStateChanged', { scope: 'stashes' });
+		return { success: true };
+	});
+
+	messageRouter.handle('clearStashes', async () => {
+		const repoRoot = await getActiveRepository();
+		if (!repoRoot) {
+			return NOT_GIT_REPO;
+		}
+		const choice = await vscode.window.showWarningMessage(
+			'Delete all stashes? This cannot be undone.',
+			{ modal: true },
+			'Clear all',
+		);
+		if (choice !== 'Clear all') {
+			return { cancelled: true };
+		}
+		await gitService.clearStashes(repoRoot);
+		messageRouter.broadcastEvent('gitStateChanged', { scope: 'stashes' });
+		void vscode.window.showInformationMessage('All stashes cleared.');
+		return { success: true };
+	});
+
+	messageRouter.handle('openStashes', async () => {
+		stashManager.open();
+		return { success: true };
 	});
 }
 

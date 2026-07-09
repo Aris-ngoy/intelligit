@@ -2,7 +2,7 @@
   "name": "intelligit-visual-git",
   "displayName": "IntelliGit — Visual Git Log & Rebase",
   "description": "A visual Git Log, beginner-friendly Interactive Rebase, and 3-way conflict resolution for VS Code.",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "publisher": "ArisNgoy",
   "license": "MIT",
   "icon": "media/icon.png",
@@ -76,6 +76,12 @@
         "icon": "$(git-merge)"
       },
       {
+        "command": "intelligit.openStashes",
+        "title": "Stashes",
+        "category": "IntelliGit",
+        "icon": "$(archive)"
+      },
+      {
         "command": "intelligit.openMergeEditor",
         "title": "Open Merge Editor",
         "category": "IntelliGit"
@@ -133,6 +139,11 @@
       "scm/title": [
         {
           "command": "intelligit.openConflicts",
+          "when": "scmProvider == git",
+          "group": "navigation"
+        },
+        {
+          "command": "intelligit.openStashes",
           "when": "scmProvider == git",
           "group": "navigation"
         }

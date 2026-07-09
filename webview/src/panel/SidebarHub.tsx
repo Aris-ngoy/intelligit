@@ -1,12 +1,25 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 
 import { bridge } from '../shared/bridge';
+import {
+	AlertTriangleIcon,
+	ArchiveIcon,
+	ArrowDownIcon,
+	ArrowUpIcon,
+	GitMergeIcon,
+	HistoryIcon,
+	LoaderIcon,
+	RadioIcon,
+	RefreshIcon,
+	SparklesIcon,
+	SwordsIcon,
+} from '../shared/icons';
 import type { RepositoryInfoDto } from '../shared/types';
 import { EmptyState, SectionHeader } from '../shared/ui';
 
 interface ActionItem {
 	id: string;
-	icon: string;
+	icon: ReactNode;
 	label: string;
 	description: string;
 	command: string;
@@ -17,7 +30,7 @@ interface ActionItem {
 const HISTORY_ACTIONS: ActionItem[] = [
 	{
 		id: 'git-log',
-		icon: '📊',
+		icon: <HistoryIcon size={16} />,
 		label: 'Git History',
 		description: 'Visual commit graph and branch tree',
 		command: 'openGitLogPanel',
@@ -25,7 +38,7 @@ const HISTORY_ACTIONS: ActionItem[] = [
 	},
 	{
 		id: 'refresh',
-		icon: '🔄',
+		icon: <RefreshIcon size={16} />,
 		label: 'Refresh',
 		description: 'Reload branches and commits',
 		command: 'refreshGitLog',
@@ -35,45 +48,55 @@ const HISTORY_ACTIONS: ActionItem[] = [
 const SYNC_ACTIONS: ActionItem[] = [
 	{
 		id: 'pull',
-		icon: '⬇️',
+		icon: <ArrowDownIcon size={16} />,
 		label: 'Pull',
 		description: 'Download changes from remote',
 		command: 'gitPull',
 	},
 	{
 		id: 'push',
-		icon: '⬆️',
+		icon: <ArrowUpIcon size={16} />,
 		label: 'Push',
 		description: 'Upload commits to remote',
 		command: 'gitPush',
 	},
 	{
 		id: 'fetch',
-		icon: '📡',
+		icon: <RadioIcon size={16} />,
 		label: 'Fetch',
 		description: 'Update remote refs without merging',
 		command: 'gitFetch',
 	},
 ];
 
+const WORKSPACE_ACTIONS: ActionItem[] = [
+	{
+		id: 'stashes',
+		icon: <ArchiveIcon size={16} />,
+		label: 'Stashes',
+		description: 'Search, apply, and delete saved changes',
+		command: 'openStashes',
+	},
+];
+
 const REBASE_ACTIONS: ActionItem[] = [
 	{
 		id: 'rebase',
-		icon: '🔀',
+		icon: <GitMergeIcon size={16} />,
 		label: 'Rebase…',
 		description: 'Move your branch onto another',
 		command: 'openRebaseDialog',
 	},
 	{
 		id: 'interactive-rebase',
-		icon: '✨',
+		icon: <SparklesIcon size={16} />,
 		label: 'Tidy up changes',
 		description: 'Interactive rebase with plain language',
 		command: 'interactiveRebaseFromHere',
 	},
 	{
 		id: 'conflicts',
-		icon: '⚔️',
+		icon: <SwordsIcon size={16} />,
 		label: 'Resolve conflicts',
 		description: 'Side-by-side conflict resolution',
 		command: 'openConflicts',
@@ -142,7 +165,7 @@ export function SidebarHub() {
 	if (error && !repoInfo) {
 		return (
 			<EmptyState
-				icon="⚠️"
+				icon={<AlertTriangleIcon size={32} />}
 				title="No Git repository"
 				description={error}
 			/>
@@ -192,6 +215,7 @@ export function SidebarHub() {
 			<div className="min-h-0 flex-1 overflow-y-auto py-2">
 				<ActionSection title="History" actions={HISTORY_ACTIONS} busyAction={busyAction} onRun={runAction} />
 				<ActionSection title="Sync" actions={SYNC_ACTIONS} busyAction={busyAction} onRun={runAction} />
+				<ActionSection title="Workspace" actions={WORKSPACE_ACTIONS} busyAction={busyAction} onRun={runAction} />
 				<ActionSection title="Rebase & merge" actions={REBASE_ACTIONS} busyAction={busyAction} onRun={runAction} />
 			</div>
 
@@ -278,8 +302,8 @@ function ActionButton({
 			onClick={onRun}
 			title={action.description}
 		>
-			<span className="mt-0.5 shrink-0 text-base leading-none" aria-hidden>
-				{busy ? '⏳' : action.icon}
+			<span className="mt-0.5 shrink-0 text-[var(--color-muted)]" aria-hidden>
+				{busy ? <LoaderIcon size={16} /> : action.icon}
 			</span>
 			<span className="min-w-0">
 				<span className="block text-xs font-medium leading-tight">{action.label}</span>

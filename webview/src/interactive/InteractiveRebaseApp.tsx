@@ -1,6 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 
 import { formatRelativeDate } from '../shared/format';
+import {
+	ArrowDownIcon,
+	ArrowUpIcon,
+	BrushIcon,
+	CheckCircleIcon,
+	CheckIcon,
+	GripVerticalIcon,
+	LinkIcon,
+	PencilIcon,
+	TrashIcon,
+} from '../shared/icons';
 import type { InteractiveRebaseCommitDto } from '../shared/types';
 import {
 	ErrorStrip,
@@ -17,7 +28,7 @@ type RebaseAction = InteractiveRebaseCommitDto['action'];
 interface FriendlyAction {
 	action: RebaseAction;
 	label: string;
-	icon: string;
+	icon: ReactNode;
 	help: string;
 	active: string;
 }
@@ -26,28 +37,28 @@ const ACTIONS: FriendlyAction[] = [
 	{
 		action: 'pick',
 		label: 'Keep',
-		icon: '✅',
+		icon: <CheckIcon size={14} />,
 		help: 'Leave this change exactly as it is.',
 		active: 'bg-green-600 text-white border-green-600',
 	},
 	{
 		action: 'reword',
 		label: 'Rename',
-		icon: '✏️',
+		icon: <PencilIcon size={14} />,
 		help: 'Keep the change but give it a new description.',
 		active: 'bg-blue-600 text-white border-blue-600',
 	},
 	{
 		action: 'fixup',
 		label: 'Combine',
-		icon: '🔗',
+		icon: <LinkIcon size={14} />,
 		help: 'Glue this into the box above it, like they were always one.',
 		active: 'bg-purple-600 text-white border-purple-600',
 	},
 	{
 		action: 'drop',
 		label: 'Delete',
-		icon: '🗑️',
+		icon: <TrashIcon size={14} />,
 		help: 'Throw this change away completely.',
 		active: 'bg-red-600 text-white border-red-600',
 	},
@@ -123,7 +134,7 @@ export function InteractiveRebaseApp({ initialFromHash }: InteractiveRebaseAppPr
 			)}
 
 			<TaskHeader
-				icon="🧹"
+				icon={<BrushIcon size={18} />}
 				title="Tidy up my changes"
 				description={`Each box below is something you saved on ${currentBranch || 'your branch'}. Choose what to do with each one. Drag a box (or use the arrows) to change the order.`}
 			/>
@@ -183,7 +194,7 @@ export function InteractiveRebaseApp({ initialFromHash }: InteractiveRebaseAppPr
 									}}
 									onClick={(e) => e.stopPropagation()}
 								>
-									⠿
+									<GripVerticalIcon size={14} />
 								</span>
 								<span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--color-border)] text-[11px] font-bold">
 									{index + 1}
@@ -222,8 +233,9 @@ export function InteractiveRebaseApp({ initialFromHash }: InteractiveRebaseAppPr
 											Will be squashed into: {combineTarget}
 										</p>
 									) : (
-										<p className="mt-0.5 text-[11px] text-[var(--color-muted)]">
-											{chosen.icon} {chosen.help}
+										<p className="mt-0.5 flex items-center gap-1 text-[11px] text-[var(--color-muted)]">
+											<span className="shrink-0">{chosen.icon}</span>
+											{chosen.help}
 										</p>
 									)}
 								</div>
@@ -231,7 +243,6 @@ export function InteractiveRebaseApp({ initialFromHash }: InteractiveRebaseAppPr
 								<div className="flex shrink-0 flex-col gap-1">
 									<ArrowButton
 										label="Move up"
-										glyph="↑"
 										disabled={index === 0}
 										onClick={(e) => {
 											e.stopPropagation();
@@ -241,7 +252,6 @@ export function InteractiveRebaseApp({ initialFromHash }: InteractiveRebaseAppPr
 									/>
 									<ArrowButton
 										label="Move down"
-										glyph="↓"
 										disabled={index === commits.length - 1}
 										onClick={(e) => {
 											e.stopPropagation();
@@ -288,7 +298,14 @@ export function InteractiveRebaseApp({ initialFromHash }: InteractiveRebaseAppPr
 					disabled={rebasing || commits.length === 0}
 					onClick={() => void startRebase()}
 				>
-					{rebasing ? 'Working on it…' : '🎉 All done — apply my changes'}
+					{rebasing ? (
+						'Working on it…'
+					) : (
+						<span className="inline-flex items-center justify-center gap-2">
+							<CheckCircleIcon size={16} />
+							All done — apply my changes
+						</span>
+					)}
 				</PrimaryButton>
 				<ReassuranceLine />
 			</footer>
@@ -298,25 +315,24 @@ export function InteractiveRebaseApp({ initialFromHash }: InteractiveRebaseAppPr
 
 function ArrowButton({
 	label,
-	glyph,
 	disabled,
 	onClick,
 }: {
 	label: string;
-	glyph: string;
 	disabled: boolean;
 	onClick: (e: React.MouseEvent) => void;
 }) {
+	const Icon = label === 'Move up' ? ArrowUpIcon : ArrowDownIcon;
 	return (
 		<button
 			type="button"
 			aria-label={label}
 			title={label}
 			disabled={disabled}
-			className="flex h-6 w-6 items-center justify-center rounded-md border border-[var(--color-border)] text-xs hover:bg-[var(--color-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/50 disabled:opacity-30"
+			className="flex h-6 w-6 items-center justify-center rounded-md border border-[var(--color-border)] text-[var(--color-muted)] hover:bg-[var(--color-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/50 disabled:opacity-30"
 			onClick={onClick}
 		>
-			{glyph}
+			<Icon size={12} />
 		</button>
 	);
 }

@@ -85,6 +85,10 @@ export function GraphCell({ commit, nextCommit, maxLane, selected }: GraphCellPr
 	);
 }
 
+export function computeGraphWidth(maxLane: number): number {
+	return (maxLane + 1) * LANE_WIDTH + PADDING * 2;
+}
+
 export function computeMaxLane(commits: CommitDto[]): number {
 	let max = 0;
 	for (const c of commits) {

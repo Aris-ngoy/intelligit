@@ -9,6 +9,7 @@ import { SidebarHub } from './panel/SidebarHub';
 import { getPreviewScreen } from './preview/previewBridge';
 import { previewInteractiveCommits, previewMergeFile } from './preview/mockData';
 import { RebaseDialogApp } from './rebase/RebaseDialogApp';
+import { StashApp } from './stash/StashApp';
 import './index.css';
 
 const rootEl = document.getElementById('root');
@@ -31,7 +32,8 @@ const mode = (preview
 	| 'interactiveRebase'
 	| 'rebaseDialog'
 	| 'conflicts'
-	| 'merge';
+	| 'merge'
+	| 'stash';
 
 const fromHash =
 	rootEl.dataset.fromHash ?? previewInteractiveCommits[0]?.hash ?? '';
@@ -46,6 +48,8 @@ function renderApp(): ReactNode {
 			return <RebaseDialogApp initialFromHash={rebaseFromHash} />;
 		case 'conflicts':
 			return <ConflictsApp />;
+		case 'stash':
+			return <StashApp />;
 		case 'merge':
 			return <MergeEditorApp filePath={file} />;
 		case 'sidebar':

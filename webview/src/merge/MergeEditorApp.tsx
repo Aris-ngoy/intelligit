@@ -2,6 +2,7 @@ import { Allotment } from 'allotment';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
 import { bridge } from '../shared/bridge';
+import { AlertTriangleIcon } from '../shared/icons';
 import type { RepositoryInfoDto } from '../shared/types';
 import { EmptyState, LoadingState, PrimaryButton, SecondaryButton } from '../shared/ui';
 import type { FileVersionsDto } from './types';
@@ -122,7 +123,7 @@ export function MergeEditorApp({ filePath }: MergeEditorAppProps) {
 
 	if (error && blocks.length === 0) {
 		return (
-			<EmptyState icon="⚠️" title="Couldn't load merge editor" description={error} />
+			<EmptyState icon={<AlertTriangleIcon size={32} />} title="Couldn't load merge editor" description={error} />
 		);
 	}
 

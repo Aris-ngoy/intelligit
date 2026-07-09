@@ -1,6 +1,13 @@
 import { useEffect, useState } from 'react';
 
 import {
+	ArchiveIcon,
+	ArrowDownIcon,
+	CheckIcon,
+	GitBranchIcon,
+	PinIcon,
+} from '../shared/icons';
+import {
 	Card,
 	Chip,
 	ErrorStrip,
@@ -55,7 +62,10 @@ export function RebaseDialogApp({ initialFromHash = '' }: RebaseDialogAppProps) 
 		<div className="mx-auto flex h-full w-full max-w-xl flex-col overflow-y-auto p-6">
 			<header className="mb-5 flex flex-col gap-1">
 				<h1 className="flex items-center gap-2 text-lg font-semibold">
-					<span aria-hidden>📦</span> Move my work
+					<span className="text-[var(--color-accent)]" aria-hidden>
+						<ArchiveIcon size={20} />
+					</span>
+					Move my work
 				</h1>
 				<p className="text-sm leading-relaxed text-[var(--color-muted)]">
 					This takes everything you’ve been working on and stacks it neatly on top of
@@ -70,8 +80,8 @@ export function RebaseDialogApp({ initialFromHash = '' }: RebaseDialogAppProps) 
 				{fromCommit ? (
 					<div className="flex flex-col gap-2">
 						<div className="flex flex-wrap items-center gap-2">
-							<span aria-hidden className="text-base">
-								📌
+							<span aria-hidden className="text-[var(--color-muted)]">
+								<PinIcon size={18} />
 							</span>
 							<span className="rounded-lg border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-1.5 font-mono text-sm font-medium">
 								{fromLabel || fromHash.slice(0, 7)}
@@ -90,8 +100,8 @@ export function RebaseDialogApp({ initialFromHash = '' }: RebaseDialogAppProps) 
 				) : (
 					<div className="flex flex-col gap-2">
 						<div className="flex flex-wrap items-center gap-2">
-							<span aria-hidden className="text-base">
-								🌿
+							<span aria-hidden className="text-[var(--color-muted)]">
+								<GitBranchIcon size={18} />
 							</span>
 							<span className="rounded-lg border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-1.5 font-mono text-sm font-medium">
 								{currentBranch || 'your branch'}
@@ -108,8 +118,8 @@ export function RebaseDialogApp({ initialFromHash = '' }: RebaseDialogAppProps) 
 			</Card>
 
 			<div className="mb-3 flex justify-center" aria-hidden>
-				<span className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-input-bg)] text-base text-[var(--color-muted)]">
-					↓
+				<span className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-input-bg)] text-[var(--color-muted)]">
+					<ArrowDownIcon size={18} />
 				</span>
 			</div>
 
@@ -124,7 +134,7 @@ export function RebaseDialogApp({ initialFromHash = '' }: RebaseDialogAppProps) 
 					aria-label="Choose target branch"
 				>
 					<option value="" disabled>
-						👉 Choose a branch…
+						Choose a branch…
 					</option>
 					{targets.map((ref) => (
 						<option key={ref} value={ref}>
@@ -169,11 +179,16 @@ export function RebaseDialogApp({ initialFromHash = '' }: RebaseDialogAppProps) 
 
 			<div className="mt-auto flex flex-col gap-2 pt-2">
 				<PrimaryButton disabled={submitting || !onto} onClick={() => void submit()}>
-					{submitting
-						? 'Moving your work…'
-						: onto
-							? `✅ Move it onto “${onto}”`
-							: 'Pick a branch first ☝️'}
+					{submitting ? (
+						'Moving your work…'
+					) : onto ? (
+						<span className="inline-flex items-center justify-center gap-2">
+							<CheckIcon size={16} />
+							Move it onto “{onto}”
+						</span>
+					) : (
+						'Pick a branch first'
+					)}
 				</PrimaryButton>
 				<ReassuranceLine />
 				<p className="text-center text-[10px] text-[var(--color-muted)]">

@@ -121,3 +121,15 @@ export interface FileVersions {
 	theirs: string;
 	working: string;
 }
+
+/** A single entry from `git stash list`. */
+export interface GitStashEntry {
+	/** 0-based index matching `stash@{n}`. */
+	index: number;
+	ref: string;
+	message: string;
+	branch?: string;
+	commitHash?: string;
+	/** Unix timestamp in seconds. */
+	timestamp?: number;
+}

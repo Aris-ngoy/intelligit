@@ -2,6 +2,7 @@ import { Allotment } from 'allotment';
 import { useEffect } from 'react';
 
 import { useGitLogStore } from '../shared/store';
+import { AlertTriangleIcon } from '../shared/icons';
 import { EmptyState } from '../shared/ui';
 import { BranchTree } from './BranchTree';
 import { CommitContextMenu } from './CommitContextMenu';
@@ -30,7 +31,7 @@ export function GitLogApp() {
 
 	if (error && commits.length === 0) {
 		return (
-			<EmptyState icon="⚠️" title="Couldn't load history" description={error} />
+			<EmptyState icon={<AlertTriangleIcon size={32} />} title="Couldn't load history" description={error} />
 		);
 	}
 

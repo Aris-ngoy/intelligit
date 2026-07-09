@@ -16,6 +16,7 @@ import type {
 	GitLogFilters,
 	GitLogOptions,
 	GitRepositoryInfo,
+	GitStashEntry,
 	MergeOperationState,
 	ParsedGitLog,
 } from './types';
@@ -442,6 +443,35 @@ export class GitService {
 		return result.stdout.trim() || result.stderr.trim() || 'Fetch completed.';
 	}
 
+	async listStashes(repoRoot: string): Promise<GitStashEntry[]> {
+		const result = await this.exec(
+			repoRoot,
+			['stash', 'list', '--format=%gd|%gs|%H|%ct'],
+			{ allowFailure: true },
+		);
+		if (result.exitCode !== 0 || !result.stdout.trim()) {
+			return [];
+		}
+
+		return result.stdout
+			.split('\n')
+			.filter(Boolean)
+			.map(parseStashListLine)
+			.filter((entry): entry is GitStashEntry => entry !== undefined);
+	}
+
+	async applyStash(repoRoot: string, index: number): Promise<void> {
+		await this.exec(repoRoot, ['stash', 'apply', `stash@{${index}}`]);
+	}
+
+	async dropStash(repoRoot: string, index: number): Promise<void> {
+		await this.exec(repoRoot, ['stash', 'drop', `stash@{${index}}`]);
+	}
+
+	async clearStashes(repoRoot: string): Promise<void> {
+		await this.exec(repoRoot, ['stash', 'clear']);
+	}
+
 	private async readGitFile(
 		gitDir: string,
 		...parts: string[]
@@ -461,6 +491,36 @@ export class GitService {
 
 /** Shared singleton used by the extension host. */
 export const gitService = new GitService();
+
+function parseStashListLine(line: string): GitStashEntry | undefined {
+	const [ref, message, commitHash, timestampRaw] = line.split('|');
+	if (!ref || !message) {
+		return undefined;
+	}
+
+	const indexMatch = /^stash@\{(\d+)\}$/.exec(ref.trim());
+	if (!indexMatch) {
+		return undefined;
+	}
+
+	const index = Number.parseInt(indexMatch[1] ?? '', 10);
+	if (Number.isNaN(index)) {
+		return undefined;
+	}
+
+	const branchMatch =
+		/^WIP on ([^:]+):/.exec(message) ?? /^On ([^:]+):/.exec(message);
+	const timestamp = Number.parseInt(timestampRaw ?? '', 10);
+
+	return {
+		index,
+		ref: ref.trim(),
+		message: message.trim(),
+		branch: branchMatch?.[1]?.trim(),
+		commitHash: commitHash?.trim() || undefined,
+		timestamp: Number.isNaN(timestamp) ? undefined : timestamp,
+	};
+}
 
 function parseNameStatusLine(line: string): CommitFile | undefined {
 	const tab = line.indexOf('\t');

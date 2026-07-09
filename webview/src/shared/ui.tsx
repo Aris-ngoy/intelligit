@@ -1,6 +1,7 @@
 import type { MouseEvent, ReactNode } from 'react';
 
 import type { FileStatusTone } from './format';
+import { AlertTriangleIcon, InfoIcon, UndoIcon } from './icons';
 
 export function Chip({
 	children,
@@ -74,14 +75,14 @@ export function EmptyState({
 	title,
 	description,
 }: {
-	icon?: string;
+	icon?: ReactNode;
 	title: string;
 	description?: string;
 }) {
 	return (
 		<div className="flex h-full flex-col items-center justify-center gap-2 p-6 text-center">
 			{icon && (
-				<span className="text-2xl" aria-hidden>
+				<span className="flex text-[var(--color-muted)] [&_svg]:h-8 [&_svg]:w-8" aria-hidden>
 					{icon}
 				</span>
 			)}
@@ -172,14 +173,16 @@ export function TaskHeader({
 	title,
 	description,
 }: {
-	icon: string;
+	icon: ReactNode;
 	title: string;
 	description: string;
 }) {
 	return (
 		<header className="flex shrink-0 flex-col gap-1 border-b border-[var(--color-border)] px-4 py-3">
 			<h1 className="flex items-center gap-2 text-base font-semibold">
-				<span aria-hidden>{icon}</span>
+				<span className="text-[var(--color-accent)]" aria-hidden>
+					{icon}
+				</span>
 				{title}
 			</h1>
 			<p className="text-xs leading-relaxed text-[var(--color-muted)]">{description}</p>
@@ -190,7 +193,10 @@ export function TaskHeader({
 export function InfoStrip({ children }: { children: ReactNode }) {
 	return (
 		<div className="shrink-0 border-b border-[var(--color-border)] bg-[var(--color-input-bg)]/40 px-4 py-2 text-xs text-[var(--color-muted)]">
-			ℹ️ {children}
+			<span className="inline-flex items-center gap-1.5">
+				<InfoIcon size={14} />
+				{children}
+			</span>
 		</div>
 	);
 }
@@ -198,15 +204,19 @@ export function InfoStrip({ children }: { children: ReactNode }) {
 export function ErrorStrip({ children }: { children: ReactNode }) {
 	return (
 		<div className="shrink-0 border-b border-[var(--color-border)] bg-[var(--color-error)]/10 px-4 py-2 text-xs text-[var(--color-error)]">
-			⚠️ {children}
+			<span className="inline-flex items-center gap-1.5">
+				<AlertTriangleIcon size={14} />
+				{children}
+			</span>
 		</div>
 	);
 }
 
 export function ReassuranceLine({ className = '' }: { className?: string }) {
 	return (
-		<p className={`text-center text-xs italic text-[var(--color-muted)] ${className}`}>
-			↩️ Everything safe. You can always undo.
+		<p className={`inline-flex items-center justify-center gap-1.5 text-center text-xs italic text-[var(--color-muted)] ${className}`}>
+			<UndoIcon size={14} />
+			Everything safe. You can always undo.
 		</p>
 	);
 }
@@ -244,17 +254,20 @@ export function PrimaryButton({
 
 export function SecondaryButton({
 	children,
+	disabled,
 	onClick,
 	className = '',
 }: {
 	children: ReactNode;
+	disabled?: boolean;
 	onClick?: () => void;
 	className?: string;
 }) {
 	return (
 		<button
 			type="button"
-			className={`rounded-lg border border-[var(--color-border)] px-3 py-2 text-xs transition hover:bg-[var(--color-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/50 ${className}`}
+			disabled={disabled}
+			className={`rounded-lg border border-[var(--color-border)] px-3 py-2 text-xs transition hover:bg-[var(--color-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/50 disabled:cursor-not-allowed disabled:opacity-40 ${className}`}
 			onClick={onClick}
 		>
 			{children}
@@ -310,7 +323,7 @@ export function SegmentedActionButton({
 	title,
 	onClick,
 }: {
-	icon: string;
+	icon: ReactNode;
 	label: string;
 	active: boolean;
 	activeClass: string;
@@ -330,7 +343,7 @@ export function SegmentedActionButton({
 			}`}
 			onClick={onClick}
 		>
-			<span aria-hidden className="text-sm">
+			<span aria-hidden className="text-[var(--color-muted)]">
 				{icon}
 			</span>
 			{label}

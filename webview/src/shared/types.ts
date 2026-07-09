@@ -79,3 +79,12 @@ export type ContextMenuAction =
 	| 'resetSoft'
 	| 'resetMixed'
 	| 'resetHard';
+
+export interface StashEntryDto {
+	index: number;
+	ref: string;
+	message: string;
+	branch?: string;
+	commitHash?: string;
+	timestamp?: number;
+}

@@ -1,5 +1,15 @@
-import { useEffect } from 'react';
+import { useEffect, type ReactNode } from 'react';
 
+import {
+	CheckCircleIcon,
+	CheckIcon,
+	FileTextIcon,
+	HandshakeIcon,
+	SearchIcon,
+	UserIcon,
+	UsersIcon,
+	XIcon,
+} from '../shared/icons';
 import {
 	EmptyState,
 	ErrorStrip,
@@ -39,7 +49,7 @@ export function ConflictsApp() {
 		return (
 			<div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-center">
 				<EmptyState
-					icon="🎉"
+					icon={<CheckCircleIcon size={32} />}
 					title="All sorted!"
 					description="Every file agrees now. There’s nothing left to fix."
 				/>
@@ -48,7 +58,10 @@ export function ConflictsApp() {
 						className="!w-auto px-6"
 						onClick={() => void continueOp()}
 					>
-						✅ Finish up
+						<span className="inline-flex items-center gap-2">
+							<CheckIcon size={16} />
+							Finish up
+						</span>
 					</PrimaryButton>
 				)}
 			</div>
@@ -58,7 +71,7 @@ export function ConflictsApp() {
 	return (
 		<div className="flex h-full flex-col">
 			<TaskHeader
-				icon="🤝"
+				icon={<HandshakeIcon size={18} />}
 				title="Two versions don’t agree"
 				description="Your changes and theirs touch the same lines. Pick which version to keep or combine them."
 			/>
@@ -82,8 +95,8 @@ export function ConflictsApp() {
 								key={file}
 								className="flex flex-wrap items-center gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-input-bg)]/20 p-3"
 							>
-								<span aria-hidden className="text-lg">
-									📄
+								<span aria-hidden className="text-[var(--color-muted)]">
+									<FileTextIcon size={20} />
 								</span>
 								<div className="min-w-0 flex-1">
 									<div className="flex flex-wrap items-center gap-2">
@@ -102,17 +115,17 @@ export function ConflictsApp() {
 								</div>
 								<div className="flex shrink-0 flex-wrap items-center gap-1.5">
 									<ChoiceButton
-										icon="🙋"
+										icon={<UserIcon size={14} />}
 										label="Keep mine"
 										onClick={() => void acceptOurs(file)}
 									/>
 									<ChoiceButton
-										icon="👥"
+										icon={<UsersIcon size={14} />}
 										label="Keep theirs"
 										onClick={() => void acceptTheirs(file)}
 									/>
 									<ChoiceButton
-										icon="🔍"
+										icon={<SearchIcon size={14} />}
 										label="Compare…"
 										primary
 										onClick={() => void openMerge(file)}
@@ -127,7 +140,10 @@ export function ConflictsApp() {
 			<TaskFooter
 				left={
 					<SecondaryButton onClick={() => void abortOp()}>
-						✖ Cancel everything
+						<span className="inline-flex items-center gap-1.5">
+							<XIcon size={14} />
+							Cancel everything
+						</span>
 					</SecondaryButton>
 				}
 				right={
@@ -138,9 +154,14 @@ export function ConflictsApp() {
 							disabled={files.length > 0}
 							onClick={() => void continueOp()}
 						>
-							{files.length > 0
-								? `Fix all ${files.length} first ☝️`
-								: '✅ Finish up'}
+							{files.length > 0 ? (
+								`Fix all ${files.length} first`
+							) : (
+								<span className="inline-flex items-center gap-2">
+									<CheckIcon size={16} />
+									Finish up
+								</span>
+							)}
 						</PrimaryButton>
 					</>
 				}
@@ -155,7 +176,7 @@ function ChoiceButton({
 	onClick,
 	primary = false,
 }: {
-	icon: string;
+	icon: ReactNode;
 	label: string;
 	onClick: () => void;
 	primary?: boolean;

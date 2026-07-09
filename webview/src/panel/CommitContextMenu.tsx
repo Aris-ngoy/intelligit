@@ -1,23 +1,38 @@
+import type { ReactNode } from 'react';
+
+import {
+	AlertTriangleIcon,
+	ArchiveIcon,
+	BookmarkIcon,
+	BrushIcon,
+	CherryIcon,
+	ClipboardIcon,
+	GitBranchIcon,
+	TagIcon,
+	UndoIcon,
+} from '../shared/icons';
 import { useGitLogStore } from '../shared/store';
 
-const MENU_GROUPS = [
+const MENU_GROUPS: Array<
+	Array<{ id: string; label: string; icon: ReactNode; disabled?: boolean }>
+> = [
 	[
-		{ id: 'interactiveRebase', label: 'Tidy up from here…', icon: '🧹' },
-		{ id: 'rebase', label: 'Move my work from here…', icon: '📦' },
-		{ id: 'cherryPick', label: 'Cherry-pick', icon: '🍒' },
-		{ id: 'checkout', label: 'Check out this version', icon: '🔖' },
+		{ id: 'interactiveRebase', label: 'Tidy up from here…', icon: <BrushIcon size={14} /> },
+		{ id: 'rebase', label: 'Move my work from here…', icon: <ArchiveIcon size={14} /> },
+		{ id: 'cherryPick', label: 'Cherry-pick', icon: <CherryIcon size={14} /> },
+		{ id: 'checkout', label: 'Check out this version', icon: <BookmarkIcon size={14} /> },
 	],
 	[
-		{ id: 'copyHash', label: 'Copy commit hash', icon: '📋' },
-		{ id: 'newTag', label: 'New tag…', icon: '🏷️', disabled: true },
-		{ id: 'newBranch', label: 'New branch…', icon: '🌿', disabled: true },
+		{ id: 'copyHash', label: 'Copy commit hash', icon: <ClipboardIcon size={14} /> },
+		{ id: 'newTag', label: 'New tag…', icon: <TagIcon size={14} />, disabled: true },
+		{ id: 'newBranch', label: 'New branch…', icon: <GitBranchIcon size={14} />, disabled: true },
 	],
 	[
-		{ id: 'resetSoft', label: 'Reset branch here (keep changes)', icon: '↩️', disabled: true },
-		{ id: 'resetMixed', label: 'Reset branch here (unstage)', icon: '↩️', disabled: true },
-		{ id: 'resetHard', label: 'Reset branch here (discard)', icon: '⚠️', disabled: true },
+		{ id: 'resetSoft', label: 'Reset branch here (keep changes)', icon: <UndoIcon size={14} />, disabled: true },
+		{ id: 'resetMixed', label: 'Reset branch here (unstage)', icon: <UndoIcon size={14} />, disabled: true },
+		{ id: 'resetHard', label: 'Reset branch here (discard)', icon: <AlertTriangleIcon size={14} />, disabled: true },
 	],
-] as const;
+];
 
 export function CommitContextMenu() {
 	const contextMenu = useGitLogStore((s) => s.contextMenu);
@@ -44,12 +59,12 @@ export function CommitContextMenu() {
 						<button
 							key={item.id}
 							type="button"
-							disabled={'disabled' in item && item.disabled}
+							disabled={item.disabled}
 							className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs transition hover:bg-[var(--color-hover)] focus:bg-[var(--color-hover)] focus:outline-none disabled:cursor-default disabled:opacity-40"
 							onClick={() => void runContextAction(item.id)}
 							role="menuitem"
 						>
-							<span aria-hidden className="w-4 shrink-0 text-center text-sm">
+							<span aria-hidden className="flex w-4 shrink-0 items-center justify-center text-[var(--color-muted)]">
 								{item.icon}
 							</span>
 							{item.label}
