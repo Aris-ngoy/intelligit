@@ -4,6 +4,11 @@ All notable changes to the IntelliGit extension are documented here. This projec
 follows [Keep a Changelog](http://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.4.5] - 2026-07-09
+
+### Fixed
+- Regenerated the marketplace icon PNG for sharper rendering at smaller file size.
+
 ## [0.4.4] - 2026-07-09
 
 ### Changed
