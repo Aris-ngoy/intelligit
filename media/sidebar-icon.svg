@@ -1,7 +1,20 @@
 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <path d="M6 8v8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
-  <path d="M17 9.5v1A4.5 4.5 0 0 1 12.5 15H6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="6" cy="6" r="2.3" stroke="currentColor" stroke-width="1.7"/>
-  <circle cx="6" cy="18" r="2.3" stroke="currentColor" stroke-width="1.7"/>
-  <circle cx="17" cy="7" r="2.3" stroke="currentColor" stroke-width="1.7"/>
+  <path
+    d="M8.25 6.75v10.5"
+    stroke="currentColor"
+    stroke-width="1.75"
+    stroke-linecap="round"
+  />
+  <path
+    d="M8.25 13.25h4.25c2.35 0 3.75 1.15 3.75 3.1 0 1.95-1.4 3.35-3.75 3.35H8.25"
+    stroke="currentColor"
+    stroke-width="1.75"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <circle cx="8.25" cy="6.75" r="2.1" stroke="currentColor" stroke-width="1.75" />
+  <circle cx="8.25" cy="13.25" r="2.1" stroke="currentColor" stroke-width="1.75" />
+  <circle cx="8.25" cy="19.75" r="2.1" stroke="currentColor" stroke-width="1.75" />
+  <circle cx="8.25" cy="13.25" r="0.95" fill="currentColor" />
+  <circle cx="8.25" cy="19.75" r="0.95" fill="currentColor" />
 </svg>

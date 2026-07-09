@@ -4,6 +4,12 @@ All notable changes to the IntelliGit extension are documented here. This projec
 follows [Keep a Changelog](http://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.4.1] - 2026-07-09
+
+### Changed
+- Unified the activity-bar and marketplace icons around the IntelliGit branch logo.
+- Added `media/icon.svg` as the source for the marketplace PNG and regenerated `icon.png`.
+
 ## [0.4.0] - 2026-07-09
 
 ### Added
