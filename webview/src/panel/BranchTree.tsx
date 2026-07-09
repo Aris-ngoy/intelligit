@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 
+import { SettingsIcon } from '../shared/icons';
 import { useGitLogStore } from '../shared/store';
 import type { GitBranchDto } from '../shared/types';
 import { SectionHeader } from '../shared/ui';
@@ -91,7 +92,7 @@ export function BranchTree() {
 						void openExternal('https://github.com/Aris-ngoy/intelligit#readme')
 					}
 				>
-					<SettingsIcon />
+					<SettingsIcon size={14} />
 					Settings
 				</button>
 			</div>
@@ -138,19 +139,5 @@ function BranchItem({
 			)}
 			<span className="min-w-0 truncate">{name}</span>
 		</button>
-	);
-}
-
-function SettingsIcon() {
-	return (
-		<svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
-			<circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" />
-			<path
-				d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
-				stroke="currentColor"
-				strokeWidth="2"
-				strokeLinecap="round"
-			/>
-		</svg>
 	);
 }

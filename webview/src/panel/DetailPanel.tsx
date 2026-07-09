@@ -8,6 +8,7 @@ import {
 	statusLabel,
 } from '../shared/format';
 import { useGitLogStore } from '../shared/store';
+import { CopyIcon, FileIcon } from '../shared/icons';
 import { AuthorAvatar, Chip, EmptyState, IconButton, StatusBadge } from '../shared/ui';
 
 export function DetailPanel() {
@@ -38,7 +39,7 @@ export function DetailPanel() {
 						{commit.shortHash}
 					</span>
 					<IconButton label="Copy hash" onClick={() => void copyHash(commit.hash)}>
-						<CopyIcon />
+						<CopyIcon size={12} />
 					</IconButton>
 				</div>
 
@@ -91,7 +92,10 @@ export function DetailPanel() {
 										className="flex w-full items-center gap-2 rounded-lg px-1 py-1.5 text-left transition hover:bg-[var(--color-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/50"
 										onClick={() => void openDiffEditor(commit.hash, file.path)}
 									>
-										<FileIcon />
+										<FileIcon
+											size={14}
+											className="shrink-0 text-[var(--color-muted)]"
+										/>
 										<span
 											className={`min-w-0 flex-1 truncate font-mono text-xs ${deleted ? 'text-[var(--color-muted)] line-through' : ''}`}
 										>
@@ -124,39 +128,5 @@ export function DetailPanel() {
 				</button>
 			</div>
 		</div>
-	);
-}
-
-function CopyIcon() {
-	return (
-		<svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden>
-			<rect x="9" y="9" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="2" />
-			<path
-				d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
-				stroke="currentColor"
-				strokeWidth="2"
-			/>
-		</svg>
-	);
-}
-
-function FileIcon() {
-	return (
-		<svg
-			width="14"
-			height="14"
-			viewBox="0 0 24 24"
-			fill="none"
-			className="shrink-0 text-[var(--color-muted)]"
-			aria-hidden
-		>
-			<path
-				d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"
-				stroke="currentColor"
-				strokeWidth="2"
-				strokeLinejoin="round"
-			/>
-			<path d="M14 2v6h6" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-		</svg>
 	);
 }

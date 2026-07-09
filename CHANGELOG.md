@@ -4,6 +4,13 @@ All notable changes to the IntelliGit extension are documented here. This projec
 follows [Keep a Changelog](http://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.4.3] - 2026-07-09
+
+### Changed
+- Replaced hand-drawn SVG icons with [Lucide](https://lucide.dev) across the webview UI.
+- Updated marketplace and activity-bar icons to use the Lucide `GitGraph` glyph.
+- Sidebar icon is now a proper 24×24 monochrome SVG that follows VS Code theming.
+
 ## [0.4.2] - 2026-07-09
 
 ### Fixed

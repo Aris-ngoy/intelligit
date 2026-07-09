@@ -1,6 +1,6 @@
 import { useGitLogStore } from '../shared/store';
 import { FilterSelect, IconButton } from '../shared/ui';
-import { RefreshIcon } from '../shared/icons';
+import { HelpIcon, RefreshIcon } from '../shared/icons';
 
 const BRANCH_OPTIONS = [
 	{ value: 'all', label: 'All branches' },
@@ -92,24 +92,9 @@ export function Toolbar() {
 						void openExternal('https://github.com/Aris-ngoy/intelligit#readme')
 					}
 				>
-					<HelpIcon />
+					<HelpIcon size={14} />
 				</IconButton>
 			</div>
 		</div>
-	);
-}
-
-function HelpIcon() {
-	return (
-		<svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
-			<circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" />
-			<path
-				d="M9.5 9.5a2.5 2.5 0 1 1 4.2 1.8c-.8.6-1.2 1.2-1.2 2.2"
-				stroke="currentColor"
-				strokeWidth="2"
-				strokeLinecap="round"
-			/>
-			<circle cx="12" cy="17" r="1" fill="currentColor" />
-		</svg>
 	);
 }
