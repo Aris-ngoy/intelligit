@@ -122,6 +122,31 @@ export interface FileVersions {
 	working: string;
 }
 
+/** A changed file in the working tree or index. */
+export interface WorkingTreeFile {
+	path: string;
+	status: string;
+	oldPath?: string;
+}
+
+/** Snapshot of staged/unstaged changes for the commit UI. */
+export interface WorkingTreeStatus {
+	branch: string;
+	staged: WorkingTreeFile[];
+	unstaged: WorkingTreeFile[];
+	hasStagedChanges: boolean;
+	lastCommitMessage: string;
+	lastCommitHash: string;
+	canAmend: boolean;
+	/** True when the current branch tracks a remote and has no unpushed commits. */
+	lastCommitLikelyPushed: boolean;
+}
+
+export interface CreateCommitOptions {
+	amend?: boolean;
+	noVerify?: boolean;
+}
+
 /** A single entry from `git stash list`. */
 export interface GitStashEntry {
 	/** 0-based index matching `stash@{n}`. */

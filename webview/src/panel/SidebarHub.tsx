@@ -8,6 +8,7 @@ import {
 	ArrowUpIcon,
 	GitMergeIcon,
 	HistoryIcon,
+	GitCommitIcon,
 	LoaderIcon,
 	RadioIcon,
 	RefreshIcon,
@@ -70,6 +71,14 @@ const SYNC_ACTIONS: ActionItem[] = [
 ];
 
 const WORKSPACE_ACTIONS: ActionItem[] = [
+	{
+		id: 'commit',
+		icon: <GitCommitIcon size={16} />,
+		label: 'Commit…',
+		description: 'Write a message and save staged changes',
+		command: 'openCommit',
+		highlight: true,
+	},
 	{
 		id: 'stashes',
 		icon: <ArchiveIcon size={16} />,

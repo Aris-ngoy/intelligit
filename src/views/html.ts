@@ -7,7 +7,8 @@ export type WebviewMode =
 	| 'rebaseDialog'
 	| 'conflicts'
 	| 'merge'
-	| 'stash';
+	| 'stash'
+	| 'commit';
 
 export interface WebviewHtmlOptions {
 	mode?: WebviewMode;

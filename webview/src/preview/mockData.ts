@@ -2,6 +2,7 @@ import type { FileVersionsDto, MergeOperationStateDto } from '../merge/types';
 import type {
 	InteractiveRebaseCommitDto,
 	RepositoryInfoDto,
+	WorkingTreeStatusDto,
 } from '../shared/types';
 import {
 	previewAuthors,
@@ -92,6 +93,24 @@ export const previewStashes = [
 		timestamp: Math.floor(Date.now() / 1000) - 172800,
 	},
 ];
+
+export const previewWorkingTreeStatus: WorkingTreeStatusDto = {
+	branch: 'feature/ui-refresh',
+	staged: [
+		{ path: 'webview/src/commit/CommitApp.tsx', status: 'A' },
+		{ path: 'webview/src/commit/store.ts', status: 'A' },
+		{ path: 'src/git/gitService.ts', status: 'M' },
+	],
+	unstaged: [
+		{ path: 'README.md', status: 'M' },
+		{ path: 'package.json', status: 'M' },
+	],
+	hasStagedChanges: true,
+	lastCommitMessage: 'feat: add stash panel with search and apply\n\nPolish empty states and refresh handling.',
+	lastCommitHash: '8f2a9c4d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6',
+	canAmend: true,
+	lastCommitLikelyPushed: false,
+};
 
 export const previewMergeVersions: FileVersionsDto = {
 	base: `import { Button } from '../ui/Button';

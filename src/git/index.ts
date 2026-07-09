@@ -26,4 +26,7 @@ export type {
 	RebaseFlag,
 	RebaseOptions,
 	GitStashEntry,
+	WorkingTreeFile,
+	WorkingTreeStatus,
+	CreateCommitOptions,
 } from './types';

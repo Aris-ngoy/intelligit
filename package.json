@@ -99,6 +99,12 @@
         "icon": "$(cloud-upload)"
       },
       {
+        "command": "intelligit.commit",
+        "title": "Commit…",
+        "category": "IntelliGit",
+        "icon": "$(git-commit)"
+      },
+      {
         "command": "intelligit.fetch",
         "title": "Fetch",
         "category": "IntelliGit",
@@ -137,6 +143,11 @@
         }
       ],
       "scm/title": [
+        {
+          "command": "intelligit.commit",
+          "when": "scmProvider == git",
+          "group": "navigation"
+        },
         {
           "command": "intelligit.openConflicts",
           "when": "scmProvider == git",

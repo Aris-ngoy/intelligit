@@ -14,6 +14,7 @@ import {
 import { GitLogViewProvider } from './views/gitLogViewProvider';
 import {
 	ConflictsManager,
+	CommitManager,
 	GitLogPanelManager,
 	InteractiveRebaseManager,
 	MergeEditorManager,
@@ -28,6 +29,7 @@ let conflictsManager: ConflictsManager;
 let mergeEditorManager: MergeEditorManager;
 let gitLogPanelManager: GitLogPanelManager;
 let stashManager: StashManager;
+let commitManager: CommitManager;
 
 const rebaseService = createRebaseService(gitService);
 
@@ -65,6 +67,7 @@ export function activate(context: vscode.ExtensionContext): void {
 	mergeEditorManager = new MergeEditorManager(context.extensionUri, messageRouter);
 	gitLogPanelManager = new GitLogPanelManager(context.extensionUri, messageRouter);
 	stashManager = new StashManager(context.extensionUri, messageRouter);
+	commitManager = new CommitManager(context.extensionUri, messageRouter);
 
 	const logProvider = new GitLogViewProvider(
 		context.extensionUri,
@@ -131,6 +134,10 @@ export function activate(context: vscode.ExtensionContext): void {
 
 		vscode.commands.registerCommand('intelligit.openStashes', () => {
 			stashManager.open();
+		}),
+
+		vscode.commands.registerCommand('intelligit.commit', () => {
+			commitManager.open();
 		}),
 
 		vscode.commands.registerCommand('intelligit.openMergeEditor', (filePath?: string) => {
@@ -652,6 +659,54 @@ function registerMessageHandlers(messageRouter: MessageRouter): void {
 
 	messageRouter.handle('openStashes', async () => {
 		stashManager.open();
+		return { success: true };
+	});
+
+	messageRouter.handle('getWorkingTreeStatus', async () => {
+		const repoRoot = await getActiveRepository();
+		if (!repoRoot) {
+			return NOT_GIT_REPO;
+		}
+		return gitService.getWorkingTreeStatus(repoRoot);
+	});
+
+	messageRouter.handle('createCommit', async (params) => {
+		const repoRoot = await getActiveRepository();
+		if (!repoRoot) {
+			return NOT_GIT_REPO;
+		}
+
+		const message = params.message as string;
+		const amend = Boolean(params.amend);
+		const noVerify = Boolean(params.noVerify);
+
+		if (amend) {
+			const status = await gitService.getWorkingTreeStatus(repoRoot);
+			if (!status.canAmend) {
+				throw new Error('Nothing to amend — no commits on this branch yet.');
+			}
+			if (status.lastCommitLikelyPushed) {
+				const choice = await vscode.window.showWarningMessage(
+					'The last commit may already be on the remote. Amending rewrites history and can cause problems for others.',
+					{ modal: true },
+					'Amend anyway',
+				);
+				if (choice !== 'Amend anyway') {
+					return { cancelled: true };
+				}
+			}
+		}
+
+		await gitService.createCommit(repoRoot, message, { amend, noVerify });
+		messageRouter.broadcastEvent('gitStateChanged', { scope: 'all' });
+		void vscode.window.showInformationMessage(
+			amend ? 'Last commit updated.' : 'Changes committed.',
+		);
+		return { success: true };
+	});
+
+	messageRouter.handle('openCommit', async () => {
+		commitManager.open();
 		return { success: true };
 	});
 }

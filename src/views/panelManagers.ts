@@ -188,6 +188,44 @@ export class StashManager {
 	}
 }
 
+export class CommitManager {
+	private panel: vscode.WebviewPanel | undefined;
+
+	constructor(
+		private readonly extensionUri: vscode.Uri,
+		private readonly messageRouter: MessageRouter,
+	) {}
+
+	open(): void {
+		if (this.panel) {
+			this.panel.reveal(vscode.ViewColumn.One);
+			this.messageRouter.broadcastEvent('gitStateChanged', { scope: 'commit' });
+			return;
+		}
+
+		this.panel = vscode.window.createWebviewPanel(
+			'intelligit.commit',
+			'Describe your changes',
+			vscode.ViewColumn.One,
+			{
+				enableScripts: true,
+				retainContextWhenHidden: true,
+				localResourceRoots: [vscode.Uri.joinPath(this.extensionUri, 'dist')],
+			},
+		);
+
+		this.panel.webview.html = getWebviewHtml(this.panel.webview, this.extensionUri, {
+			mode: 'commit',
+		});
+
+		const routerDisposable = this.messageRouter.registerWebview(this.panel.webview);
+		this.panel.onDidDispose(() => {
+			routerDisposable.dispose();
+			this.panel = undefined;
+		});
+	}
+}
+
 export class ConflictsManager {
 	private panel: vscode.WebviewPanel | undefined;
 

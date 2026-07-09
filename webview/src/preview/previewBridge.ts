@@ -12,6 +12,7 @@ import {
 	previewCommits,
 	previewRepoInfo,
 	previewStashes,
+	previewWorkingTreeStatus,
 } from './mockData';
 
 export type PreviewScreen =
@@ -20,7 +21,8 @@ export type PreviewScreen =
 	| 'tidy'
 	| 'conflicts'
 	| 'merge'
-	| 'stash';
+	| 'stash'
+	| 'commit';
 
 export function getPreviewScreen(): PreviewScreen | null {
 	const value = new URLSearchParams(window.location.search).get('preview');
@@ -30,7 +32,8 @@ export function getPreviewScreen(): PreviewScreen | null {
 		value === 'tidy' ||
 		value === 'conflicts' ||
 		value === 'merge' ||
-		value === 'stash'
+		value === 'stash' ||
+		value === 'commit'
 	) {
 		return value;
 	}
@@ -73,6 +76,8 @@ export function createPreviewBridge(): Bridge {
 					return previewConflictFiles as T;
 				case 'getStashes':
 					return previewStashes as T;
+				case 'getWorkingTreeStatus':
+					return previewWorkingTreeStatus as T;
 				case 'getFileVersions':
 					return previewMergeVersions as T;
 				case 'copyToClipboard':
@@ -92,6 +97,8 @@ export function createPreviewBridge(): Bridge {
 				case 'openRebaseDialog':
 				case 'openConflicts':
 				case 'openStashes':
+				case 'openCommit':
+				case 'createCommit':
 				case 'openGitLogPanel':
 				case 'gitPull':
 				case 'gitPush':

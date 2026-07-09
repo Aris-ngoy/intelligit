@@ -1,6 +1,7 @@
 import { StrictMode, type ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
 
+import { CommitApp } from './commit/CommitApp';
 import { ConflictsApp } from './conflicts/ConflictsApp';
 import { InteractiveRebaseApp } from './interactive/InteractiveRebaseApp';
 import { MergeEditorApp } from './merge/MergeEditorApp';
@@ -33,7 +34,8 @@ const mode = (preview
 	| 'rebaseDialog'
 	| 'conflicts'
 	| 'merge'
-	| 'stash';
+	| 'stash'
+	| 'commit';
 
 const fromHash =
 	rootEl.dataset.fromHash ?? previewInteractiveCommits[0]?.hash ?? '';
@@ -50,6 +52,8 @@ function renderApp(): ReactNode {
 			return <ConflictsApp />;
 		case 'stash':
 			return <StashApp />;
+		case 'commit':
+			return <CommitApp />;
 		case 'merge':
 			return <MergeEditorApp filePath={file} />;
 		case 'sidebar':

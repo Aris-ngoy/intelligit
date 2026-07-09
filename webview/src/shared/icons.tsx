@@ -14,6 +14,7 @@ import {
 	File,
 	FileText,
 	GitBranch,
+	GitCommit,
 	GitMerge,
 	GripVertical,
 	Handshake,
@@ -23,6 +24,7 @@ import {
 	Loader2,
 	Pencil,
 	Pin,
+	Plus,
 	Radio,
 	RefreshCw,
 	Search,
@@ -64,6 +66,7 @@ export const CopyIcon = createIcon(Copy);
 export const FileIcon = createIcon(File);
 export const FileTextIcon = createIcon(FileText);
 export const GitBranchIcon = createIcon(GitBranch);
+export const GitCommitIcon = createIcon(GitCommit);
 export const GitMergeIcon = createIcon(GitMerge);
 export const GripVerticalIcon = createIcon(GripVertical);
 export const HandshakeIcon = createIcon(Handshake);
@@ -73,6 +76,7 @@ export const InfoIcon = createIcon(Info);
 export const LinkIcon = createIcon(Link);
 export const PencilIcon = createIcon(Pencil);
 export const PinIcon = createIcon(Pin);
+export const PlusIcon = createIcon(Plus);
 export const RadioIcon = createIcon(Radio);
 export const RefreshIcon = createIcon(RefreshCw);
 export const SearchIcon = createIcon(Search);

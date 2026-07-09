@@ -50,6 +50,7 @@ export class GitWatcher implements vscode.Disposable {
 		this.debounceTimer = setTimeout(() => {
 			this.debounceTimer = undefined;
 			this.messageRouter.broadcastEvent('mergeStateChanged', {});
+			this.messageRouter.broadcastEvent('gitStateChanged', { scope: 'workingTree' });
 			void this.checkConflicts();
 		}, 300);
 	}

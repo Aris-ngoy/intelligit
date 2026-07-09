@@ -1,5 +1,6 @@
 import { execFile } from 'node:child_process';
 import * as fs from 'node:fs/promises';
+import * as os from 'node:os';
 import * as path from 'node:path';
 import { promisify } from 'node:util';
 
@@ -16,9 +17,12 @@ import type {
 	GitLogFilters,
 	GitLogOptions,
 	GitRepositoryInfo,
+	CreateCommitOptions,
 	GitStashEntry,
 	MergeOperationState,
 	ParsedGitLog,
+	WorkingTreeFile,
+	WorkingTreeStatus,
 } from './types';
 
 const execFileAsync = promisify(execFile);
@@ -472,6 +476,85 @@ export class GitService {
 		await this.exec(repoRoot, ['stash', 'clear']);
 	}
 
+	async getWorkingTreeStatus(repoRoot: string): Promise<WorkingTreeStatus> {
+		const [branchResult, stagedResult, unstagedResult, lastCommitResult, statusSb] =
+			await Promise.all([
+				this.exec(repoRoot, ['rev-parse', '--abbrev-ref', 'HEAD'], {
+					allowFailure: true,
+				}),
+				this.exec(repoRoot, ['diff', '--cached', '--name-status'], {
+					allowFailure: true,
+				}),
+				this.exec(repoRoot, ['diff', '--name-status'], { allowFailure: true }),
+				this.exec(repoRoot, ['log', '-1', '--format=%H%n%B'], {
+					allowFailure: true,
+				}),
+				this.exec(repoRoot, ['status', '-sb'], { allowFailure: true }),
+			]);
+
+		const branch =
+			branchResult.exitCode === 0 ? branchResult.stdout.trim() : 'HEAD';
+		const staged = parseNameStatusOutput(stagedResult.stdout);
+		const unstaged = parseNameStatusOutput(unstagedResult.stdout);
+
+		let lastCommitHash = '';
+		let lastCommitMessage = '';
+		if (lastCommitResult.exitCode === 0 && lastCommitResult.stdout.trim()) {
+			const newline = lastCommitResult.stdout.indexOf('\n');
+			if (newline >= 0) {
+				lastCommitHash = lastCommitResult.stdout.slice(0, newline).trim();
+				lastCommitMessage = lastCommitResult.stdout.slice(newline + 1).trimEnd();
+			}
+		}
+
+		const canAmend = lastCommitHash.length > 0;
+		const aheadBehind = parseAheadBehind(statusSb.stdout);
+		const lastCommitLikelyPushed =
+			aheadBehind.hasUpstream && aheadBehind.ahead === 0;
+
+		return {
+			branch,
+			staged,
+			unstaged,
+			hasStagedChanges: staged.length > 0,
+			lastCommitMessage,
+			lastCommitHash,
+			canAmend,
+			lastCommitLikelyPushed,
+		};
+	}
+
+	async createCommit(
+		repoRoot: string,
+		message: string,
+		options: CreateCommitOptions = {},
+	): Promise<void> {
+		const trimmed = message.trim();
+		if (!trimmed) {
+			throw new Error('Commit message cannot be empty');
+		}
+
+		const msgPath = path.join(
+			os.tmpdir(),
+			`intelligit-commit-${Date.now()}-${Math.random().toString(36).slice(2)}.txt`,
+		);
+		const normalized = message.endsWith('\n') ? message : `${message}\n`;
+
+		try {
+			await fs.writeFile(msgPath, normalized, 'utf8');
+			const args = ['commit', '-F', msgPath];
+			if (options.amend) {
+				args.push('--amend');
+			}
+			if (options.noVerify) {
+				args.push('--no-verify');
+			}
+			await this.exec(repoRoot, args);
+		} finally {
+			await fs.unlink(msgPath).catch(() => undefined);
+		}
+	}
+
 	private async readGitFile(
 		gitDir: string,
 		...parts: string[]
@@ -519,6 +602,36 @@ function parseStashListLine(line: string): GitStashEntry | undefined {
 		branch: branchMatch?.[1]?.trim(),
 		commitHash: commitHash?.trim() || undefined,
 		timestamp: Number.isNaN(timestamp) ? undefined : timestamp,
+	};
+}
+
+function parseNameStatusOutput(stdout: string): WorkingTreeFile[] {
+	return stdout
+		.split('\n')
+		.filter(Boolean)
+		.map((line) => parseNameStatusLine(line))
+		.filter((file): file is WorkingTreeFile => file !== undefined);
+}
+
+function parseAheadBehind(statusOutput: string): {
+	hasUpstream: boolean;
+	ahead: number;
+	behind: number;
+} {
+	const firstLine = statusOutput.split('\n')[0]?.trim() ?? '';
+	const branchInfo = firstLine.startsWith('## ') ? firstLine.slice(3) : '';
+	const upstreamSep = branchInfo.indexOf('...');
+	if (upstreamSep === -1) {
+		return { hasUpstream: false, ahead: 0, behind: 0 };
+	}
+
+	const tracking = branchInfo.slice(upstreamSep + 3);
+	const aheadMatch = /ahead (\d+)/.exec(tracking);
+	const behindMatch = /behind (\d+)/.exec(tracking);
+	return {
+		hasUpstream: true,
+		ahead: aheadMatch ? Number.parseInt(aheadMatch[1] ?? '0', 10) : 0,
+		behind: behindMatch ? Number.parseInt(behindMatch[1] ?? '0', 10) : 0,
 	};
 }
 

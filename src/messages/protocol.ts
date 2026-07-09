@@ -60,7 +60,10 @@ export type CommandType =
 	| 'applyStash'
 	| 'dropStash'
 	| 'clearStashes'
-	| 'openStashes';
+	| 'openStashes'
+	| 'getWorkingTreeStatus'
+	| 'createCommit'
+	| 'openCommit';
 
 export type EventType =
 	| 'gitStateChanged'

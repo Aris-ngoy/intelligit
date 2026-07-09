@@ -88,3 +88,20 @@ export interface StashEntryDto {
 	commitHash?: string;
 	timestamp?: number;
 }
+
+export interface WorkingTreeFileDto {
+	path: string;
+	status: string;
+	oldPath?: string;
+}
+
+export interface WorkingTreeStatusDto {
+	branch: string;
+	staged: WorkingTreeFileDto[];
+	unstaged: WorkingTreeFileDto[];
+	hasStagedChanges: boolean;
+	lastCommitMessage: string;
+	lastCommitHash: string;
+	canAmend: boolean;
+	lastCommitLikelyPushed: boolean;
+}

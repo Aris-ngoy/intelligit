@@ -11,6 +11,7 @@
     "dev:conflicts": "vite --open '/?preview=conflicts'",
     "dev:merge": "vite --open '/?preview=merge'",
     "dev:stash": "vite --open '/?preview=stash'",
+    "dev:commit": "vite --open '/?preview=commit'",
     "build": "tsc && vite build",
     "watch": "vite build --watch",
     "preview": "vite preview",
