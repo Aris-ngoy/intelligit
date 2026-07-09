@@ -4,6 +4,12 @@ All notable changes to the IntelliGit extension are documented here. This projec
 follows [Keep a Changelog](http://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.4.4] - 2026-07-09
+
+### Changed
+- Updated marketplace and activity-bar icons to the Lucide GitGraph glyph
+  (`icon.svg`, `icon.png`, `sidebar-icon.svg`).
+
 ## [0.4.3] - 2026-07-09
 
 ### Changed
