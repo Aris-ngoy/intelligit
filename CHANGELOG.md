@@ -8,8 +8,11 @@ follows [Keep a Changelog](http://keepachangelog.com/) and
 
 ### Changed
 - Replaced hand-drawn SVG icons with [Lucide](https://lucide.dev) across the webview UI.
-- Updated marketplace and activity-bar icons to use the Lucide `GitGraph` glyph.
-- Sidebar icon is now a proper 24×24 monochrome SVG that follows VS Code theming.
+
+### Fixed
+- Restored the IntelliGit branch logo for the marketplace icon (`icon.svg` / `icon.png`).
+- Restored the activity-bar sidebar icon so it renders correctly instead of showing a gray
+  placeholder (stroke-only SVGs do not mask properly in VS Code's activity bar).
 
 ## [0.4.2] - 2026-07-09
 
