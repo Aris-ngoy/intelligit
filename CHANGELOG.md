@@ -4,6 +4,12 @@ All notable changes to the IntelliGit extension are documented here. This projec
 follows [Keep a Changelog](http://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.4.2] - 2026-07-09
+
+### Fixed
+- Activity-bar icon now matches the marketplace logo: full gradient background and
+  correctly scaled branch mark (the previous sidebar SVG was tiny and monochrome).
+
 ## [0.4.1] - 2026-07-09
 
 ### Changed
