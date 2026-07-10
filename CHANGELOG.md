@@ -4,6 +4,22 @@ All notable changes to the IntelliGit extension are documented here. This projec
 follows [Keep a Changelog](http://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.6.0] - 2026-07-10
+
+### Added
+- Branch switching and creation from the IntelliGit sidebar with stash-safe checkout
+  and live header updates.
+- Vertical swimlane commit graph with merge markers, HEAD highlighting, lazy loading,
+  and on-demand branch lanes.
+- Guided rebase path in the rebase dialog with `--onto` support.
+- Commit panel staging: stage and unstage files, open diffs, and stage/unstage all.
+- Dismissible stash onboarding tip in the Stashes panel.
+
+### Changed
+- Git History uses a scoped default view; repo info surfaces conflict and rebase progress.
+- Sidebar subtitles and copy polish for clearer wayfinding.
+- README updated with new screenshots and a full feature overview.
+
 ## [0.5.0] - 2026-07-09
 
 ### Added
