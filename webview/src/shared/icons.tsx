@@ -14,6 +14,7 @@ import {
 	File,
 	FileText,
 	GitBranch,
+	GitBranchPlus,
 	GitCommit,
 	GitMerge,
 	GripVertical,
@@ -66,6 +67,7 @@ export const CopyIcon = createIcon(Copy);
 export const FileIcon = createIcon(File);
 export const FileTextIcon = createIcon(FileText);
 export const GitBranchIcon = createIcon(GitBranch);
+export const GitBranchPlusIcon = createIcon(GitBranchPlus);
 export const GitCommitIcon = createIcon(GitCommit);
 export const GitMergeIcon = createIcon(GitMerge);
 export const GripVerticalIcon = createIcon(GripVertical);

@@ -66,3 +66,30 @@ body,
 	white-space: nowrap;
 	border-width: 0;
 }
+
+@keyframes branch-dot-flash {
+	0%,
+	100% {
+		opacity: 1;
+		transform: scale(1);
+		box-shadow: none;
+	}
+	30% {
+		opacity: 1;
+		transform: scale(1.75);
+		box-shadow: 0 0 6px #22c55e;
+	}
+	60% {
+		opacity: 0.55;
+		transform: scale(1);
+	}
+	80% {
+		opacity: 1;
+		transform: scale(1.35);
+		box-shadow: 0 0 4px #22c55e;
+	}
+}
+
+.branch-dot-flash {
+	animation: branch-dot-flash 1.1s ease-in-out;
+}
