@@ -11,6 +11,7 @@ export const previewRepoInfo: RepositoryInfoDto = {
 	currentBranch: "main",
 	isRebaseInProgress: false,
 	isMergeInProgress: false,
+	conflictFileCount: 0,
 	branches: [
 		{ name: "main", remote: false, current: true },
 		{ name: "feature/auth-provider", remote: false, current: false },

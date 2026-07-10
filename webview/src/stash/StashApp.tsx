@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useMemo } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 
 import {
 	ArchiveIcon,
@@ -18,6 +18,8 @@ import {
 	TaskHeader,
 } from "../shared/ui";
 import { filterStashes, useStashStore } from "./store";
+
+const STASH_TIP_STORAGE_KEY = "intelligit.stash.tip.dismissed";
 
 function formatStashDate(timestamp?: number): string | undefined {
 	if (!timestamp) {
@@ -41,6 +43,25 @@ export function StashApp() {
 	const applyStash = useStashStore((s) => s.applyStash);
 	const dropStash = useStashStore((s) => s.dropStash);
 	const clearAll = useStashStore((s) => s.clearAll);
+	const [showStashTip, setShowStashTip] = useState(false);
+
+	useEffect(() => {
+		try {
+			const dismissed = localStorage.getItem(STASH_TIP_STORAGE_KEY);
+			setShowStashTip(dismissed !== "1");
+		} catch {
+			setShowStashTip(true);
+		}
+	}, []);
+
+	function dismissStashTip() {
+		try {
+			localStorage.setItem(STASH_TIP_STORAGE_KEY, "1");
+		} catch {
+			// Ignore storage failures.
+		}
+		setShowStashTip(false);
+	}
 
 	useEffect(() => {
 		void load();
@@ -60,8 +81,28 @@ export function StashApp() {
 			<TaskHeader
 				icon={<ArchiveIcon size={18} />}
 				title="Saved changes"
-				description="Stashes you set aside. Apply them back to your working tree or delete ones you no longer need."
+				description="Set changes aside temporarily without committing."
 			/>
+
+			{showStashTip && (
+				<div className="mx-3 mt-3 rounded-xl border border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 p-3 text-xs">
+					<p className="font-semibold text-[var(--color-app-fg)]">
+						What&apos;s a stash?
+					</p>
+					<p className="mt-1 leading-relaxed text-[var(--color-muted)]">
+						A stash saves your uncommitted changes so you can switch tasks, then
+						bring them back later exactly as they were — without making a
+						commit.
+					</p>
+					<button
+						type="button"
+						className="mt-2 text-[11px] font-medium text-[var(--color-accent)] hover:underline focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/50"
+						onClick={dismissStashTip}
+					>
+						Got it
+					</button>
+				</div>
+			)}
 
 			<div className="shrink-0 border-b border-[var(--color-border)] px-3 py-2">
 				<label className="sr-only" htmlFor="stash-search">

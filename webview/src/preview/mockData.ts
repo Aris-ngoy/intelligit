@@ -156,4 +156,5 @@ export const previewMergeRepoInfo: RepositoryInfoDto = {
 	],
 	isRebaseInProgress: false,
 	isMergeInProgress: true,
+	conflictFileCount: 3,
 };

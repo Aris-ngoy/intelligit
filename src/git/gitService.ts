@@ -87,6 +87,7 @@ export class GitService {
 	}
 
 	async getRepositoryInfo(repoRoot: string): Promise<GitRepositoryInfo> {
+		const gitDir = path.join(repoRoot, ".git");
 		const [branchResult, branches] = await Promise.all([
 			this.exec(repoRoot, ["rev-parse", "--abbrev-ref", "HEAD"], {
 				allowFailure: true,
@@ -94,11 +95,32 @@ export class GitService {
 			this.listBranches(repoRoot),
 		]);
 
-		const [rebaseMerge, rebaseApply, mergeHead] = await Promise.all([
-			this.pathExists(path.join(repoRoot, ".git", "rebase-merge")),
-			this.pathExists(path.join(repoRoot, ".git", "rebase-apply")),
-			this.pathExists(path.join(repoRoot, ".git", "MERGE_HEAD")),
-		]);
+		const [rebaseMerge, rebaseApply, mergeHead, conflictFiles] =
+			await Promise.all([
+				this.pathExists(path.join(gitDir, "rebase-merge")),
+				this.pathExists(path.join(gitDir, "rebase-apply")),
+				this.pathExists(path.join(gitDir, "MERGE_HEAD")),
+				this.getConflictFiles(repoRoot),
+			]);
+
+		let rebaseCommitsRemaining: number | undefined;
+		if (rebaseMerge) {
+			try {
+				const msgnum = Number.parseInt(
+					await this.readGitFile(gitDir, "rebase-merge", "msgnum"),
+					10,
+				);
+				const end = Number.parseInt(
+					await this.readGitFile(gitDir, "rebase-merge", "end"),
+					10,
+				);
+				if (Number.isFinite(msgnum) && Number.isFinite(end) && end >= msgnum) {
+					rebaseCommitsRemaining = end - msgnum + 1;
+				}
+			} catch {
+				// Ignore missing rebase metadata.
+			}
+		}
 
 		return {
 			root: repoRoot,
@@ -107,7 +129,45 @@ export class GitService {
 			branches,
 			isRebaseInProgress: rebaseMerge || rebaseApply,
 			isMergeInProgress: mergeHead,
+			conflictFileCount: conflictFiles.length,
+			rebaseCommitsRemaining,
 		};
+	}
+
+	async getMergeBase(
+		repoRoot: string,
+		a: string,
+		b: string,
+	): Promise<string | undefined> {
+		const result = await this.exec(repoRoot, ["merge-base", a, b], {
+			allowFailure: true,
+		});
+		if (result.exitCode !== 0) {
+			return undefined;
+		}
+		const base = result.stdout.trim();
+		return base || undefined;
+	}
+
+	/** First commit on HEAD not reachable from `onto` (oldest first). */
+	async getFirstRebaseCommit(
+		repoRoot: string,
+		onto: string,
+	): Promise<string | undefined> {
+		const mergeBase = await this.getMergeBase(repoRoot, "HEAD", onto);
+		if (!mergeBase) {
+			return undefined;
+		}
+		const result = await this.exec(
+			repoRoot,
+			["log", "--reverse", "--pretty=format:%H", `${mergeBase}..HEAD`, "-1"],
+			{ allowFailure: true },
+		);
+		if (result.exitCode !== 0) {
+			return undefined;
+		}
+		const hash = result.stdout.trim();
+		return hash || undefined;
 	}
 
 	async listBranches(repoRoot: string): Promise<GitBranch[]> {

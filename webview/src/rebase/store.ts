@@ -3,6 +3,8 @@ import { create } from "zustand";
 import { bridge } from "../shared/bridge";
 import type { RebaseFlagDto } from "../shared/types";
 
+export type RebaseMode = "guided" | "standard";
+
 interface RebaseDialogStore {
 	loading: boolean;
 	error: string | null;
@@ -15,11 +17,13 @@ interface RebaseDialogStore {
 	fromLabel: string;
 	commitCount: number;
 	flags: RebaseFlagDto[];
+	mode: RebaseMode;
 	submitting: boolean;
 
 	load: (fromHash?: string) => Promise<void>;
 	setOnto: (value: string) => void;
 	setFrom: (value: string) => void;
+	setMode: (mode: RebaseMode) => void;
 	toggleFlag: (flag: RebaseFlagDto) => void;
 	submit: () => Promise<void>;
 }
@@ -36,6 +40,7 @@ export const useRebaseDialogStore = create<RebaseDialogStore>((set, get) => ({
 	fromLabel: "",
 	commitCount: 0,
 	flags: [],
+	mode: "guided",
 	submitting: false,
 
 	async load(fromHash = "") {
@@ -88,6 +93,10 @@ export const useRebaseDialogStore = create<RebaseDialogStore>((set, get) => ({
 		set({ from: value });
 	},
 
+	setMode(mode) {
+		set({ mode });
+	},
+
 	toggleFlag(flag) {
 		const flags = get().flags;
 		set({
@@ -98,18 +107,26 @@ export const useRebaseDialogStore = create<RebaseDialogStore>((set, get) => ({
 	},
 
 	async submit() {
-		const { onto, from, fromHash, flags } = get();
+		const { onto, from, fromHash, flags, mode } = get();
 		if (!onto.trim()) {
 			set({ error: "Onto is required." });
 			return;
 		}
 		set({ submitting: true, error: null });
 		try {
-			await bridge.request("startStandardRebase", {
-				onto,
-				from: fromHash ? from : undefined,
-				flags,
-			});
+			if (mode === "guided") {
+				await bridge.request("openGuidedRebase", {
+					onto,
+					fromHash: fromHash || undefined,
+					flags,
+				});
+			} else {
+				await bridge.request("startStandardRebase", {
+					onto,
+					from: fromHash ? from : undefined,
+					flags,
+				});
+			}
 		} catch (err) {
 			set({ error: err instanceof Error ? err.message : String(err) });
 		} finally {

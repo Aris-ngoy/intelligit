@@ -37,6 +37,8 @@ export interface RepositoryInfoDto {
 	branches: GitBranchDto[];
 	isRebaseInProgress: boolean;
 	isMergeInProgress: boolean;
+	conflictFileCount: number;
+	rebaseCommitsRemaining?: number;
 }
 
 export interface ParsedLogDto {

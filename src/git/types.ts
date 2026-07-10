@@ -71,6 +71,8 @@ export interface GitRepositoryInfo {
 	branches: GitBranch[];
 	isRebaseInProgress: boolean;
 	isMergeInProgress: boolean;
+	conflictFileCount: number;
+	rebaseCommitsRemaining?: number;
 }
 
 export interface GitExecResult {

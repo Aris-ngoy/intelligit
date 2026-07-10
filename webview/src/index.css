@@ -94,6 +94,20 @@ body,
 	animation: branch-dot-flash 1.1s ease-in-out;
 }
 
+/* Sidebar hub: allow subtitles to wrap to container width (buttons default to nowrap). */
+.sidebar-action-btn {
+	white-space: normal;
+}
+
+.sidebar-action-description {
+	overflow-wrap: anywhere;
+	word-break: break-word;
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	overflow: hidden;
+}
+
 .graph-branch-pill {
 	display: block;
 	max-width: 100%;

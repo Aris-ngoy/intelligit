@@ -442,6 +442,7 @@ function registerMessageHandlers(messageRouter: MessageRouter): void {
 		const fromHash = params.fromHash as string;
 		const commits = params.commits as InteractiveRebaseCommit[];
 		const flags = (params.flags as RebaseFlag[]) ?? [];
+		const onto = params.onto as string | undefined;
 
 		try {
 			await rebaseService.runInteractiveRebase(
@@ -449,6 +450,7 @@ function registerMessageHandlers(messageRouter: MessageRouter): void {
 				fromHash,
 				commits,
 				flags,
+				onto,
 			);
 			interactiveRebaseManager.close();
 			messageRouter.broadcastEvent("gitStateChanged", { scope: "all" });
@@ -752,6 +754,30 @@ function registerMessageHandlers(messageRouter: MessageRouter): void {
 		const fromHash = params.fromHash as string | undefined;
 		rebaseDialogManager.open(fromHash ? { fromHash } : {});
 		return { success: true };
+	});
+
+	messageRouter.handle("openGuidedRebase", async (params) => {
+		const repoRoot = await getActiveRepository();
+		if (!repoRoot) {
+			return NOT_GIT_REPO;
+		}
+		const onto = (params.onto as string)?.trim();
+		if (!onto) {
+			throw new Error("Target branch is required.");
+		}
+		let fromHash = (params.fromHash as string | undefined)?.trim();
+		if (!fromHash) {
+			fromHash = await gitService.getFirstRebaseCommit(repoRoot, onto);
+			if (!fromHash) {
+				throw new Error(`No commits to rebase onto “${onto}”.`);
+			}
+		}
+		rebaseDialogManager.close();
+		interactiveRebaseManager.open(fromHash, {
+			onto,
+			flags: (params.flags as RebaseFlag[]) ?? [],
+		});
+		return { success: true, fromHash, onto };
 	});
 
 	messageRouter.handle("openGitLogPanel", async () => {

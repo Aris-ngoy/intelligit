@@ -26,11 +26,13 @@ const mode = (
 	preview
 		? preview === "gitlog"
 			? "panel"
-			: preview === "rebase"
-				? "rebaseDialog"
-				: preview === "tidy"
-					? "interactiveRebase"
-					: preview
+			: preview === "sidebar"
+				? "sidebar"
+				: preview === "rebase"
+					? "rebaseDialog"
+					: preview === "tidy"
+						? "interactiveRebase"
+						: preview
 		: (rootEl.dataset.mode ?? "panel")
 ) as
 	| "panel"
@@ -69,4 +71,14 @@ function renderApp(): ReactNode {
 	}
 }
 
-createRoot(rootEl).render(<StrictMode>{renderApp()}</StrictMode>);
+const app = renderApp();
+const framedApp =
+	preview === "sidebar" ? (
+		<div className="mx-auto h-full w-full max-w-[280px] border-x border-[var(--color-border)]">
+			{app}
+		</div>
+	) : (
+		app
+	);
+
+createRoot(rootEl).render(<StrictMode>{framedApp}</StrictMode>);

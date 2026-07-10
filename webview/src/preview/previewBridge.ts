@@ -17,6 +17,7 @@ import {
 
 export type PreviewScreen =
 	| "gitlog"
+	| "sidebar"
 	| "rebase"
 	| "tidy"
 	| "conflicts"
@@ -28,6 +29,7 @@ export function getPreviewScreen(): PreviewScreen | null {
 	const value = new URLSearchParams(window.location.search).get("preview");
 	if (
 		value === "gitlog" ||
+		value === "sidebar" ||
 		value === "rebase" ||
 		value === "tidy" ||
 		value === "conflicts" ||
@@ -119,6 +121,7 @@ export function createPreviewBridge(): Bridge {
 				case "startInteractiveRebase":
 				case "startStandardRebase":
 				case "openRebaseDialog":
+				case "openGuidedRebase":
 				case "openConflicts":
 				case "openStashes":
 				case "openCommit":

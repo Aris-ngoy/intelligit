@@ -6,6 +6,7 @@ import {
 	CheckIcon,
 	GitBranchIcon,
 	PinIcon,
+	SparklesIcon,
 } from "../shared/icons";
 import {
 	Card,
@@ -57,9 +58,11 @@ export function RebaseDialogApp({
 	const commitCount = useRebaseDialogStore((s) => s.commitCount);
 	const onto = useRebaseDialogStore((s) => s.onto);
 	const flags = useRebaseDialogStore((s) => s.flags);
+	const mode = useRebaseDialogStore((s) => s.mode);
 	const submitting = useRebaseDialogStore((s) => s.submitting);
 	const load = useRebaseDialogStore((s) => s.load);
 	const setOnto = useRebaseDialogStore((s) => s.setOnto);
+	const setMode = useRebaseDialogStore((s) => s.setMode);
 	const toggleFlag = useRebaseDialogStore((s) => s.toggleFlag);
 	const submit = useRebaseDialogStore((s) => s.submit);
 
@@ -165,6 +168,28 @@ export function RebaseDialogApp({
 				</p>
 			</Card>
 
+			<Card className="mb-4">
+				<div className="mb-3 flex items-center gap-2 text-xs font-semibold text-[var(--color-muted)]">
+					<StepBadge n={3} /> How should we do it?
+				</div>
+				<div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+					<ModeOption
+						selected={mode === "guided"}
+						title="Guided"
+						description="Walks you through each step in plain language"
+						icon={<SparklesIcon size={16} />}
+						onSelect={() => setMode("guided")}
+					/>
+					<ModeOption
+						selected={mode === "standard"}
+						title="Standard"
+						description="Straightforward rebase, no extra guidance"
+						icon={<CheckIcon size={16} />}
+						onSelect={() => setMode("standard")}
+					/>
+				</div>
+			</Card>
+
 			{error && <ErrorStrip>{error}</ErrorStrip>}
 
 			<div className="mb-4">
@@ -205,11 +230,17 @@ export function RebaseDialogApp({
 					onClick={() => void submit()}
 				>
 					{submitting ? (
-						"Moving your work…"
+						mode === "guided" ? (
+							"Opening guided rebase…"
+						) : (
+							"Moving your work…"
+						)
 					) : onto ? (
 						<span className="inline-flex items-center justify-center gap-2">
 							<CheckIcon size={16} />
-							Move it onto “{onto}”
+							{mode === "guided"
+								? `Review changes, then move onto “${onto}”`
+								: `Move it onto “${onto}”`}
 						</span>
 					) : (
 						"Pick a branch first"
@@ -222,5 +253,47 @@ export function RebaseDialogApp({
 				</p>
 			</div>
 		</div>
+	);
+}
+
+function ModeOption({
+	selected,
+	title,
+	description,
+	icon,
+	onSelect,
+}: {
+	selected: boolean;
+	title: string;
+	description: string;
+	icon: React.ReactNode;
+	onSelect: () => void;
+}) {
+	return (
+		<button
+			type="button"
+			className={`flex items-start gap-2.5 rounded-lg border px-3 py-2.5 text-left transition focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/50 ${
+				selected
+					? "border-[var(--color-accent)] bg-[var(--color-accent)]/10"
+					: "border-[var(--color-border)] hover:bg-[var(--color-hover)]"
+			}`}
+			onClick={onSelect}
+			aria-pressed={selected}
+		>
+			<span
+				className={`mt-0.5 shrink-0 ${
+					selected ? "text-[var(--color-accent)]" : "text-[var(--color-muted)]"
+				}`}
+				aria-hidden
+			>
+				{icon}
+			</span>
+			<span className="min-w-0">
+				<span className="block text-xs font-semibold">{title}</span>
+				<span className="mt-0.5 block text-[10px] leading-snug text-[var(--color-muted)]">
+					{description}
+				</span>
+			</span>
+		</button>
 	);
 }

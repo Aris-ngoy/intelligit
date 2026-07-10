@@ -48,6 +48,7 @@ export class RebaseService {
 		fromCommitHash: string,
 		commits: InteractiveRebaseCommit[],
 		flags: RebaseFlag[] = [],
+		onto?: string,
 	): Promise<void> {
 		const upstream = await this.resolveRebaseUpstream(repoRoot, fromCommitHash);
 		const todoBody = buildTodoFile(commits);
@@ -64,7 +65,19 @@ export class RebaseService {
 				: undefined;
 
 		try {
-			const args = ["rebase", "-i", ...rebaseFlagsToArgs(flags), upstream];
+			const flagArgs = rebaseFlagsToArgs(flags);
+			const args =
+				onto && onto.trim().length > 0
+					? [
+							"rebase",
+							"-i",
+							...flagArgs,
+							"--onto",
+							onto.trim(),
+							upstream,
+							"HEAD",
+						]
+					: ["rebase", "-i", ...flagArgs, upstream];
 			await this.git.exec(repoRoot, args, {
 				env: {
 					GIT_SEQUENCE_EDITOR: sequenceScript,
