@@ -1,0 +1,38 @@
+name: E2E
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  webview-e2e:
+    name: Webview Playwright tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: webview/pnpm-lock.yaml
+
+      - name: Install webview dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: webview
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
+        working-directory: webview
+
+      - name: Run E2E tests
+        run: pnpm run test:e2e
+        working-directory: webview
+        env:
+          CI: true

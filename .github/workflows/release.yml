@@ -1,0 +1,52 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Git tag to publish (e.g. v0.6.0). Leave empty to use the current branch."
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Publish to VS Code Marketplace
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require repository owner
+        if: github.repository_owner != github.actor
+        run: |
+          echo "Only the repository owner (${{ github.repository_owner }}) can publish releases."
+          echo "Triggered by: ${{ github.actor }}"
+          exit 1
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag != '' && format('refs/tags/{0}', inputs.tag) || github.ref }}
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install webview dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: webview
+
+      - name: Package extension
+        run: pnpm run package
+
+      - name: Publish to Marketplace
+        run: pnpm dlx @vscode/vsce publish -p "$VSCE_PAT"
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
