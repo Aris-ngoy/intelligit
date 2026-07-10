@@ -1,3 +1,4 @@
+import * as path from "node:path";
 import * as vscode from "vscode";
 
 import type { GitService } from "../git/gitService";
@@ -45,4 +46,34 @@ export async function openCommitFileDiff(
 	await vscode.commands.executeCommand("vscode.diff", left, right, title, {
 		preview: true,
 	});
+}
+
+export async function openWorkingTreeFileDiff(
+	repoRoot: string,
+	filePath: string,
+	kind: "staged" | "unstaged",
+): Promise<void> {
+	const workingUri = vscode.Uri.file(path.join(repoRoot, filePath));
+
+	if (kind === "staged") {
+		const left = gitContentUri("HEAD", filePath);
+		const right = gitContentUri("index", filePath);
+		await vscode.commands.executeCommand(
+			"vscode.diff",
+			left,
+			right,
+			`${filePath} (staged)`,
+			{ preview: true },
+		);
+		return;
+	}
+
+	const left = gitContentUri("index", filePath);
+	await vscode.commands.executeCommand(
+		"vscode.diff",
+		left,
+		workingUri,
+		`${filePath} (working tree)`,
+		{ preview: true },
+	);
 }

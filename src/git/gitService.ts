@@ -280,12 +280,17 @@ export class GitService {
 		ref: string,
 		filePath: string,
 	): Promise<string> {
-		if (ref === "0000000000000000000000000000000000000000") {
+		if (ref === "0000000000000000000000000000000000000000" || ref === "empty") {
 			return "";
 		}
-		const result = await this.exec(repoRoot, ["show", `${ref}:${filePath}`], {
-			allowFailure: true,
-		});
+		const gitRef = ref === "index" ? ":0:" : ref;
+		const result = await this.exec(
+			repoRoot,
+			["show", `${gitRef}:${filePath}`],
+			{
+				allowFailure: true,
+			},
+		);
 		if (result.exitCode !== 0) {
 			return "";
 		}
@@ -429,6 +434,18 @@ export class GitService {
 
 	async stageFile(repoRoot: string, filePath: string): Promise<void> {
 		await this.exec(repoRoot, ["add", "--", filePath]);
+	}
+
+	async unstageFile(repoRoot: string, filePath: string): Promise<void> {
+		await this.exec(repoRoot, ["restore", "--staged", "--", filePath]);
+	}
+
+	async stageAll(repoRoot: string): Promise<void> {
+		await this.exec(repoRoot, ["add", "-A"]);
+	}
+
+	async unstageAll(repoRoot: string): Promise<void> {
+		await this.exec(repoRoot, ["restore", "--staged", "."]);
 	}
 
 	async acceptOurs(repoRoot: string, filePath: string): Promise<void> {

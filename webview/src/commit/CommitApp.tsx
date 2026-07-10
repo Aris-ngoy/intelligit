@@ -1,6 +1,15 @@
 import { type ReactNode, useEffect, useRef } from "react";
+import { isPreviewMode } from "../preview/previewBridge";
+import { bridge } from "../shared/bridge";
 import { fileStatusTone, statusLabel } from "../shared/format";
-import { GitCommitIcon, PencilIcon, PlusIcon } from "../shared/icons";
+import {
+	FileIcon,
+	GitCommitIcon,
+	PencilIcon,
+	PlusIcon,
+	UndoIcon,
+} from "../shared/icons";
+import type { WorkingTreeFileDto } from "../shared/types";
 import {
 	EmptyState,
 	ErrorStrip,
@@ -37,12 +46,23 @@ export function CommitApp() {
 		(s) => s.replaceWithLastMessage,
 	);
 	const appendLastMessage = useCommitStore((s) => s.appendLastMessage);
+	const stageFile = useCommitStore((s) => s.stageFile);
+	const unstageFile = useCommitStore((s) => s.unstageFile);
+	const stageAll = useCommitStore((s) => s.stageAll);
+	const unstageAll = useCommitStore((s) => s.unstageAll);
+	const openDiff = useCommitStore((s) => s.openDiff);
 	const commit = useCommitStore((s) => s.commit);
 
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
 
 	useEffect(() => {
-		void load();
+		async function init() {
+			if (isPreviewMode()) {
+				await bridge.request("resetPreviewState");
+			}
+			await load();
+		}
+		void init();
 	}, [load]);
 
 	const canCommit =
@@ -77,13 +97,13 @@ export function CommitApp() {
 			<TaskHeader
 				icon={<GitCommitIcon size={18} />}
 				title="Describe your changes"
-				description="Write a message for what's staged. You can save a new commit or update the last one."
+				description="Stage files, review diffs, and write a message for your commit."
 			/>
 
 			{mode === "new" && !status.hasStagedChanges && (
 				<InfoStrip>
-					Nothing staged yet — stage files in Source Control, then come back
-					here.
+					Nothing staged yet — stage files below, then write your commit
+					message.
 				</InfoStrip>
 			)}
 
@@ -178,31 +198,36 @@ export function CommitApp() {
 				</div>
 
 				<section>
-					<h2 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-[var(--color-muted)]">
-						Staged ({status.staged.length})
-					</h2>
+					<div className="mb-2 flex items-center justify-between gap-2">
+						<h2 className="text-[11px] font-semibold uppercase tracking-wide text-[var(--color-muted)]">
+							Staged ({status.staged.length})
+						</h2>
+						{status.staged.length > 0 && (
+							<BulkActionButton
+								disabled={busy}
+								onClick={() => void unstageAll()}
+								title="Unstage all files"
+							>
+								Unstage all
+							</BulkActionButton>
+						)}
+					</div>
 					{status.staged.length === 0 ? (
 						<p className="rounded-lg border border-dashed border-[var(--color-border)] px-3 py-4 text-center text-xs text-[var(--color-muted)]">
-							No staged files. Stage changes in the Source Control view.
+							No staged files. Stage changes from the list below.
 						</p>
 					) : (
 						<ul className="space-y-1">
 							{status.staged.map((file) => (
-								<li
+								<FileRow
 									key={`${file.status}:${file.path}`}
-									className="flex items-center gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-input-bg)]/20 px-2.5 py-1.5"
-								>
-									<StatusBadge
-										tone={fileStatusTone(file.status)}
-										label={statusLabel(file.status)}
-									/>
-									<span
-										className="min-w-0 truncate font-mono text-[11px]"
-										title={file.path}
-									>
-										{file.path}
-									</span>
-								</li>
+									file={file}
+									kind="staged"
+									disabled={busy}
+									onOpenDiff={() => void openDiff(file.path, "staged")}
+									onToggleStage={() => void unstageFile(file.path)}
+									toggleLabel="Unstage file"
+								/>
 							))}
 						</ul>
 					)}
@@ -210,32 +235,30 @@ export function CommitApp() {
 
 				{status.unstaged.length > 0 && (
 					<section className="mt-4">
-						<h2 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-[var(--color-muted)]">
-							Not staged ({status.unstaged.length})
-						</h2>
-						<ul className="space-y-1 opacity-80">
-							{status.unstaged.slice(0, 8).map((file) => (
-								<li
+						<div className="mb-2 flex items-center justify-between gap-2">
+							<h2 className="text-[11px] font-semibold uppercase tracking-wide text-[var(--color-muted)]">
+								Not staged ({status.unstaged.length})
+							</h2>
+							<BulkActionButton
+								disabled={busy}
+								onClick={() => void stageAll()}
+								title="Stage all files"
+							>
+								Stage all
+							</BulkActionButton>
+						</div>
+						<ul className="space-y-1">
+							{status.unstaged.map((file) => (
+								<FileRow
 									key={`unstaged:${file.status}:${file.path}`}
-									className="flex items-center gap-2 rounded-lg px-2.5 py-1"
-								>
-									<StatusBadge
-										tone={fileStatusTone(file.status)}
-										label={statusLabel(file.status)}
-									/>
-									<span
-										className="min-w-0 truncate font-mono text-[11px] text-[var(--color-muted)]"
-										title={file.path}
-									>
-										{file.path}
-									</span>
-								</li>
+									file={file}
+									kind="unstaged"
+									disabled={busy}
+									onOpenDiff={() => void openDiff(file.path, "unstaged")}
+									onToggleStage={() => void stageFile(file.path)}
+									toggleLabel="Stage file"
+								/>
 							))}
-							{status.unstaged.length > 8 && (
-								<li className="px-2.5 text-[10px] text-[var(--color-muted)]">
-									+{status.unstaged.length - 8} more unstaged files
-								</li>
-							)}
 						</ul>
 					</section>
 				)}
@@ -262,6 +285,103 @@ export function CommitApp() {
 				}
 			/>
 		</div>
+	);
+}
+
+function FileRow({
+	file,
+	kind,
+	disabled,
+	onOpenDiff,
+	onToggleStage,
+	toggleLabel,
+}: {
+	file: WorkingTreeFileDto;
+	kind: "staged" | "unstaged";
+	disabled?: boolean;
+	onOpenDiff: () => void;
+	onToggleStage: () => void;
+	toggleLabel: string;
+}) {
+	const tone = fileStatusTone(file.status);
+	const deleted = tone === "deleted";
+
+	return (
+		<li className="flex items-center gap-1 rounded-lg border border-[var(--color-border)] bg-[var(--color-input-bg)]/20 px-1 py-0.5">
+			<button
+				type="button"
+				disabled={disabled}
+				aria-label={`View ${kind} diff for ${file.path}`}
+				className="flex min-w-0 flex-1 items-center gap-2 rounded-md px-1.5 py-1 text-left transition hover:bg-[var(--color-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/50 disabled:opacity-40"
+				onClick={onOpenDiff}
+				title={`View ${kind} diff`}
+			>
+				<FileIcon size={14} className="shrink-0 text-[var(--color-muted)]" />
+				<StatusBadge tone={tone} label={statusLabel(file.status)} />
+				<span
+					className={`min-w-0 flex-1 truncate font-mono text-[11px] ${deleted ? "text-[var(--color-muted)] line-through" : ""} ${kind === "unstaged" ? "text-[var(--color-muted)]" : ""}`}
+					title={file.path}
+				>
+					{file.path}
+				</span>
+			</button>
+			<FileActionButton
+				disabled={disabled}
+				onClick={onToggleStage}
+				label={toggleLabel}
+			>
+				{kind === "staged" ? <UndoIcon size={14} /> : <PlusIcon size={14} />}
+			</FileActionButton>
+		</li>
+	);
+}
+
+function BulkActionButton({
+	children,
+	disabled,
+	onClick,
+	title,
+}: {
+	children: ReactNode;
+	disabled?: boolean;
+	onClick: () => void;
+	title?: string;
+}) {
+	return (
+		<button
+			type="button"
+			disabled={disabled}
+			title={title}
+			onClick={onClick}
+			className="rounded-md border border-[var(--color-border)] px-2 py-0.5 text-[10px] font-medium transition hover:bg-[var(--color-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/50 disabled:opacity-40"
+		>
+			{children}
+		</button>
+	);
+}
+
+function FileActionButton({
+	children,
+	disabled,
+	onClick,
+	label,
+}: {
+	children: ReactNode;
+	disabled?: boolean;
+	onClick: () => void;
+	label: string;
+}) {
+	return (
+		<button
+			type="button"
+			disabled={disabled}
+			aria-label={label}
+			title={label}
+			onClick={onClick}
+			className="shrink-0 rounded-md p-1.5 text-[var(--color-muted)] transition hover:bg-[var(--color-hover)] hover:text-[var(--color-fg)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/50 disabled:opacity-40"
+		>
+			{children}
+		</button>
 	);
 }
 

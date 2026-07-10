@@ -1,5 +1,4 @@
 import { create } from "zustand";
-
 import { bridge } from "../shared/bridge";
 import type { WorkingTreeStatusDto } from "../shared/types";
 
@@ -20,6 +19,11 @@ interface CommitStore {
 	appendText: (text: string) => void;
 	replaceWithLastMessage: () => void;
 	appendLastMessage: () => void;
+	stageFile: (filePath: string) => Promise<void>;
+	unstageFile: (filePath: string) => Promise<void>;
+	stageAll: () => Promise<void>;
+	unstageAll: () => Promise<void>;
+	openDiff: (filePath: string, kind: "staged" | "unstaged") => Promise<void>;
 	commit: () => Promise<boolean>;
 }
 
@@ -113,6 +117,62 @@ export const useCommitStore = create<CommitStore>((set, get) => ({
 				message: joinMessage(message, status.lastCommitMessage),
 				messageDirty: true,
 			});
+		}
+	},
+
+	async stageFile(filePath) {
+		set({ busy: true, error: null });
+		try {
+			await bridge.request("stageFile", { filePath });
+			await get().load();
+		} catch (err) {
+			set({ error: err instanceof Error ? err.message : String(err) });
+		} finally {
+			set({ busy: false });
+		}
+	},
+
+	async unstageFile(filePath) {
+		set({ busy: true, error: null });
+		try {
+			await bridge.request("unstageFile", { filePath });
+			await get().load();
+		} catch (err) {
+			set({ error: err instanceof Error ? err.message : String(err) });
+		} finally {
+			set({ busy: false });
+		}
+	},
+
+	async stageAll() {
+		set({ busy: true, error: null });
+		try {
+			await bridge.request("stageAll");
+			await get().load();
+		} catch (err) {
+			set({ error: err instanceof Error ? err.message : String(err) });
+		} finally {
+			set({ busy: false });
+		}
+	},
+
+	async unstageAll() {
+		set({ busy: true, error: null });
+		try {
+			await bridge.request("unstageAll");
+			await get().load();
+		} catch (err) {
+			set({ error: err instanceof Error ? err.message : String(err) });
+		} finally {
+			set({ busy: false });
+		}
+	},
+
+	async openDiff(filePath, kind) {
+		try {
+			await bridge.request("openWorkingTreeDiff", { filePath, kind });
+		} catch (err) {
+			set({ error: err instanceof Error ? err.message : String(err) });
 		}
 	},
 
