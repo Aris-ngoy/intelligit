@@ -29,10 +29,7 @@ test.describe("Git log commit table", () => {
 		);
 
 		await expect(
-			page
-				.getByTestId("commit-table-row")
-				.first()
-				.getByText("feat: implement bento grid layout for dashboard"),
+			page.getByTestId("commit-table-row").first().getByText("Update readme"),
 		).toBeVisible();
 
 		const authorCell = page.getByTestId("commit-table-author-cell").first();

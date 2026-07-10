@@ -16,6 +16,7 @@ import {
 	COMMIT_ROW_HEIGHT,
 	computeGraphWidth,
 	computeMaxLane,
+	GRAPH_TOP_PADDING,
 } from "./graphLayout";
 import { SwimlaneGraph } from "./SwimlaneGraph";
 
@@ -154,7 +155,10 @@ export function CommitTable() {
 				onWidthsChange={handleWidthsChange}
 			/>
 			<div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto">
-				<div className="flex min-h-full">
+				<div
+					className="flex min-h-full"
+					style={{ paddingTop: GRAPH_TOP_PADDING }}
+				>
 					<div
 						className="sticky left-0 shrink-0 self-start bg-[var(--color-app-bg)]"
 						style={{ width: columnWidths.graph }}

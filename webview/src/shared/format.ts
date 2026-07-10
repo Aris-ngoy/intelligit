@@ -1,6 +1,7 @@
+/** Lane 0 = main/default (blue); lane 1+ = feature branches (green, purple, …). */
 const LANE_COLORS = [
+	"#4a90e2",
 	"#6aab73",
-	"#6897bb",
 	"#9876aa",
 	"#cc7832",
 	"#ffc66d",
