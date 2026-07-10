@@ -65,6 +65,18 @@ pnpm test           # type-check, lint, and run the test suite
 
 Press `F5` in VS Code to launch the Extension Development Host.
 
+### Contributing
+
+All commits must follow the [Commit Convention](docs/COMMIT_CONVENTION.md).
+Messages are validated locally by Husky and on every pull request in CI — non-conforming
+commits are rejected.
+
+Quick example:
+
+```bash
+git commit -m "feat(rebase): add autostash toggle to dialog"
+```
+
 ## License
 
 [MIT](LICENSE)
