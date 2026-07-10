@@ -1,14 +1,14 @@
-import { createPreviewBridge, isPreviewMode } from '../preview/previewBridge';
+import { createPreviewBridge, isPreviewMode } from "../preview/previewBridge";
 
 export interface RequestMessage {
-	type: 'request';
+	type: "request";
 	id: string;
 	command: string;
 	params: Record<string, unknown>;
 }
 
 export interface ResponseMessage {
-	type: 'response';
+	type: "response";
 	id: string;
 	success: boolean;
 	data?: unknown;
@@ -16,13 +16,16 @@ export interface ResponseMessage {
 }
 
 export interface EventMessage {
-	type: 'event';
+	type: "event";
 	event: string;
 	data: unknown;
 }
 
 export interface Bridge {
-	request<T = unknown>(command: string, params?: Record<string, unknown>): Promise<T>;
+	request<T = unknown>(
+		command: string,
+		params?: Record<string, unknown>,
+	): Promise<T>;
 	onEvent(handler: (event: string, data: unknown) => void): () => void;
 }
 
@@ -38,19 +41,19 @@ function createVSCodeBridge(): Bridge {
 	>();
 	const eventHandlers = new Set<(event: string, data: unknown) => void>();
 
-	window.addEventListener('message', (e: MessageEvent) => {
+	window.addEventListener("message", (e: MessageEvent) => {
 		const msg = e.data as ResponseMessage | EventMessage;
-		if (msg.type === 'response') {
+		if (msg.type === "response") {
 			const pending = pendingRequests.get(msg.id);
 			if (pending) {
 				pendingRequests.delete(msg.id);
 				if (msg.success) {
 					pending.resolve(msg.data);
 				} else {
-					pending.reject(new Error(msg.error?.message ?? 'Unknown error'));
+					pending.reject(new Error(msg.error?.message ?? "Unknown error"));
 				}
 			}
-		} else if (msg.type === 'event') {
+		} else if (msg.type === "event") {
 			for (const h of eventHandlers) {
 				h(msg.event, msg.data);
 			}
@@ -58,7 +61,10 @@ function createVSCodeBridge(): Bridge {
 	});
 
 	return {
-		request<T>(command: string, params: Record<string, unknown> = {}): Promise<T> {
+		request<T>(
+			command: string,
+			params: Record<string, unknown> = {},
+		): Promise<T> {
 			return new Promise<T>((resolve, reject) => {
 				const id = crypto.randomUUID();
 				const timeout = setTimeout(() => {
@@ -77,7 +83,12 @@ function createVSCodeBridge(): Bridge {
 					},
 				});
 
-				const message: RequestMessage = { type: 'request', id, command, params };
+				const message: RequestMessage = {
+					type: "request",
+					id,
+					command,
+					params,
+				};
 				vscode.postMessage(message);
 			});
 		},

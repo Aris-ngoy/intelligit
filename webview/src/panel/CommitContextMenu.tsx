@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { ReactNode } from "react";
 
 import {
 	AlertTriangleIcon,
@@ -10,27 +10,68 @@ import {
 	GitBranchIcon,
 	TagIcon,
 	UndoIcon,
-} from '../shared/icons';
-import { useGitLogStore } from '../shared/store';
+} from "../shared/icons";
+import { useGitLogStore } from "../shared/store";
 
 const MENU_GROUPS: Array<
 	Array<{ id: string; label: string; icon: ReactNode; disabled?: boolean }>
 > = [
 	[
-		{ id: 'interactiveRebase', label: 'Tidy up from here…', icon: <BrushIcon size={14} /> },
-		{ id: 'rebase', label: 'Move my work from here…', icon: <ArchiveIcon size={14} /> },
-		{ id: 'cherryPick', label: 'Cherry-pick', icon: <CherryIcon size={14} /> },
-		{ id: 'checkout', label: 'Check out this version', icon: <BookmarkIcon size={14} /> },
+		{
+			id: "interactiveRebase",
+			label: "Tidy up from here…",
+			icon: <BrushIcon size={14} />,
+		},
+		{
+			id: "rebase",
+			label: "Move my work from here…",
+			icon: <ArchiveIcon size={14} />,
+		},
+		{ id: "cherryPick", label: "Cherry-pick", icon: <CherryIcon size={14} /> },
+		{
+			id: "checkout",
+			label: "Check out this version",
+			icon: <BookmarkIcon size={14} />,
+		},
 	],
 	[
-		{ id: 'copyHash', label: 'Copy commit hash', icon: <ClipboardIcon size={14} /> },
-		{ id: 'newTag', label: 'New tag…', icon: <TagIcon size={14} />, disabled: true },
-		{ id: 'newBranch', label: 'New branch…', icon: <GitBranchIcon size={14} />, disabled: true },
+		{
+			id: "copyHash",
+			label: "Copy commit hash",
+			icon: <ClipboardIcon size={14} />,
+		},
+		{
+			id: "newTag",
+			label: "New tag…",
+			icon: <TagIcon size={14} />,
+			disabled: true,
+		},
+		{
+			id: "newBranch",
+			label: "New branch…",
+			icon: <GitBranchIcon size={14} />,
+			disabled: true,
+		},
 	],
 	[
-		{ id: 'resetSoft', label: 'Reset branch here (keep changes)', icon: <UndoIcon size={14} />, disabled: true },
-		{ id: 'resetMixed', label: 'Reset branch here (unstage)', icon: <UndoIcon size={14} />, disabled: true },
-		{ id: 'resetHard', label: 'Reset branch here (discard)', icon: <AlertTriangleIcon size={14} />, disabled: true },
+		{
+			id: "resetSoft",
+			label: "Reset branch here (keep changes)",
+			icon: <UndoIcon size={14} />,
+			disabled: true,
+		},
+		{
+			id: "resetMixed",
+			label: "Reset branch here (unstage)",
+			icon: <UndoIcon size={14} />,
+			disabled: true,
+		},
+		{
+			id: "resetHard",
+			label: "Reset branch here (discard)",
+			icon: <AlertTriangleIcon size={14} />,
+			disabled: true,
+		},
 	],
 ];
 
@@ -51,9 +92,12 @@ export function CommitContextMenu() {
 			role="menu"
 		>
 			{MENU_GROUPS.map((group, groupIndex) => (
-				<div key={groupIndex}>
+				<div key={group[0]?.id ?? group.map((item) => item.id).join("-")}>
 					{groupIndex > 0 && (
-						<div className="my-1 border-t border-[var(--color-border)]/60" role="separator" />
+						<div
+							className="my-1 border-t border-[var(--color-border)]/60"
+							role="separator"
+						/>
 					)}
 					{group.map((item) => (
 						<button
@@ -64,7 +108,10 @@ export function CommitContextMenu() {
 							onClick={() => void runContextAction(item.id)}
 							role="menuitem"
 						>
-							<span aria-hidden className="flex w-4 shrink-0 items-center justify-center text-[var(--color-muted)]">
+							<span
+								aria-hidden
+								className="flex w-4 shrink-0 items-center justify-center text-[var(--color-muted)]"
+							>
 								{item.icon}
 							</span>
 							{item.label}

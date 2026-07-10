@@ -1,4 +1,4 @@
-import type * as vscode from 'vscode';
+import type * as vscode from "vscode";
 
 import {
 	ErrorCode,
@@ -6,7 +6,7 @@ import {
 	type EventType,
 	type RequestMessage,
 	type ResponseMessage,
-} from './protocol';
+} from "./protocol";
 
 export type CommandHandler = (
 	params: Record<string, unknown>,
@@ -23,9 +23,11 @@ export class MessageRouter {
 	registerWebview(webview: vscode.Webview): vscode.Disposable {
 		this.webviews.add(webview);
 
-		const messageDisposable = webview.onDidReceiveMessage((msg: RequestMessage) => {
-			void this.handleRequest(webview, msg);
-		});
+		const messageDisposable = webview.onDidReceiveMessage(
+			(msg: RequestMessage) => {
+				void this.handleRequest(webview, msg);
+			},
+		);
 
 		return {
 			dispose: () => {
@@ -36,7 +38,7 @@ export class MessageRouter {
 	}
 
 	broadcastEvent(event: EventType, data: unknown): void {
-		const msg: EventMessage = { type: 'event', event, data };
+		const msg: EventMessage = { type: "event", event, data };
 		for (const webview of this.webviews) {
 			void webview.postMessage(msg);
 		}
@@ -46,7 +48,7 @@ export class MessageRouter {
 		webview: vscode.Webview,
 		msg: RequestMessage,
 	): Promise<void> {
-		if (msg.type !== 'request') {
+		if (msg.type !== "request") {
 			return;
 		}
 
@@ -79,7 +81,7 @@ export class MessageRouter {
 		error?: { code: ErrorCode; message: string },
 	): void {
 		const response: ResponseMessage = {
-			type: 'response',
+			type: "response",
 			id,
 			success,
 			data,

@@ -1,4 +1,4 @@
-import type { LucideIcon, LucideProps } from 'lucide-react';
+import type { LucideIcon, LucideProps } from "lucide-react";
 import {
 	Archive,
 	ArrowDown,
@@ -38,7 +38,7 @@ import {
 	User,
 	Users,
 	X,
-} from 'lucide-react';
+} from "lucide-react";
 
 export type IconProps = LucideProps & {
 	size?: number;
@@ -90,7 +90,7 @@ export const UserIcon = createIcon(User);
 export const UsersIcon = createIcon(Users);
 export const XIcon = createIcon(X);
 
-export function LoaderIcon({ size = 16, className = '', ...props }: IconProps) {
+export function LoaderIcon({ size = 16, className = "", ...props }: IconProps) {
 	return (
 		<Loader2
 			size={size}

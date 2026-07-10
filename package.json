@@ -1,193 +1,202 @@
 {
-  "name": "intelligit-visual-git",
-  "displayName": "IntelliGit — Visual Git Log & Rebase",
-  "description": "A visual Git Log, beginner-friendly Interactive Rebase, and 3-way conflict resolution for VS Code.",
-  "version": "0.5.0",
-  "publisher": "ArisNgoy",
-  "license": "MIT",
-  "icon": "media/icon.png",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/Aris-ngoy/intelligit.git"
-  },
-  "bugs": {
-    "url": "https://github.com/Aris-ngoy/intelligit/issues"
-  },
-  "homepage": "https://github.com/Aris-ngoy/intelligit#readme",
-  "engines": {
-    "vscode": "^1.105.0"
-  },
-  "categories": [
-    "SCM Providers",
-    "Other"
-  ],
-  "keywords": [
-    "git",
-    "rebase",
-    "git log",
-    "git graph",
-    "interactive rebase",
-    "merge conflict"
-  ],
-  "activationEvents": [
-    "onStartupFinished"
-  ],
-  "main": "./dist/extension.js",
-  "contributes": {
-    "commands": [
-      {
-        "command": "intelligit.openGitLog",
-        "title": "Open Git Log (Full Screen)",
-        "category": "IntelliGit",
-        "icon": "$(git-commit)"
-      },
-      {
-        "command": "intelligit.openGitLogInEditor",
-        "title": "Open Git Log in Editor (Full Screen)",
-        "category": "IntelliGit",
-        "icon": "$(screen-full)"
-      },
-      {
-        "command": "intelligit.rebase",
-        "title": "Rebase...",
-        "category": "IntelliGit",
-        "icon": "$(git-merge)"
-      },
-      {
-        "command": "intelligit.interactiveRebaseFromHere",
-        "title": "Interactively Rebase from Here...",
-        "category": "IntelliGit"
-      },
-      {
-        "command": "intelligit.refreshGitLog",
-        "title": "Refresh",
-        "category": "IntelliGit",
-        "icon": "$(refresh)"
-      },
-      {
-        "command": "intelligit.showCommitInOutput",
-        "title": "Debug: Show Git Log in Output",
-        "category": "IntelliGit"
-      },
-      {
-        "command": "intelligit.openConflicts",
-        "title": "Conflicts",
-        "category": "IntelliGit",
-        "icon": "$(git-merge)"
-      },
-      {
-        "command": "intelligit.openStashes",
-        "title": "Stashes",
-        "category": "IntelliGit",
-        "icon": "$(archive)"
-      },
-      {
-        "command": "intelligit.openMergeEditor",
-        "title": "Open Merge Editor",
-        "category": "IntelliGit"
-      },
-      {
-        "command": "intelligit.pull",
-        "title": "Pull",
-        "category": "IntelliGit",
-        "icon": "$(cloud-download)"
-      },
-      {
-        "command": "intelligit.push",
-        "title": "Push",
-        "category": "IntelliGit",
-        "icon": "$(cloud-upload)"
-      },
-      {
-        "command": "intelligit.commit",
-        "title": "Commit…",
-        "category": "IntelliGit",
-        "icon": "$(git-commit)"
-      },
-      {
-        "command": "intelligit.fetch",
-        "title": "Fetch",
-        "category": "IntelliGit",
-        "icon": "$(cloud)"
-      }
-    ],
-    "viewsContainers": {
-      "activitybar": [
-        {
-          "id": "intelligit-panel",
-          "title": "IntelliGit",
-          "icon": "media/sidebar-icon.svg"
-        }
-      ]
-    },
-    "views": {
-      "intelligit-panel": [
-        {
-          "id": "intelligit.gitLog",
-          "name": "IntelliGit",
-          "type": "webview"
-        }
-      ]
-    },
-    "menus": {
-      "view/title": [
-        {
-          "command": "intelligit.openGitLogInEditor",
-          "when": "view == intelligit.gitLog",
-          "group": "navigation@1"
-        },
-        {
-          "command": "intelligit.refreshGitLog",
-          "when": "view == intelligit.gitLog",
-          "group": "navigation@2"
-        }
-      ],
-      "scm/title": [
-        {
-          "command": "intelligit.commit",
-          "when": "scmProvider == git",
-          "group": "navigation"
-        },
-        {
-          "command": "intelligit.openConflicts",
-          "when": "scmProvider == git",
-          "group": "navigation"
-        },
-        {
-          "command": "intelligit.openStashes",
-          "when": "scmProvider == git",
-          "group": "navigation"
-        }
-      ]
-    }
-  },
-  "scripts": {
-    "vscode:prepublish": "pnpm run package",
-    "compile": "pnpm run check-types && pnpm run lint && node esbuild.js",
-    "watch": "npm-run-all -p watch:*",
-    "watch:esbuild": "node esbuild.js --watch",
-    "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
-    "watch:webview": "cd webview && pnpm run watch",
-    "package": "pnpm run check-types && pnpm run lint && node esbuild.js --production && pnpm run build:web",
-    "build:web": "cd webview && pnpm run build",
-    "build": "pnpm run compile && pnpm run build:web",
-    "compile-tests": "tsc -p . --outDir out",
-    "watch-tests": "tsc -p . -w --outDir out",
-    "pretest": "pnpm run compile-tests && pnpm run compile && pnpm run lint",
-    "check-types": "tsc --noEmit",
-    "lint": "eslint src",
-    "test": "vscode-test"
-  },
-  "devDependencies": {
-    "@types/vscode": "^1.105.0",
-    "@types/mocha": "^10.0.10",
-    "@types/node": "22.x",
-    "typescript-eslint": "^8.56.1",
-    "eslint": "^9.39.3",
-    "esbuild": "^0.27.3",
-    "npm-run-all": "^4.1.5",
-    "typescript": "^5.9.3",
-    "@vscode/test-cli": "^0.0.12",
-    "@vscode/test-electron": "^2.5.2"
-  }
+	"name": "intelligit-visual-git",
+	"displayName": "IntelliGit — Visual Git Log & Rebase",
+	"description": "A visual Git Log, beginner-friendly Interactive Rebase, and 3-way conflict resolution for VS Code.",
+	"version": "0.5.0",
+	"publisher": "ArisNgoy",
+	"license": "MIT",
+	"icon": "media/icon.png",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/Aris-ngoy/intelligit.git"
+	},
+	"bugs": {
+		"url": "https://github.com/Aris-ngoy/intelligit/issues"
+	},
+	"homepage": "https://github.com/Aris-ngoy/intelligit#readme",
+	"engines": {
+		"vscode": "^1.105.0"
+	},
+	"categories": [
+		"SCM Providers",
+		"Other"
+	],
+	"keywords": [
+		"git",
+		"rebase",
+		"git log",
+		"git graph",
+		"interactive rebase",
+		"merge conflict"
+	],
+	"activationEvents": [
+		"onStartupFinished"
+	],
+	"main": "./dist/extension.js",
+	"contributes": {
+		"commands": [
+			{
+				"command": "intelligit.openGitLog",
+				"title": "Open Git Log (Full Screen)",
+				"category": "IntelliGit",
+				"icon": "$(git-commit)"
+			},
+			{
+				"command": "intelligit.openGitLogInEditor",
+				"title": "Open Git Log in Editor (Full Screen)",
+				"category": "IntelliGit",
+				"icon": "$(screen-full)"
+			},
+			{
+				"command": "intelligit.rebase",
+				"title": "Rebase...",
+				"category": "IntelliGit",
+				"icon": "$(git-merge)"
+			},
+			{
+				"command": "intelligit.interactiveRebaseFromHere",
+				"title": "Interactively Rebase from Here...",
+				"category": "IntelliGit"
+			},
+			{
+				"command": "intelligit.refreshGitLog",
+				"title": "Refresh",
+				"category": "IntelliGit",
+				"icon": "$(refresh)"
+			},
+			{
+				"command": "intelligit.showCommitInOutput",
+				"title": "Debug: Show Git Log in Output",
+				"category": "IntelliGit"
+			},
+			{
+				"command": "intelligit.openConflicts",
+				"title": "Conflicts",
+				"category": "IntelliGit",
+				"icon": "$(git-merge)"
+			},
+			{
+				"command": "intelligit.openStashes",
+				"title": "Stashes",
+				"category": "IntelliGit",
+				"icon": "$(archive)"
+			},
+			{
+				"command": "intelligit.openMergeEditor",
+				"title": "Open Merge Editor",
+				"category": "IntelliGit"
+			},
+			{
+				"command": "intelligit.pull",
+				"title": "Pull",
+				"category": "IntelliGit",
+				"icon": "$(cloud-download)"
+			},
+			{
+				"command": "intelligit.push",
+				"title": "Push",
+				"category": "IntelliGit",
+				"icon": "$(cloud-upload)"
+			},
+			{
+				"command": "intelligit.commit",
+				"title": "Commit…",
+				"category": "IntelliGit",
+				"icon": "$(git-commit)"
+			},
+			{
+				"command": "intelligit.fetch",
+				"title": "Fetch",
+				"category": "IntelliGit",
+				"icon": "$(cloud)"
+			}
+		],
+		"viewsContainers": {
+			"activitybar": [
+				{
+					"id": "intelligit-panel",
+					"title": "IntelliGit",
+					"icon": "media/sidebar-icon.svg"
+				}
+			]
+		},
+		"views": {
+			"intelligit-panel": [
+				{
+					"id": "intelligit.gitLog",
+					"name": "IntelliGit",
+					"type": "webview"
+				}
+			]
+		},
+		"menus": {
+			"view/title": [
+				{
+					"command": "intelligit.openGitLogInEditor",
+					"when": "view == intelligit.gitLog",
+					"group": "navigation@1"
+				},
+				{
+					"command": "intelligit.refreshGitLog",
+					"when": "view == intelligit.gitLog",
+					"group": "navigation@2"
+				}
+			],
+			"scm/title": [
+				{
+					"command": "intelligit.commit",
+					"when": "scmProvider == git",
+					"group": "navigation"
+				},
+				{
+					"command": "intelligit.openConflicts",
+					"when": "scmProvider == git",
+					"group": "navigation"
+				},
+				{
+					"command": "intelligit.openStashes",
+					"when": "scmProvider == git",
+					"group": "navigation"
+				}
+			]
+		}
+	},
+	"scripts": {
+		"vscode:prepublish": "pnpm run package",
+		"compile": "pnpm run check-types && pnpm run check && node esbuild.js",
+		"watch": "npm-run-all -p watch:*",
+		"watch:esbuild": "node esbuild.js --watch",
+		"watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
+		"watch:webview": "cd webview && pnpm run watch",
+		"package": "pnpm run check-types && pnpm run check && node esbuild.js --production && pnpm run build:web",
+		"build:web": "cd webview && pnpm run build",
+		"build": "pnpm run compile && pnpm run build:web",
+		"compile-tests": "tsc -p . --outDir out",
+		"watch-tests": "tsc -p . -w --outDir out",
+		"pretest": "pnpm run compile-tests && pnpm run compile && pnpm run check",
+		"check-types": "tsc --noEmit",
+		"lint": "biome lint .",
+		"format": "biome format --write .",
+		"format:check": "biome format .",
+		"check": "biome check .",
+		"check:fix": "biome check --write .",
+		"test": "vscode-test",
+		"prepare": "husky"
+	},
+	"lint-staged": {
+		"*.{js,mjs,cjs,ts,tsx,json,jsonc}": "biome check --write --no-errors-on-unmatched --files-ignore-unknown=true"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.5.3",
+		"@types/mocha": "^10.0.10",
+		"@types/node": "22.x",
+		"@types/vscode": "^1.105.0",
+		"@vscode/test-cli": "^0.0.12",
+		"@vscode/test-electron": "^2.5.2",
+		"esbuild": "^0.27.3",
+		"husky": "^9.1.7",
+		"lint-staged": "^17.0.8",
+		"npm-run-all": "^4.1.5",
+		"typescript": "^5.9.3"
+	}
 }

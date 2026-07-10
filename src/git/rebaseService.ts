@@ -1,9 +1,13 @@
-import * as fs from 'node:fs/promises';
-import * as os from 'node:os';
-import * as path from 'node:path';
+import * as fs from "node:fs/promises";
+import * as os from "node:os";
+import * as path from "node:path";
 
-import type { GitService } from './gitService';
-import type { InteractiveRebaseCommit, RebaseFlag, RebaseOptions } from './types';
+import type { GitService } from "./gitService";
+import type {
+	InteractiveRebaseCommit,
+	RebaseFlag,
+	RebaseOptions,
+} from "./types";
 
 export class RebaseService {
 	constructor(private readonly git: GitService) {}
@@ -15,14 +19,14 @@ export class RebaseService {
 	): Promise<string> {
 		const result = await this.git.exec(
 			repoRoot,
-			['rev-parse', `${fromCommitHash}^`],
+			["rev-parse", `${fromCommitHash}^`],
 			{ allowFailure: true },
 		);
 		if (result.exitCode === 0) {
 			return result.stdout.trim();
 		}
 		// Root commit — rebase onto empty tree
-		return '--root';
+		return "--root";
 	}
 
 	async loadInteractiveCommits(
@@ -35,7 +39,7 @@ export class RebaseService {
 			shortHash: c.shortHash,
 			message: c.message,
 			timestamp: c.timestamp,
-			action: 'pick' as const,
+			action: "pick" as const,
 		}));
 	}
 
@@ -60,11 +64,11 @@ export class RebaseService {
 				: undefined;
 
 		try {
-			const args = ['rebase', '-i', ...rebaseFlagsToArgs(flags), upstream];
+			const args = ["rebase", "-i", ...rebaseFlagsToArgs(flags), upstream];
 			await this.git.exec(repoRoot, args, {
 				env: {
 					GIT_SEQUENCE_EDITOR: sequenceScript,
-					GIT_EDITOR: messageEditor ? messageEditor.path : 'true',
+					GIT_EDITOR: messageEditor ? messageEditor.path : "true",
 				},
 			});
 		} finally {
@@ -79,7 +83,7 @@ export class RebaseService {
 	): Promise<void> {
 		const onto = options.onto.trim();
 		if (!onto) {
-			throw new Error('Onto branch or revision is required');
+			throw new Error("Onto branch or revision is required");
 		}
 
 		const flags = rebaseFlagsToArgs(options.flags);
@@ -88,33 +92,36 @@ export class RebaseService {
 		let args: string[];
 		if (from && from.length > 0) {
 			// git rebase [flags] --onto newbase upstream [branch]
-			args = ['rebase', ...flags, '--onto', onto, from, 'HEAD'];
+			args = ["rebase", ...flags, "--onto", onto, from, "HEAD"];
 		} else {
-			args = ['rebase', ...flags, onto];
+			args = ["rebase", ...flags, onto];
 		}
 
 		await this.git.exec(repoRoot, args);
 	}
 
 	async abortRebase(repoRoot: string): Promise<void> {
-		await this.git.exec(repoRoot, ['rebase', '--abort'], { allowFailure: true });
+		await this.git.exec(repoRoot, ["rebase", "--abort"], {
+			allowFailure: true,
+		});
 	}
 }
 
 function buildTodoFile(commits: InteractiveRebaseCommit[]): string {
 	const lines = commits
-		.filter((c) => c.action !== 'drop')
+		.filter((c) => c.action !== "drop")
 		.map((c) => {
-			const action = c.action === 'pick' ? 'pick' : c.action;
-			const subject = c.message.split('\n')[0]?.replace(/\s+/g, ' ').trim() ?? '';
+			const action = c.action === "pick" ? "pick" : c.action;
+			const subject =
+				c.message.split("\n")[0]?.replace(/\s+/g, " ").trim() ?? "";
 			return `${action} ${c.hash} ${subject}`;
 		});
 
 	if (lines.length === 0) {
-		throw new Error('No commits selected for rebase');
+		throw new Error("No commits selected for rebase");
 	}
 
-	return `${lines.join('\n')}\n`;
+	return `${lines.join("\n")}\n`;
 }
 
 async function writeSequenceEditorScript(todoBody: string): Promise<string> {
@@ -140,8 +147,8 @@ fs.writeFileSync(todoPath, ${JSON.stringify(todoBody)}, 'utf8');
 /** New commit messages, in the order git will ask for them during the rebase. */
 function collectEditorMessages(commits: InteractiveRebaseCommit[]): string[] {
 	return commits
-		.filter((c) => c.action !== 'drop')
-		.filter((c) => c.action === 'reword' || c.action === 'squash')
+		.filter((c) => c.action !== "drop")
+		.filter((c) => c.action === "reword" || c.action === "squash")
 		.map((c) => c.message);
 }
 
@@ -155,7 +162,10 @@ async function writeMessageEditorScript(
 ): Promise<{ path: string; cleanup: () => Promise<void> }> {
 	const stamp = `${process.pid}-${Date.now()}`;
 	const indexPath = path.join(os.tmpdir(), `intelligit-msg-index-${stamp}`);
-	const scriptPath = path.join(os.tmpdir(), `intelligit-msg-editor-${stamp}.js`);
+	const scriptPath = path.join(
+		os.tmpdir(),
+		`intelligit-msg-editor-${stamp}.js`,
+	);
 
 	const script = `#!/usr/bin/env node
 'use strict';
@@ -190,7 +200,7 @@ fs.writeFileSync(indexPath, String(index + 1), 'utf8');
 function rebaseFlagsToArgs(flags: RebaseFlag[]): string[] {
 	const args: string[] = [];
 	for (const flag of flags) {
-		if (flag === '--onto') {
+		if (flag === "--onto") {
 			continue;
 		}
 		args.push(flag);

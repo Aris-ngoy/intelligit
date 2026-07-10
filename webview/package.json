@@ -1,40 +1,40 @@
 {
-  "name": "intelligit-webview",
-  "private": true,
-  "version": "0.0.0",
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "dev:gitlog": "vite --open '/?preview=gitlog'",
-    "dev:rebase": "vite --open '/?preview=rebase'",
-    "dev:tidy": "vite --open '/?preview=tidy'",
-    "dev:conflicts": "vite --open '/?preview=conflicts'",
-    "dev:merge": "vite --open '/?preview=merge'",
-    "dev:stash": "vite --open '/?preview=stash'",
-    "dev:commit": "vite --open '/?preview=commit'",
-    "build": "tsc && vite build",
-    "watch": "vite build --watch",
-    "preview": "vite preview",
-    "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui"
-  },
-  "dependencies": {
-    "allotment": "^1.20.5",
-    "diff": "^8.0.3",
-    "lucide-react": "^1.24.0",
-    "node-diff3": "^3.2.0",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4",
-    "zustand": "^5.0.11"
-  },
-  "devDependencies": {
-    "@playwright/test": "^1.61.1",
-    "@tailwindcss/vite": "^4.1.18",
-    "@types/react": "^19.2.14",
-    "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^5.1.4",
-    "tailwindcss": "^4.1.18",
-    "typescript": "~5.9.3",
-    "vite": "^7.3.1"
-  }
+	"name": "intelligit-webview",
+	"private": true,
+	"version": "0.0.0",
+	"type": "module",
+	"scripts": {
+		"dev": "vite",
+		"dev:gitlog": "vite --open '/?preview=gitlog'",
+		"dev:rebase": "vite --open '/?preview=rebase'",
+		"dev:tidy": "vite --open '/?preview=tidy'",
+		"dev:conflicts": "vite --open '/?preview=conflicts'",
+		"dev:merge": "vite --open '/?preview=merge'",
+		"dev:stash": "vite --open '/?preview=stash'",
+		"dev:commit": "vite --open '/?preview=commit'",
+		"build": "tsc && vite build",
+		"watch": "vite build --watch",
+		"preview": "vite preview",
+		"test:e2e": "playwright test",
+		"test:e2e:ui": "playwright test --ui"
+	},
+	"dependencies": {
+		"allotment": "^1.20.5",
+		"diff": "^8.0.3",
+		"lucide-react": "^1.24.0",
+		"node-diff3": "^3.2.0",
+		"react": "^19.2.4",
+		"react-dom": "^19.2.4",
+		"zustand": "^5.0.11"
+	},
+	"devDependencies": {
+		"@playwright/test": "^1.61.1",
+		"@tailwindcss/vite": "^4.1.18",
+		"@types/react": "^19.2.14",
+		"@types/react-dom": "^19.2.3",
+		"@vitejs/plugin-react": "^5.1.4",
+		"tailwindcss": "^4.1.18",
+		"typescript": "~5.9.3",
+		"vite": "^7.3.1"
+	}
 }

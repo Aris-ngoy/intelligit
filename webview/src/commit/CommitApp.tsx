@@ -1,8 +1,6 @@
-import { useEffect, useRef, type ReactNode } from 'react';
-
-import { useCommitStore } from './store';
-import { GitCommitIcon, PencilIcon, PlusIcon } from '../shared/icons';
-import { fileStatusTone, statusLabel } from '../shared/format';
+import { type ReactNode, useEffect, useRef } from "react";
+import { fileStatusTone, statusLabel } from "../shared/format";
+import { GitCommitIcon, PencilIcon, PlusIcon } from "../shared/icons";
 import {
 	EmptyState,
 	ErrorStrip,
@@ -15,12 +13,13 @@ import {
 	StatusBadge,
 	TaskFooter,
 	TaskHeader,
-} from '../shared/ui';
+} from "../shared/ui";
+import { useCommitStore } from "./store";
 
 const APPEND_SNIPPETS = [
-	{ label: 'Co-authored-by', text: 'Co-authored-by: Name <email@example.com>' },
-	{ label: 'Fixes issue', text: 'Fixes #' },
-	{ label: 'See also', text: 'See also: ' },
+	{ label: "Co-authored-by", text: "Co-authored-by: Name <email@example.com>" },
+	{ label: "Fixes issue", text: "Fixes #" },
+	{ label: "See also", text: "See also: " },
 ] as const;
 
 export function CommitApp() {
@@ -34,7 +33,9 @@ export function CommitApp() {
 	const setMessage = useCommitStore((s) => s.setMessage);
 	const setMode = useCommitStore((s) => s.setMode);
 	const appendText = useCommitStore((s) => s.appendText);
-	const replaceWithLastMessage = useCommitStore((s) => s.replaceWithLastMessage);
+	const replaceWithLastMessage = useCommitStore(
+		(s) => s.replaceWithLastMessage,
+	);
 	const appendLastMessage = useCommitStore((s) => s.appendLastMessage);
 	const commit = useCommitStore((s) => s.commit);
 
@@ -46,9 +47,7 @@ export function CommitApp() {
 
 	const canCommit =
 		message.trim().length > 0 &&
-		(mode === 'amend'
-			? status?.canAmend
-			: status?.hasStagedChanges) &&
+		(mode === "amend" ? status?.canAmend : status?.hasStagedChanges) &&
 		!busy;
 
 	if (loading && !status) {
@@ -65,13 +64,13 @@ export function CommitApp() {
 	}
 
 	const commitLabel =
-		mode === 'amend'
+		mode === "amend"
 			? busy
-				? 'Updating…'
-				: 'Update last commit'
+				? "Updating…"
+				: "Update last commit"
 			: busy
-				? 'Saving…'
-				: 'Save changes';
+				? "Saving…"
+				: "Save changes";
 
 	return (
 		<div className="flex h-full flex-col">
@@ -81,15 +80,17 @@ export function CommitApp() {
 				description="Write a message for what's staged. You can save a new commit or update the last one."
 			/>
 
-			{mode === 'new' && !status.hasStagedChanges && (
+			{mode === "new" && !status.hasStagedChanges && (
 				<InfoStrip>
-					Nothing staged yet — stage files in Source Control, then come back here.
+					Nothing staged yet — stage files in Source Control, then come back
+					here.
 				</InfoStrip>
 			)}
 
-			{mode === 'amend' && status.lastCommitLikelyPushed && (
+			{mode === "amend" && status.lastCommitLikelyPushed && (
 				<InfoStrip>
-					The last commit may already be on the remote. Updating it rewrites history.
+					The last commit may already be on the remote. Updating it rewrites
+					history.
 				</InfoStrip>
 			)}
 
@@ -111,23 +112,23 @@ export function CommitApp() {
 					<SegmentedActionButton
 						icon={<GitCommitIcon size={16} />}
 						label="New commit"
-						active={mode === 'new'}
+						active={mode === "new"}
 						activeClass="border-[var(--color-accent)] bg-[var(--color-accent)]/15 text-[var(--color-accent)]"
 						disabled={busy}
-						onClick={() => setMode('new')}
+						onClick={() => setMode("new")}
 					/>
 					<SegmentedActionButton
 						icon={<PencilIcon size={16} />}
 						label="Amend last"
-						active={mode === 'amend'}
+						active={mode === "amend"}
 						activeClass="border-orange-500/60 bg-orange-500/15 text-orange-300"
 						disabled={busy || !status.canAmend}
 						title={
 							status.canAmend
-								? 'Replace or extend the last commit message'
-								: 'No commits to amend yet'
+								? "Replace or extend the last commit message"
+								: "No commits to amend yet"
 						}
-						onClick={() => setMode('amend')}
+						onClick={() => setMode("amend")}
 					/>
 				</div>
 
@@ -139,9 +140,9 @@ export function CommitApp() {
 					value={message}
 					onChange={(event) => setMessage(event.target.value)}
 					placeholder={
-						mode === 'amend'
-							? 'Edit the last commit message…'
-							: 'Short summary on the first line, details below…'
+						mode === "amend"
+							? "Edit the last commit message…"
+							: "Short summary on the first line, details below…"
 					}
 					rows={8}
 					disabled={busy}
@@ -243,7 +244,10 @@ export function CommitApp() {
 			<TaskFooter
 				summary={<ReassuranceLine />}
 				left={
-					<SecondaryButton disabled={busy || loading} onClick={() => void load()}>
+					<SecondaryButton
+						disabled={busy || loading}
+						onClick={() => void load()}
+					>
 						Refresh
 					</SecondaryButton>
 				}

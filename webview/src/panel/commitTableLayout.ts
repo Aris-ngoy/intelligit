@@ -1,4 +1,4 @@
-const STORAGE_KEY = 'intelligit.commitTable.columnWidths';
+const STORAGE_KEY = "intelligit.commitTable.columnWidths";
 
 export interface CommitTableColumnWidths {
 	graph: number;
@@ -19,9 +19,9 @@ export function loadStoredColumnWidths(): Partial<CommitTableColumnWidths> {
 		}
 		const parsed = JSON.parse(raw) as Partial<CommitTableColumnWidths>;
 		return {
-			author: typeof parsed.author === 'number' ? parsed.author : undefined,
-			date: typeof parsed.date === 'number' ? parsed.date : undefined,
-			graph: typeof parsed.graph === 'number' ? parsed.graph : undefined,
+			author: typeof parsed.author === "number" ? parsed.author : undefined,
+			date: typeof parsed.date === "number" ? parsed.date : undefined,
+			graph: typeof parsed.graph === "number" ? parsed.graph : undefined,
 		};
 	} catch {
 		return {};

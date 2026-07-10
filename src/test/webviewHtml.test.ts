@@ -1,15 +1,15 @@
-import * as assert from 'node:assert/strict';
+import * as assert from "node:assert/strict";
 
-import * as vscode from 'vscode';
+import * as vscode from "vscode";
 
-import { MessageRouter } from '../messages/messageRouter';
-import { getWebviewHtml } from '../views/html';
-import { GitLogViewProvider } from '../views/gitLogViewProvider';
+import { MessageRouter } from "../messages/messageRouter";
+import { GitLogViewProvider } from "../views/gitLogViewProvider";
+import { getWebviewHtml } from "../views/html";
 
 function fakeWebview(posted?: Array<Record<string, unknown>>): vscode.Webview {
 	return {
 		asWebviewUri: (uri: vscode.Uri) => uri,
-		cspSource: 'vscode-resource:',
+		cspSource: "vscode-resource:",
 		onDidReceiveMessage: () => ({ dispose() {} }),
 		postMessage: (msg: Record<string, unknown>) => {
 			posted?.push(msg);
@@ -18,28 +18,28 @@ function fakeWebview(posted?: Array<Record<string, unknown>>): vscode.Webview {
 	} as unknown as vscode.Webview;
 }
 
-suite('getWebviewHtml', () => {
-	const extUri = vscode.Uri.file('/ext');
+suite("getWebviewHtml", () => {
+	const extUri = vscode.Uri.file("/ext");
 
-	test('renders the requested mode and asset references', () => {
-		const html = getWebviewHtml(fakeWebview(), extUri, { mode: 'conflicts' });
+	test("renders the requested mode and asset references", () => {
+		const html = getWebviewHtml(fakeWebview(), extUri, { mode: "conflicts" });
 		assert.match(html, /data-mode="conflicts"/);
 		assert.match(html, /assets\/main\.js/);
 		assert.match(html, /assets\/style\.css/);
 	});
 
-	test('applies a matching nonce to the CSP and the script tag', () => {
-		const html = getWebviewHtml(fakeWebview(), extUri, { mode: 'panel' });
+	test("applies a matching nonce to the CSP and the script tag", () => {
+		const html = getWebviewHtml(fakeWebview(), extUri, { mode: "panel" });
 		const cspNonce = html.match(/script-src 'nonce-([A-Za-z0-9]+)'/);
 		const tagNonce = html.match(/<script[^>]*nonce="([A-Za-z0-9]+)"/);
-		assert.ok(cspNonce, 'CSP nonce present');
-		assert.ok(tagNonce, 'script nonce present');
-		assert.equal(cspNonce![1], tagNonce![1]);
+		assert.ok(cspNonce, "CSP nonce present");
+		assert.ok(tagNonce, "script nonce present");
+		assert.equal(cspNonce?.[1], tagNonce?.[1]);
 	});
 
-	test('escapes attribute values to prevent injection', () => {
+	test("escapes attribute values to prevent injection", () => {
 		const html = getWebviewHtml(fakeWebview(), extUri, {
-			mode: 'merge',
+			mode: "merge",
 			file: 'a"><img src=x>&.ts',
 		});
 		assert.doesNotMatch(html, /data-file="a"><img/);
@@ -48,20 +48,20 @@ suite('getWebviewHtml', () => {
 		assert.match(html, /&amp;/);
 	});
 
-	test('defaults to panel mode when none is given', () => {
+	test("defaults to panel mode when none is given", () => {
 		const html = getWebviewHtml(fakeWebview(), extUri, {});
 		assert.match(html, /data-mode="panel"/);
 	});
 });
 
-suite('GitLogViewProvider', () => {
-	test('viewType matches the contributed view id', () => {
-		assert.equal(GitLogViewProvider.viewType, 'intelligit.gitLog');
+suite("GitLogViewProvider", () => {
+	test("viewType matches the contributed view id", () => {
+		assert.equal(GitLogViewProvider.viewType, "intelligit.gitLog");
 	});
 
-	test('resolveWebviewView sets panel HTML and registers the webview', () => {
+	test("resolveWebviewView sets panel HTML and registers the webview", () => {
 		const router = new MessageRouter();
-		const provider = new GitLogViewProvider(vscode.Uri.file('/ext'), router);
+		const provider = new GitLogViewProvider(vscode.Uri.file("/ext"), router);
 
 		const posted: Array<Record<string, unknown>> = [];
 		const webview = fakeWebview(posted);
@@ -81,8 +81,8 @@ suite('GitLogViewProvider', () => {
 		assert.match(webview.html, /data-mode="sidebar"/);
 
 		// Registered with the router: broadcasts now reach this webview.
-		router.broadcastEvent('gitStateChanged', { ok: true });
+		router.broadcastEvent("gitStateChanged", { ok: true });
 		assert.equal(posted.length, 1);
-		assert.equal((posted[0] as { event: string }).event, 'gitStateChanged');
+		assert.equal((posted[0] as { event: string }).event, "gitStateChanged");
 	});
 });

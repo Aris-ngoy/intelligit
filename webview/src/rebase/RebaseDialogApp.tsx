@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
 import {
 	ArchiveIcon,
@@ -6,7 +6,7 @@ import {
 	CheckIcon,
 	GitBranchIcon,
 	PinIcon,
-} from '../shared/icons';
+} from "../shared/icons";
 import {
 	Card,
 	Chip,
@@ -15,21 +15,39 @@ import {
 	PrimaryButton,
 	ReassuranceLine,
 	StepBadge,
-} from '../shared/ui';
-import { useRebaseDialogStore } from './store';
+} from "../shared/ui";
+import { useRebaseDialogStore } from "./store";
 
 const FLAG_OPTIONS = [
-	{ id: '--autostash', label: 'Auto-stash', help: 'Tuck away unsaved changes first, then bring them back after.' },
-	{ id: '--no-verify', label: 'Skip checks', help: 'Don’t run the pre-commit hooks while moving.' },
-	{ id: '--keep-empty', label: 'Keep empty commits', help: 'Don’t throw away commits that change nothing.' },
-	{ id: '--autosquash', label: 'Auto-squash', help: 'Automatically fold in commits marked “fixup!”.' },
+	{
+		id: "--autostash",
+		label: "Auto-stash",
+		help: "Tuck away unsaved changes first, then bring them back after.",
+	},
+	{
+		id: "--no-verify",
+		label: "Skip checks",
+		help: "Don’t run the pre-commit hooks while moving.",
+	},
+	{
+		id: "--keep-empty",
+		label: "Keep empty commits",
+		help: "Don’t throw away commits that change nothing.",
+	},
+	{
+		id: "--autosquash",
+		label: "Auto-squash",
+		help: "Automatically fold in commits marked “fixup!”.",
+	},
 ] as const;
 
 interface RebaseDialogAppProps {
 	initialFromHash?: string;
 }
 
-export function RebaseDialogApp({ initialFromHash = '' }: RebaseDialogAppProps) {
+export function RebaseDialogApp({
+	initialFromHash = "",
+}: RebaseDialogAppProps) {
 	const loading = useRebaseDialogStore((s) => s.loading);
 	const error = useRebaseDialogStore((s) => s.error);
 	const refs = useRebaseDialogStore((s) => s.refs);
@@ -68,8 +86,8 @@ export function RebaseDialogApp({ initialFromHash = '' }: RebaseDialogAppProps) 
 					Move my work
 				</h1>
 				<p className="text-sm leading-relaxed text-[var(--color-muted)]">
-					This takes everything you’ve been working on and stacks it neatly on top of
-					another branch.
+					This takes everything you’ve been working on and stacks it neatly on
+					top of another branch.
 				</p>
 			</header>
 
@@ -88,13 +106,13 @@ export function RebaseDialogApp({ initialFromHash = '' }: RebaseDialogAppProps) 
 							</span>
 							{commitCount > 0 && (
 								<Chip variant="branch" className="max-w-none">
-									{commitCount} commit{commitCount === 1 ? '' : 's'}
+									{commitCount} commit{commitCount === 1 ? "" : "s"}
 								</Chip>
 							)}
 						</div>
 						<p className="text-xs text-[var(--color-muted)]">
-							Everything from this point through your latest changes on{' '}
-							<strong>{currentBranch || 'your branch'}</strong>.
+							Everything from this point through your latest changes on{" "}
+							<strong>{currentBranch || "your branch"}</strong>.
 						</p>
 					</div>
 				) : (
@@ -104,7 +122,7 @@ export function RebaseDialogApp({ initialFromHash = '' }: RebaseDialogAppProps) 
 								<GitBranchIcon size={18} />
 							</span>
 							<span className="rounded-lg border border-[var(--color-border)] bg-[var(--color-input-bg)] px-3 py-1.5 font-mono text-sm font-medium">
-								{currentBranch || 'your branch'}
+								{currentBranch || "your branch"}
 							</span>
 							<span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-muted)]">
 								CURRENT
@@ -155,7 +173,9 @@ export function RebaseDialogApp({ initialFromHash = '' }: RebaseDialogAppProps) 
 					className="text-xs text-[var(--color-muted)] underline-offset-2 hover:underline focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/50"
 					onClick={() => setShowAdvanced((v) => !v)}
 				>
-					{showAdvanced ? '▾ Hide extra options' : '▸ Show extra options (for grown-ups)'}
+					{showAdvanced
+						? "▾ Hide extra options"
+						: "▸ Show extra options (for grown-ups)"}
 				</button>
 				{showAdvanced && (
 					<div className="mt-2 flex flex-col gap-2 rounded-lg border border-[var(--color-border)] p-3">
@@ -169,7 +189,9 @@ export function RebaseDialogApp({ initialFromHash = '' }: RebaseDialogAppProps) 
 								/>
 								<span>
 									<span className="font-medium">{f.label}</span>
-									<span className="block text-[var(--color-muted)]">{f.help}</span>
+									<span className="block text-[var(--color-muted)]">
+										{f.help}
+									</span>
 								</span>
 							</label>
 						))}
@@ -178,22 +200,25 @@ export function RebaseDialogApp({ initialFromHash = '' }: RebaseDialogAppProps) 
 			</div>
 
 			<div className="mt-auto flex flex-col gap-2 pt-2">
-				<PrimaryButton disabled={submitting || !onto} onClick={() => void submit()}>
+				<PrimaryButton
+					disabled={submitting || !onto}
+					onClick={() => void submit()}
+				>
 					{submitting ? (
-						'Moving your work…'
+						"Moving your work…"
 					) : onto ? (
 						<span className="inline-flex items-center justify-center gap-2">
 							<CheckIcon size={16} />
 							Move it onto “{onto}”
 						</span>
 					) : (
-						'Pick a branch first'
+						"Pick a branch first"
 					)}
 				</PrimaryButton>
 				<ReassuranceLine />
 				<p className="text-center text-[10px] text-[var(--color-muted)]">
-					IntelliGit is rewriting your history locally. No changes will be sent to the
-					remote server until you decide to sync.
+					IntelliGit is rewriting your history locally. No changes will be sent
+					to the remote server until you decide to sync.
 				</p>
 			</div>
 		</div>

@@ -15,9 +15,9 @@ export interface GitCommit {
 
 /** Filters supported by the Git Log toolbar. */
 export interface GitLogFilters {
-	branchScope: 'all' | 'local' | 'remote' | string;
+	branchScope: "all" | "local" | "remote" | string;
 	author?: string;
-	datePreset?: 'today' | 'yesterday' | 'last-week' | 'custom';
+	datePreset?: "today" | "yesterday" | "last-week" | "custom";
 	since?: string;
 	until?: string;
 	path?: string;
@@ -41,7 +41,7 @@ export interface GitLogEntry extends GitCommit {
 export interface GraphConnection {
 	fromLane: number;
 	toLane: number;
-	type: 'merge' | 'normal';
+	type: "merge" | "normal";
 }
 
 /** Result of parsing `git log` output. */
@@ -73,7 +73,13 @@ export interface GitExecResult {
 }
 
 /** Interactive rebase action for a commit row. */
-export type RebaseAction = 'pick' | 'reword' | 'edit' | 'squash' | 'fixup' | 'drop';
+export type RebaseAction =
+	| "pick"
+	| "reword"
+	| "edit"
+	| "squash"
+	| "fixup"
+	| "drop";
 
 export interface InteractiveRebaseCommit {
 	hash: string;
@@ -89,11 +95,11 @@ export interface RebaseOptions {
 }
 
 export type RebaseFlag =
-	| '--onto'
-	| '--no-verify'
-	| '--keep-empty'
-	| '--autosquash'
-	| '--autostash';
+	| "--onto"
+	| "--no-verify"
+	| "--keep-empty"
+	| "--autosquash"
+	| "--autostash";
 
 /** Changed file in a commit (from git diff-tree --name-status). */
 export interface CommitFile {
@@ -103,7 +109,7 @@ export interface CommitFile {
 }
 
 export interface MergeOperationState {
-	type: 'none' | 'merge' | 'rebase' | 'cherry-pick';
+	type: "none" | "merge" | "rebase" | "cherry-pick";
 	message: string;
 	isRebaseInProgress: boolean;
 	isMergeInProgress: boolean;

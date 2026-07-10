@@ -1,0 +1,9 @@
+#!/usr/bin/env sh
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+	if [ "$remote_ref" = "refs/heads/main" ] || [ "$remote_ref" = "refs/heads/master" ]; then
+		echo "Running lint and format checks before push to main..."
+		pnpm run check
+		pnpm run check-types
+	fi
+done

@@ -1,10 +1,10 @@
-import type { MouseEvent } from 'react';
+import type { MouseEvent } from "react";
 
-import { refChipVariant, refDisplayLabel } from '../shared/format';
-import type { CommitDto } from '../shared/types';
-import { Chip } from '../shared/ui';
-import type { CommitTableColumnWidths } from './commitTableLayout';
-import { COMMIT_ROW_HEIGHT, GraphCell } from './GraphCell';
+import { refChipVariant, refDisplayLabel } from "../shared/format";
+import type { CommitDto } from "../shared/types";
+import { Chip } from "../shared/ui";
+import type { CommitTableColumnWidths } from "./commitTableLayout";
+import { COMMIT_ROW_HEIGHT, GraphCell } from "./GraphCell";
 
 interface CommitTableRowProps {
 	commit: CommitDto;
@@ -32,21 +32,29 @@ export function CommitTableRow({
 			role="button"
 			tabIndex={0}
 			className={`selectable-row flex items-start border-b border-[var(--color-border)]/30 px-2 transition ${
-				selected ? 'selected' : ''
+				selected ? "selected" : ""
 			}`}
 			style={{ minHeight: COMMIT_ROW_HEIGHT }}
 			data-testid="commit-table-row"
 			onClick={onSelect}
 			onKeyDown={(e) => {
-				if (e.key === 'Enter' || e.key === ' ') {
+				if (e.key === "Enter" || e.key === " ") {
 					e.preventDefault();
 					onSelect();
 				}
 			}}
 			onContextMenu={onContextMenu}
 		>
-			<div className="shrink-0 overflow-hidden py-0.5 pr-3" style={{ width: columnWidths.graph }}>
-				<GraphCell commit={commit} nextCommit={nextCommit} maxLane={maxLane} selected={selected} />
+			<div
+				className="shrink-0 overflow-hidden py-0.5 pr-3"
+				style={{ width: columnWidths.graph }}
+			>
+				<GraphCell
+					commit={commit}
+					nextCommit={nextCommit}
+					maxLane={maxLane}
+					selected={selected}
+				/>
 			</div>
 			<div className="flex min-w-0 flex-1 items-center gap-1.5 py-1 pr-3">
 				{commit.refs.map((ref) => (

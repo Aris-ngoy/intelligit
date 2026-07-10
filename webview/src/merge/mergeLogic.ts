@@ -1,25 +1,32 @@
-import { diffArrays } from 'diff';
-import { diff3MergeRegions, type IRegion } from 'node-diff3';
+import { diffArrays } from "diff";
+import { diff3MergeRegions, type IRegion } from "node-diff3";
 
-import type { MergeBlock, MergeBlockState } from './types';
+import type { MergeBlock, MergeBlockState } from "./types";
 
 function blockId(index: number, prefix: string): string {
 	return `block-${prefix}-${index}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
-function refineConflictBlock(block: MergeBlock, blockIndex: number): MergeBlock[] {
+function refineConflictBlock(
+	block: MergeBlock,
+	blockIndex: number,
+): MergeBlock[] {
 	const changes = diffArrays(block.leftLines, block.rightLines);
 	const subBlocks: MergeBlock[] = [];
 	let subIdx = 0;
 	let i = 0;
 
 	while (i < changes.length) {
-		const change = changes[i]!;
+		const change = changes[i];
+		if (!change) {
+			i++;
+			continue;
+		}
 		if (!change.added && !change.removed) {
 			const lines = change.value;
 			subBlocks.push({
-				id: blockId(blockIndex * 1000 + subIdx++, 'equal'),
-				state: 'equal',
+				id: blockId(blockIndex * 1000 + subIdx++, "equal"),
+				state: "equal",
 				baseLines: lines,
 				leftLines: lines,
 				rightLines: lines,
@@ -36,7 +43,7 @@ function refineConflictBlock(block: MergeBlock, blockIndex: number): MergeBlock[
 			leftLines = change.value;
 			i++;
 			if (i < changes.length && changes[i]?.added) {
-				rightLines = changes[i]!.value;
+				rightLines = changes[i]?.value;
 				i++;
 			}
 		} else if (change.added) {
@@ -45,8 +52,8 @@ function refineConflictBlock(block: MergeBlock, blockIndex: number): MergeBlock[
 		}
 
 		subBlocks.push({
-			id: blockId(blockIndex * 1000 + subIdx++, 'conflict'),
-			state: 'conflict',
+			id: blockId(blockIndex * 1000 + subIdx++, "conflict"),
+			state: "conflict",
 			baseLines: [],
 			leftLines,
 			rightLines,
@@ -59,10 +66,14 @@ function refineConflictBlock(block: MergeBlock, blockIndex: number): MergeBlock[
 }
 
 /** Left = Local (ours), Right = Incoming (theirs). */
-export function parseMergeBlocks(base: string, ours: string, theirs: string): MergeBlock[] {
-	const baseLines = base.split('\n');
-	const leftLines = ours.split('\n');
-	const rightLines = theirs.split('\n');
+export function parseMergeBlocks(
+	base: string,
+	ours: string,
+	theirs: string,
+): MergeBlock[] {
+	const baseLines = base.split("\n");
+	const leftLines = ours.split("\n");
+	const rightLines = theirs.split("\n");
 	const regions = diff3MergeRegions(leftLines, baseLines, rightLines);
 	const blocks: MergeBlock[] = [];
 
@@ -70,8 +81,8 @@ export function parseMergeBlocks(base: string, ours: string, theirs: string): Me
 		if (region.stable) {
 			const content = region.bufferContent ?? [];
 			blocks.push({
-				id: blockId(index, 'equal'),
-				state: 'equal',
+				id: blockId(index, "equal"),
+				state: "equal",
 				baseLines: content,
 				leftLines: content,
 				rightLines: content,
@@ -88,23 +99,25 @@ export function parseMergeBlocks(base: string, ours: string, theirs: string): Me
 		const leftChanged = JSON.stringify(bLines) !== JSON.stringify(lLines);
 		const rightChanged = JSON.stringify(bLines) !== JSON.stringify(rLines);
 		const bothSame =
-			leftChanged && rightChanged && JSON.stringify(lLines) === JSON.stringify(rLines);
+			leftChanged &&
+			rightChanged &&
+			JSON.stringify(lLines) === JSON.stringify(rLines);
 
-		let state: MergeBlockState = 'conflict';
+		let state: MergeBlockState = "conflict";
 		if (bothSame) {
-			state = 'modified_both';
+			state = "modified_both";
 		} else if (leftChanged && !rightChanged) {
-			state = 'modified_left';
+			state = "modified_left";
 		} else if (!leftChanged && rightChanged) {
-			state = 'modified_right';
+			state = "modified_right";
 		}
 
 		let resultLines = [...bLines];
 		let isResolved = false;
-		if (state === 'modified_left' || state === 'modified_both') {
+		if (state === "modified_left" || state === "modified_both") {
 			resultLines = [...lLines];
 			isResolved = true;
-		} else if (state === 'modified_right') {
+		} else if (state === "modified_right") {
 			resultLines = [...rLines];
 			isResolved = true;
 		}
@@ -119,7 +132,7 @@ export function parseMergeBlocks(base: string, ours: string, theirs: string): Me
 			isResolved,
 		};
 
-		if (state === 'conflict') {
+		if (state === "conflict") {
 			blocks.push(...refineConflictBlock(block, index));
 		} else {
 			blocks.push(block);
@@ -130,9 +143,9 @@ export function parseMergeBlocks(base: string, ours: string, theirs: string): Me
 }
 
 export function blocksToText(blocks: MergeBlock[]): string {
-	return blocks.map((b) => b.resultLines.join('\n')).join('\n');
+	return blocks.map((b) => b.resultLines.join("\n")).join("\n");
 }
 
 export function countUnresolvedConflicts(blocks: MergeBlock[]): number {
-	return blocks.filter((b) => b.state === 'conflict' && !b.isResolved).length;
+	return blocks.filter((b) => b.state === "conflict" && !b.isResolved).length;
 }

@@ -1,7 +1,6 @@
-import { create } from 'zustand';
-
-import { bridge } from '../shared/bridge';
-import type { MergeOperationStateDto } from '../merge/types';
+import { create } from "zustand";
+import type { MergeOperationStateDto } from "../merge/types";
+import { bridge } from "../shared/bridge";
 
 interface ConflictsStore {
 	loading: boolean;
@@ -27,11 +26,13 @@ export const useConflictsStore = create<ConflictsStore>((set, get) => ({
 		set({ loading: true, error: null });
 		try {
 			const [operation, files] = await Promise.all([
-				bridge.request<MergeOperationStateDto | { status: string }>('getMergeState'),
-				bridge.request<string[] | { status: string }>('getConflictFiles'),
+				bridge.request<MergeOperationStateDto | { status: string }>(
+					"getMergeState",
+				),
+				bridge.request<string[] | { status: string }>("getConflictFiles"),
 			]);
 
-			if ('status' in operation || 'status' in files) {
+			if ("status" in operation || "status" in files) {
 				set({ loading: false, operation: null, files: [] });
 				return;
 			}
@@ -46,22 +47,22 @@ export const useConflictsStore = create<ConflictsStore>((set, get) => ({
 	},
 
 	async acceptOurs(filePath) {
-		await bridge.request('acceptOurs', { filePath });
+		await bridge.request("acceptOurs", { filePath });
 		await get().load();
 	},
 
 	async acceptTheirs(filePath) {
-		await bridge.request('acceptTheirs', { filePath });
+		await bridge.request("acceptTheirs", { filePath });
 		await get().load();
 	},
 
 	async openMerge(filePath) {
-		await bridge.request('openMergeEditor', { filePath });
+		await bridge.request("openMergeEditor", { filePath });
 	},
 
 	async continueOperation() {
 		try {
-			await bridge.request('continueOperation', {});
+			await bridge.request("continueOperation", {});
 			await get().load();
 		} catch (err) {
 			set({ error: err instanceof Error ? err.message : String(err) });
@@ -70,7 +71,7 @@ export const useConflictsStore = create<ConflictsStore>((set, get) => ({
 
 	async abortOperation() {
 		try {
-			await bridge.request('abortOperation', {});
+			await bridge.request("abortOperation", {});
 			await get().load();
 		} catch (err) {
 			set({ error: err instanceof Error ? err.message : String(err) });
@@ -79,7 +80,7 @@ export const useConflictsStore = create<ConflictsStore>((set, get) => ({
 }));
 
 bridge.onEvent((event) => {
-	if (event === 'mergeStateChanged') {
+	if (event === "mergeStateChanged") {
 		void useConflictsStore.getState().load();
 	}
 });

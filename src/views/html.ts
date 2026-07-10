@@ -1,14 +1,14 @@
-import * as vscode from 'vscode';
+import * as vscode from "vscode";
 
 export type WebviewMode =
-	| 'panel'
-	| 'sidebar'
-	| 'interactiveRebase'
-	| 'rebaseDialog'
-	| 'conflicts'
-	| 'merge'
-	| 'stash'
-	| 'commit';
+	| "panel"
+	| "sidebar"
+	| "interactiveRebase"
+	| "rebaseDialog"
+	| "conflicts"
+	| "merge"
+	| "stash"
+	| "commit";
 
 export interface WebviewHtmlOptions {
 	mode?: WebviewMode;
@@ -22,18 +22,18 @@ export function getWebviewHtml(
 	extensionUri: vscode.Uri,
 	options: WebviewHtmlOptions = {},
 ): string {
-	const distUri = vscode.Uri.joinPath(extensionUri, 'dist', 'webview');
+	const distUri = vscode.Uri.joinPath(extensionUri, "dist", "webview");
 	const scriptUri = webview.asWebviewUri(
-		vscode.Uri.joinPath(distUri, 'assets', 'main.js'),
+		vscode.Uri.joinPath(distUri, "assets", "main.js"),
 	);
 	const styleUri = webview.asWebviewUri(
-		vscode.Uri.joinPath(distUri, 'assets', 'style.css'),
+		vscode.Uri.joinPath(distUri, "assets", "style.css"),
 	);
 	const nonce = getNonce();
-	const mode = options.mode ?? 'panel';
-	const fromHash = options.fromHash ?? '';
-	const file = options.file ?? '';
-	const rebaseFromHash = options.rebaseFromHash ?? '';
+	const mode = options.mode ?? "panel";
+	const fromHash = options.fromHash ?? "";
+	const file = options.file ?? "";
+	const rebaseFromHash = options.rebaseFromHash ?? "";
 
 	return `<!DOCTYPE html>
 <html lang="en">
@@ -53,8 +53,8 @@ export function getWebviewHtml(
 
 function getNonce(): string {
 	const chars =
-		'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-	let result = '';
+		"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+	let result = "";
 	for (let i = 0; i < 32; i++) {
 		result += chars.charAt(Math.floor(Math.random() * chars.length));
 	}
@@ -63,7 +63,7 @@ function getNonce(): string {
 
 function escapeAttr(value: string): string {
 	return value
-		.replace(/&/g, '&amp;')
-		.replace(/"/g, '&quot;')
-		.replace(/</g, '&lt;');
+		.replace(/&/g, "&amp;")
+		.replace(/"/g, "&quot;")
+		.replace(/</g, "&lt;");
 }

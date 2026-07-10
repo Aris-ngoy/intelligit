@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  lint-and-typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install webview dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: webview
+
+      - name: Biome check (lint + format)
+        run: pnpm run check
+
+      - name: Typecheck extension
+        run: pnpm run check-types
+
+      - name: Typecheck webview
+        run: pnpm exec tsc --noEmit
+        working-directory: webview

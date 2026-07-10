@@ -1,22 +1,23 @@
-import type { MouseEvent, ReactNode } from 'react';
+import type { MouseEvent, ReactNode } from "react";
 
-import type { FileStatusTone } from './format';
-import { AlertTriangleIcon, InfoIcon, UndoIcon } from './icons';
+import type { FileStatusTone } from "./format";
+import { AlertTriangleIcon, InfoIcon, UndoIcon } from "./icons";
 
 export function Chip({
 	children,
-	variant = 'default',
-	className = '',
+	variant = "default",
+	className = "",
 }: {
 	children: ReactNode;
-	variant?: 'default' | 'branch' | 'remote' | 'tag';
+	variant?: "default" | "branch" | "remote" | "tag";
 	className?: string;
 }) {
 	const styles = {
-		default: 'bg-[var(--color-input-bg)] text-[var(--color-app-fg)]',
-		branch: 'bg-[var(--color-accent)] text-white',
-		remote: 'bg-[var(--color-input-bg)] text-[var(--color-muted)] border border-[var(--color-border)]',
-		tag: 'bg-orange-500/25 text-orange-200',
+		default: "bg-[var(--color-input-bg)] text-[var(--color-app-fg)]",
+		branch: "bg-[var(--color-accent)] text-white",
+		remote:
+			"bg-[var(--color-input-bg)] text-[var(--color-muted)] border border-[var(--color-border)]",
+		tag: "bg-orange-500/25 text-orange-200",
 	};
 	return (
 		<span
@@ -27,12 +28,18 @@ export function Chip({
 	);
 }
 
-export function StatusBadge({ tone, label }: { tone: FileStatusTone; label: string }) {
+export function StatusBadge({
+	tone,
+	label,
+}: {
+	tone: FileStatusTone;
+	label: string;
+}) {
 	const styles: Record<FileStatusTone, string> = {
-		added: 'bg-green-500/20 text-green-400',
-		modified: 'bg-blue-500/20 text-blue-300',
-		deleted: 'bg-red-500/20 text-red-400',
-		other: 'bg-[var(--color-input-bg)] text-[var(--color-muted)]',
+		added: "bg-green-500/20 text-green-400",
+		modified: "bg-blue-500/20 text-blue-300",
+		deleted: "bg-red-500/20 text-red-400",
+		other: "bg-[var(--color-input-bg)] text-[var(--color-muted)]",
 	};
 	return (
 		<span
@@ -50,14 +57,14 @@ export function AuthorAvatar({ name }: { name: string }) {
 		.filter(Boolean)
 		.map((p) => p[0])
 		.slice(0, 2)
-		.join('')
+		.join("")
 		.toUpperCase();
 	return (
 		<span
 			className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--color-accent)]/30 text-[11px] font-bold text-[var(--color-accent)]"
 			aria-hidden
 		>
-			{initials || '?'}
+			{initials || "?"}
 		</span>
 	);
 }
@@ -82,13 +89,18 @@ export function EmptyState({
 	return (
 		<div className="flex h-full flex-col items-center justify-center gap-2 p-6 text-center">
 			{icon && (
-				<span className="flex text-[var(--color-muted)] [&_svg]:h-8 [&_svg]:w-8" aria-hidden>
+				<span
+					className="flex text-[var(--color-muted)] [&_svg]:h-8 [&_svg]:w-8"
+					aria-hidden
+				>
 					{icon}
 				</span>
 			)}
 			<p className="text-sm font-medium">{title}</p>
 			{description && (
-				<p className="max-w-xs text-xs text-[var(--color-muted)]">{description}</p>
+				<p className="max-w-xs text-xs text-[var(--color-muted)]">
+					{description}
+				</p>
 			)}
 		</div>
 	);
@@ -99,7 +111,7 @@ export function FilterSelect({
 	value,
 	onChange,
 	children,
-	className = '',
+	className = "",
 }: {
 	label: string;
 	value: string;
@@ -146,7 +158,7 @@ export function IconButton({
 
 export function Card({
 	children,
-	className = '',
+	className = "",
 }: {
 	children: ReactNode;
 	className?: string;
@@ -185,7 +197,9 @@ export function TaskHeader({
 				</span>
 				{title}
 			</h1>
-			<p className="text-xs leading-relaxed text-[var(--color-muted)]">{description}</p>
+			<p className="text-xs leading-relaxed text-[var(--color-muted)]">
+				{description}
+			</p>
 		</header>
 	);
 }
@@ -212,9 +226,11 @@ export function ErrorStrip({ children }: { children: ReactNode }) {
 	);
 }
 
-export function ReassuranceLine({ className = '' }: { className?: string }) {
+export function ReassuranceLine({ className = "" }: { className?: string }) {
 	return (
-		<p className={`inline-flex items-center justify-center gap-1.5 text-center text-xs italic text-[var(--color-muted)] ${className}`}>
+		<p
+			className={`inline-flex items-center justify-center gap-1.5 text-center text-xs italic text-[var(--color-muted)] ${className}`}
+		>
 			<UndoIcon size={14} />
 			Everything safe. You can always undo.
 		</p>
@@ -233,7 +249,7 @@ export function PrimaryButton({
 	children,
 	disabled,
 	onClick,
-	className = '',
+	className = "",
 }: {
 	children: ReactNode;
 	disabled?: boolean;
@@ -256,7 +272,7 @@ export function SecondaryButton({
 	children,
 	disabled,
 	onClick,
-	className = '',
+	className = "",
 }: {
 	children: ReactNode;
 	disabled?: boolean;
@@ -297,18 +313,20 @@ export function TaskFooter({
 
 export function TagBadge({
 	label,
-	tone = 'default',
+	tone = "default",
 }: {
 	label: string;
-	tone?: 'default' | 'error' | 'info';
+	tone?: "default" | "error" | "info";
 }) {
 	const styles = {
-		default: 'bg-[var(--color-input-bg)] text-[var(--color-muted)]',
-		error: 'bg-red-500/20 text-red-400',
-		info: 'bg-blue-500/20 text-blue-300',
+		default: "bg-[var(--color-input-bg)] text-[var(--color-muted)]",
+		error: "bg-red-500/20 text-red-400",
+		info: "bg-blue-500/20 text-blue-300",
 	};
 	return (
-		<span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold ${styles[tone]}`}>
+		<span
+			className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold ${styles[tone]}`}
+		>
 			{label}
 		</span>
 	);
@@ -339,7 +357,7 @@ export function SegmentedActionButton({
 			className={`flex flex-col items-center gap-0.5 rounded-lg border px-1 py-1.5 text-[11px] font-medium transition focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/50 disabled:opacity-30 ${
 				active
 					? activeClass
-					: 'border-[var(--color-border)] hover:bg-[var(--color-hover)]'
+					: "border-[var(--color-border)] hover:bg-[var(--color-hover)]"
 			}`}
 			onClick={onClick}
 		>

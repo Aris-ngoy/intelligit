@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from 'react';
+import { type ReactNode, useEffect } from "react";
 
 import {
 	CheckCircleIcon,
@@ -9,7 +9,7 @@ import {
 	UserIcon,
 	UsersIcon,
 	XIcon,
-} from '../shared/icons';
+} from "../shared/icons";
 import {
 	EmptyState,
 	ErrorStrip,
@@ -21,9 +21,9 @@ import {
 	TagBadge,
 	TaskFooter,
 	TaskHeader,
-} from '../shared/ui';
-import { useConflictsStore } from './store';
-import { getConflictFileMeta, splitFilePath } from './utils';
+} from "../shared/ui";
+import { useConflictsStore } from "./store";
+import { getConflictFileMeta, splitFilePath } from "./utils";
 
 export function ConflictsApp() {
 	const loading = useConflictsStore((s) => s.loading);
@@ -76,7 +76,7 @@ export function ConflictsApp() {
 				description="Your changes and theirs touch the same lines. Pick which version to keep or combine them."
 			/>
 
-			{operation && operation.type !== 'none' && operation.message && (
+			{operation && operation.type !== "none" && operation.message && (
 				<InfoStrip>{operation.message}</InfoStrip>
 			)}
 
@@ -84,7 +84,7 @@ export function ConflictsApp() {
 
 			<div className="min-h-0 flex-1 overflow-y-auto p-3">
 				<p className="mb-2 px-1 text-[11px] font-medium text-[var(--color-muted)]">
-					{files.length} file{files.length === 1 ? '' : 's'} need your help
+					{files.length} file{files.length === 1 ? "" : "s"} need your help
 				</p>
 				<div className="space-y-2">
 					{files.map((file) => {
@@ -100,9 +100,14 @@ export function ConflictsApp() {
 								</span>
 								<div className="min-w-0 flex-1">
 									<div className="flex flex-wrap items-center gap-2">
-										<span className="min-w-0 truncate font-mono text-xs" title={file}>
+										<span
+											className="min-w-0 truncate font-mono text-xs"
+											title={file}
+										>
 											{folder && (
-												<span className="text-[var(--color-muted)]">{folder}</span>
+												<span className="text-[var(--color-muted)]">
+													{folder}
+												</span>
 											)}
 											<span className="font-semibold text-[var(--color-app-fg)]">
 												{name}
@@ -186,8 +191,8 @@ function ChoiceButton({
 			type="button"
 			className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[11px] font-medium transition focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/50 ${
 				primary
-					? 'border-[var(--color-accent)] bg-[var(--color-accent)] text-white'
-					: 'border-[var(--color-border)] hover:bg-[var(--color-hover)]'
+					? "border-[var(--color-accent)] bg-[var(--color-accent)] text-white"
+					: "border-[var(--color-border)] hover:bg-[var(--color-hover)]"
 			}`}
 			onClick={onClick}
 		>

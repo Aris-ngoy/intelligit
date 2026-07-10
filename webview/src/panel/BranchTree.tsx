@@ -1,9 +1,9 @@
-import type { ReactNode } from 'react';
+import type { ReactNode } from "react";
 
-import { SettingsIcon } from '../shared/icons';
-import { useGitLogStore } from '../shared/store';
-import type { GitBranchDto } from '../shared/types';
-import { SectionHeader } from '../shared/ui';
+import { SettingsIcon } from "../shared/icons";
+import { useGitLogStore } from "../shared/store";
+import type { GitBranchDto } from "../shared/types";
+import { SectionHeader } from "../shared/ui";
 
 function groupBranches(branches: GitBranchDto[]) {
 	const current = branches.filter((b) => b.current);
@@ -38,8 +38,8 @@ export function BranchTree() {
 				<Section title="All">
 					<BranchItem
 						name="All History"
-						selected={selected === 'all'}
-						onSelect={() => setFilters({ branchScope: 'all' })}
+						selected={selected === "all"}
+						onSelect={() => setFilters({ branchScope: "all" })}
 					/>
 				</Section>
 
@@ -89,7 +89,7 @@ export function BranchTree() {
 					type="button"
 					className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[var(--color-muted)] transition hover:bg-[var(--color-hover)] hover:text-[var(--color-app-fg)]"
 					onClick={() =>
-						void openExternal('https://github.com/Aris-ngoy/intelligit#readme')
+						void openExternal("https://github.com/Aris-ngoy/intelligit#readme")
 					}
 				>
 					<SettingsIcon size={14} />
@@ -125,8 +125,8 @@ function BranchItem({
 			type="button"
 			className={`flex w-full items-center gap-2 truncate rounded-lg px-2 py-1.5 text-left transition focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/50 ${
 				selected
-					? 'bg-[var(--color-selected)] font-medium text-[var(--color-selected-fg)]'
-					: 'hover:bg-[var(--color-hover)]'
+					? "bg-[var(--color-selected)] font-medium text-[var(--color-selected-fg)]"
+					: "hover:bg-[var(--color-hover)]"
 			}`}
 			onClick={onSelect}
 			title={name}

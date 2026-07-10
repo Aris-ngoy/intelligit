@@ -1,10 +1,10 @@
-import * as vscode from 'vscode';
+import * as vscode from "vscode";
 
-import type { MessageRouter } from '../messages/messageRouter';
-import { getWebviewHtml } from './html';
+import type { MessageRouter } from "../messages/messageRouter";
+import { getWebviewHtml } from "./html";
 
 export class GitLogViewProvider implements vscode.WebviewViewProvider {
-	public static readonly viewType = 'intelligit.gitLog';
+	public static readonly viewType = "intelligit.gitLog";
 
 	constructor(
 		private readonly extensionUri: vscode.Uri,
@@ -20,10 +20,12 @@ export class GitLogViewProvider implements vscode.WebviewViewProvider {
 
 		webview.options = {
 			enableScripts: true,
-			localResourceRoots: [vscode.Uri.joinPath(this.extensionUri, 'dist')],
+			localResourceRoots: [vscode.Uri.joinPath(this.extensionUri, "dist")],
 		};
 
-		webview.html = getWebviewHtml(webview, this.extensionUri, { mode: 'sidebar' });
+		webview.html = getWebviewHtml(webview, this.extensionUri, {
+			mode: "sidebar",
+		});
 
 		const routerDisposable = this.messageRouter.registerWebview(webview);
 		webviewView.onDidDispose(() => routerDisposable.dispose());

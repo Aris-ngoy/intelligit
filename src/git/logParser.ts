@@ -1,8 +1,13 @@
-import type { GitCommit, GitLogEntry, GitLogFilters, ParsedGitLog } from './types';
+import type {
+	GitCommit,
+	GitLogEntry,
+	GitLogFilters,
+	ParsedGitLog,
+} from "./types";
 
 /** Field separator (%x1f) and record separator (%x1e) used in git log format strings. */
-export const GIT_LOG_FIELD_SEP = '\x1f';
-export const GIT_LOG_RECORD_SEP = '\x1e';
+export const GIT_LOG_FIELD_SEP = "\x1f";
+export const GIT_LOG_RECORD_SEP = "\x1e";
 
 /**
  * Pretty-format string for `git log`.
@@ -23,7 +28,9 @@ export function parseGitLog(raw: string): ParsedGitLog {
 	const authorSet = new Set<string>();
 	const refSet = new Set<string>();
 
-	const records = raw.split(GIT_LOG_RECORD_SEP).filter((r) => r.trim().length > 0);
+	const records = raw
+		.split(GIT_LOG_RECORD_SEP)
+		.filter((r) => r.trim().length > 0);
 
 	for (const record of records) {
 		const commit = parseCommitRecord(record);
@@ -68,7 +75,7 @@ function parseCommitRecord(record: string): GitCommit | undefined {
 		return undefined;
 	}
 
-	const timestamp = Number.parseInt(timestampRaw ?? '0', 10);
+	const timestamp = Number.parseInt(timestampRaw ?? "0", 10);
 	if (Number.isNaN(timestamp)) {
 		return undefined;
 	}
@@ -76,13 +83,13 @@ function parseCommitRecord(record: string): GitCommit | undefined {
 	return {
 		hash,
 		shortHash: shortHash ?? hash.slice(0, 7),
-		parentHashes: parseParents(parentsRaw ?? ''),
-		author: author ?? 'Unknown',
-		authorEmail: authorEmail ?? '',
+		parentHashes: parseParents(parentsRaw ?? ""),
+		author: author ?? "Unknown",
+		authorEmail: authorEmail ?? "",
 		timestamp,
-		subject: subject ?? '',
-		body: (body ?? '').trimEnd(),
-		refs: parseRefs(refsRaw ?? ''),
+		subject: subject ?? "",
+		body: (body ?? "").trimEnd(),
+		refs: parseRefs(refsRaw ?? ""),
 	};
 }
 
@@ -97,7 +104,7 @@ export function parseRefs(refsRaw: string): string[] {
 	}
 
 	return refsRaw
-		.split(',')
+		.split(",")
 		.map((part) => part.trim())
 		.filter(Boolean)
 		.map(normalizeRef);
@@ -107,12 +114,12 @@ function normalizeRef(ref: string): string {
 	// Strip "HEAD -> " prefix
 	const headArrow = ref.match(/^HEAD\s*->\s*(.+)$/);
 	if (headArrow) {
-		return headArrow[1]!.trim();
+		return headArrow[1]?.trim();
 	}
 	// Strip "tag: " prefix but keep tag name
 	const tagMatch = ref.match(/^tag:\s*(.+)$/);
 	if (tagMatch) {
-		return tagMatch[1]!.trim();
+		return tagMatch[1]?.trim();
 	}
 	return ref;
 }
@@ -123,13 +130,21 @@ function normalizeRef(ref: string): string {
  */
 export function assignGraphLanes(commits: GitLogEntry[]): void {
 	const hashToIndex = new Map<string, number>();
-	commits.forEach((c, i) => hashToIndex.set(c.hash, i));
+	for (let i = 0; i < commits.length; i++) {
+		const entry = commits[i];
+		if (entry) {
+			hashToIndex.set(entry.hash, i);
+		}
+	}
 
 	const activeLanes = new Map<number, string>(); // lane -> commit hash at tip
 	let nextFreeLane = 0;
 
 	for (let i = 0; i < commits.length; i++) {
-		const commit = commits[i]!;
+		const commit = commits[i];
+		if (!commit) {
+			continue;
+		}
 		let lane = findLaneForCommit(activeLanes, commit.hash);
 
 		if (lane === undefined) {
@@ -149,17 +164,23 @@ export function assignGraphLanes(commits: GitLogEntry[]): void {
 		}
 
 		// First parent continues in same lane
-		const firstParent = parents[0]!;
+		const firstParent = parents[0];
+		if (!firstParent) {
+			continue;
+		}
 		activeLanes.set(lane, firstParent);
 		commit.graphConnections.push({
 			fromLane: lane,
 			toLane: lane,
-			type: 'normal',
+			type: "normal",
 		});
 
 		// Merge parents get new lanes
 		for (let p = 1; p < parents.length; p++) {
-			const parentHash = parents[p]!;
+			const parentHash = parents[p];
+			if (!parentHash) {
+				continue;
+			}
 			let parentLane = findLaneByHash(activeLanes, parentHash);
 			if (parentLane === undefined) {
 				parentLane = nextFreeLane;
@@ -169,7 +190,7 @@ export function assignGraphLanes(commits: GitLogEntry[]): void {
 			commit.graphConnections.push({
 				fromLane: lane,
 				toLane: parentLane,
-				type: 'merge',
+				type: "merge",
 			});
 		}
 	}
@@ -239,20 +260,20 @@ function formatTime(d: Date): string {
 }
 
 function pad2(n: number): string {
-	return n.toString().padStart(2, '0');
+	return n.toString().padStart(2, "0");
 }
 
 /** Build `--since` / `--until` git args from filter preset. */
 export function datePresetToGitArgs(
-	preset: GitLogFilters['datePreset'],
+	preset: GitLogFilters["datePreset"],
 	now: Date = new Date(),
 ): { since?: string; until?: string } {
 	switch (preset) {
-		case 'today': {
+		case "today": {
 			const start = startOfDay(now);
 			return { since: start.toISOString() };
 		}
-		case 'yesterday': {
+		case "yesterday": {
 			const todayStart = startOfDay(now);
 			const yesterdayStart = new Date(todayStart);
 			yesterdayStart.setDate(yesterdayStart.getDate() - 1);
@@ -261,7 +282,7 @@ export function datePresetToGitArgs(
 				until: todayStart.toISOString(),
 			};
 		}
-		case 'last-week': {
+		case "last-week": {
 			const weekAgo = new Date(now);
 			weekAgo.setDate(weekAgo.getDate() - 7);
 			return { since: weekAgo.toISOString() };

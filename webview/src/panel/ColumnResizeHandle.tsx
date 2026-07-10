@@ -1,4 +1,9 @@
-import { useCallback, useEffect, useRef, type MouseEvent as ReactMouseEvent } from 'react';
+import {
+	type MouseEvent as ReactMouseEvent,
+	useCallback,
+	useEffect,
+	useRef,
+} from "react";
 
 interface ColumnResizeHandleProps {
 	onResize: (deltaX: number) => void;
@@ -21,22 +26,22 @@ export function ColumnResizeHandle({ onResize }: ColumnResizeHandleProps) {
 		};
 
 		const onMouseUp = () => {
-			document.removeEventListener('mousemove', onMouseMove);
-			document.removeEventListener('mouseup', onMouseUp);
-			document.body.style.cursor = '';
-			document.body.style.userSelect = '';
+			document.removeEventListener("mousemove", onMouseMove);
+			document.removeEventListener("mouseup", onMouseUp);
+			document.body.style.cursor = "";
+			document.body.style.userSelect = "";
 		};
 
-		document.body.style.cursor = 'col-resize';
-		document.body.style.userSelect = 'none';
-		document.addEventListener('mousemove', onMouseMove);
-		document.addEventListener('mouseup', onMouseUp);
+		document.body.style.cursor = "col-resize";
+		document.body.style.userSelect = "none";
+		document.addEventListener("mousemove", onMouseMove);
+		document.addEventListener("mouseup", onMouseUp);
 	}, []);
 
 	useEffect(() => {
 		return () => {
-			document.body.style.cursor = '';
-			document.body.style.userSelect = '';
+			document.body.style.cursor = "";
+			document.body.style.userSelect = "";
 		};
 	}, []);
 

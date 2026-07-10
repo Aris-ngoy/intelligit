@@ -1,4 +1,4 @@
-import { useEffect, useMemo, type ReactNode } from 'react';
+import { type ReactNode, useEffect, useMemo } from "react";
 
 import {
 	ArchiveIcon,
@@ -6,7 +6,7 @@ import {
 	SparklesIcon,
 	TrashIcon,
 	UndoIcon,
-} from '../shared/icons';
+} from "../shared/icons";
 import {
 	EmptyState,
 	ErrorStrip,
@@ -16,16 +16,16 @@ import {
 	TagBadge,
 	TaskFooter,
 	TaskHeader,
-} from '../shared/ui';
-import { filterStashes, useStashStore } from './store';
+} from "../shared/ui";
+import { filterStashes, useStashStore } from "./store";
 
 function formatStashDate(timestamp?: number): string | undefined {
 	if (!timestamp) {
 		return undefined;
 	}
 	return new Date(timestamp * 1000).toLocaleString(undefined, {
-		dateStyle: 'medium',
-		timeStyle: 'short',
+		dateStyle: "medium",
+		timeStyle: "short",
 	});
 }
 
@@ -96,8 +96,8 @@ export function StashApp() {
 					<>
 						<p className="mb-2 px-1 text-[11px] font-medium text-[var(--color-muted)]">
 							{filteredStashes.length} stash
-							{filteredStashes.length === 1 ? '' : 'es'}
-							{searchQuery.trim() ? ' matching search' : ''}
+							{filteredStashes.length === 1 ? "" : "es"}
+							{searchQuery.trim() ? " matching search" : ""}
 						</p>
 						<div className="space-y-2">
 							{filteredStashes.map((stash) => {
@@ -126,7 +126,9 @@ export function StashApp() {
 											<div className="mt-1 flex flex-wrap items-center gap-2 text-[10px] text-[var(--color-muted)]">
 												<span>{stash.ref}</span>
 												{stash.commitHash && (
-													<span className="font-mono">{stash.commitHash.slice(0, 7)}</span>
+													<span className="font-mono">
+														{stash.commitHash.slice(0, 7)}
+													</span>
 												)}
 												{dateLabel && <span>{dateLabel}</span>}
 											</div>
@@ -134,14 +136,22 @@ export function StashApp() {
 										<div className="flex shrink-0 flex-wrap items-center gap-1.5">
 											<ChoiceButton
 												icon={<UndoIcon size={14} />}
-												label={isBusy && busyAction === 'apply' ? 'Applying…' : 'Apply'}
+												label={
+													isBusy && busyAction === "apply"
+														? "Applying…"
+														: "Apply"
+												}
 												primary
 												disabled={busyAction !== null}
 												onClick={() => void applyStash(stash.index)}
 											/>
 											<ChoiceButton
 												icon={<TrashIcon size={14} />}
-												label={isBusy && busyAction === 'drop' ? 'Deleting…' : 'Delete'}
+												label={
+													isBusy && busyAction === "drop"
+														? "Deleting…"
+														: "Delete"
+												}
 												disabled={busyAction !== null}
 												onClick={() => void dropStash(stash.index)}
 											/>
@@ -160,7 +170,7 @@ export function StashApp() {
 						disabled={stashes.length === 0 || busyAction !== null}
 						onClick={() => void clearAll()}
 					>
-						{busyAction === 'clear' ? 'Clearing…' : 'Clear all stashes'}
+						{busyAction === "clear" ? "Clearing…" : "Clear all stashes"}
 					</SecondaryButton>
 				}
 				right={
@@ -196,8 +206,8 @@ function ChoiceButton({
 			disabled={disabled}
 			className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[11px] font-medium transition focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/50 disabled:opacity-50 ${
 				primary
-					? 'border-[var(--color-accent)] bg-[var(--color-accent)] text-white'
-					: 'border-[var(--color-border)] hover:bg-[var(--color-hover)]'
+					? "border-[var(--color-accent)] bg-[var(--color-accent)] text-white"
+					: "border-[var(--color-border)] hover:bg-[var(--color-hover)]"
 			}`}
 			onClick={onClick}
 		>

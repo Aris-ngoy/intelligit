@@ -1,9 +1,9 @@
-import { create } from 'zustand';
+import { create } from "zustand";
 
-import { bridge } from '../shared/bridge';
-import type { WorkingTreeStatusDto } from '../shared/types';
+import { bridge } from "../shared/bridge";
+import type { WorkingTreeStatusDto } from "../shared/types";
 
-export type CommitMode = 'new' | 'amend';
+export type CommitMode = "new" | "amend";
 
 interface CommitStore {
 	loading: boolean;
@@ -39,8 +39,8 @@ export const useCommitStore = create<CommitStore>((set, get) => ({
 	loading: true,
 	error: null,
 	status: null,
-	message: '',
-	mode: 'new',
+	message: "",
+	mode: "new",
 	busy: false,
 	messageDirty: false,
 
@@ -49,8 +49,8 @@ export const useCommitStore = create<CommitStore>((set, get) => ({
 		try {
 			const status = await bridge.request<
 				WorkingTreeStatusDto | { status: string }
-			>('getWorkingTreeStatus');
-			if ('status' in status) {
+			>("getWorkingTreeStatus");
+			if ("status" in status) {
 				set({ loading: false, status: null });
 				return;
 			}
@@ -63,9 +63,9 @@ export const useCommitStore = create<CommitStore>((set, get) => ({
 
 			if (!messageDirty) {
 				updates.message =
-					mode === 'amend' && status.lastCommitMessage
+					mode === "amend" && status.lastCommitMessage
 						? status.lastCommitMessage
-						: '';
+						: "";
 			}
 
 			set(updates);
@@ -87,9 +87,9 @@ export const useCommitStore = create<CommitStore>((set, get) => ({
 		if (!messageDirty && status) {
 			set({
 				message:
-					mode === 'amend' && status.lastCommitMessage
+					mode === "amend" && status.lastCommitMessage
 						? status.lastCommitMessage
-						: '',
+						: "",
 			});
 		}
 	},
@@ -119,30 +119,33 @@ export const useCommitStore = create<CommitStore>((set, get) => ({
 	async commit() {
 		const { message, mode, status } = get();
 		if (!message.trim()) {
-			set({ error: 'Write a commit message first.' });
+			set({ error: "Write a commit message first." });
 			return false;
 		}
 
-		const amend = mode === 'amend';
+		const amend = mode === "amend";
 		if (!amend && !status?.hasStagedChanges) {
-			set({ error: 'Stage some changes before committing.' });
+			set({ error: "Stage some changes before committing." });
 			return false;
 		}
 		if (amend && !status?.canAmend) {
-			set({ error: 'Nothing to amend on this branch.' });
+			set({ error: "Nothing to amend on this branch." });
 			return false;
 		}
 
 		set({ busy: true, error: null });
 		try {
-			const result = await bridge.request<{ cancelled?: boolean }>('createCommit', {
-				message,
-				amend,
-			});
+			const result = await bridge.request<{ cancelled?: boolean }>(
+				"createCommit",
+				{
+					message,
+					amend,
+				},
+			);
 			if (result?.cancelled) {
 				return false;
 			}
-			set({ message: '', messageDirty: false, mode: 'new' });
+			set({ message: "", messageDirty: false, mode: "new" });
 			await get().load();
 			return true;
 		} catch (err) {
@@ -155,7 +158,7 @@ export const useCommitStore = create<CommitStore>((set, get) => ({
 }));
 
 bridge.onEvent((event) => {
-	if (event === 'gitStateChanged') {
+	if (event === "gitStateChanged") {
 		void useCommitStore.getState().load();
 	}
 });
