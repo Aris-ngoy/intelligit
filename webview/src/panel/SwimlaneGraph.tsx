@@ -1,13 +1,16 @@
-import { type ReactElement, useMemo } from "react";
+import { type CSSProperties, type ReactElement, useMemo } from "react";
 
 import { laneColor, refDisplayLabel } from "../shared/format";
 import type { CommitDto } from "../shared/types";
 import {
 	COMMIT_ROW_HEIGHT,
+	computeGraphHeight,
 	computeGraphWidth,
 	computeMaxLane,
 	LANE_PADDING,
 	LANE_WIDTH,
+	NODE_RADIUS,
+	PILL_HEIGHT,
 } from "./graphLayout";
 
 export {
@@ -23,6 +26,11 @@ interface SwimlaneGraphProps {
 	highlightedLane: number | null;
 	onLaneHover: (lane: number | null) => void;
 	onBranchAction?: (branchName: string, action: "checkout") => void;
+}
+
+interface LaneLabel {
+	label: string;
+	commitIndex: number;
 }
 
 function laneCenterX(lane: number): number {
@@ -53,16 +61,24 @@ function buildHashIndex(commits: CommitDto[]): Map<string, number> {
 	return map;
 }
 
-function computeLaneLabels(commits: CommitDto[]): Map<number, string> {
-	const labels = new Map<number, string>();
-	for (const commit of commits) {
+/** Branch labels at each lane tip (newest commit on the lane with a local branch ref). */
+function computeLaneLabels(commits: CommitDto[]): Map<number, LaneLabel> {
+	const labels = new Map<number, LaneLabel>();
+	for (let i = 0; i < commits.length; i++) {
+		const commit = commits[i];
+		if (!commit) {
+			continue;
+		}
 		const lane = commit.graphLane ?? 0;
 		if (labels.has(lane)) {
 			continue;
 		}
 		const branchRef = commit.refs.find(isLocalBranchRef);
 		if (branchRef) {
-			labels.set(lane, refDisplayLabel(branchRef));
+			labels.set(lane, {
+				label: refDisplayLabel(branchRef),
+				commitIndex: i,
+			});
 		}
 	}
 	return labels;
@@ -70,6 +86,29 @@ function computeLaneLabels(commits: CommitDto[]): Map<number, string> {
 
 function laneDimmed(lane: number, highlightedLane: number | null): boolean {
 	return highlightedLane !== null && lane !== highlightedLane;
+}
+
+/** Git-style elbow routing between child (above) and parent (below). */
+function linkPath(
+	childX: number,
+	childY: number,
+	parentX: number,
+	parentY: number,
+	sameLane: boolean,
+): string {
+	if (sameLane) {
+		return `M ${childX} ${childY} L ${parentX} ${parentY}`;
+	}
+	const midY = (childY + parentY) / 2;
+	return `M ${childX} ${childY} L ${childX} ${midY} L ${parentX} ${midY} L ${parentX} ${parentY}`;
+}
+
+function pillWidth(label: string): number {
+	return Math.min(88, Math.max(36, label.length * 5.5 + 14));
+}
+
+function pillYForNode(nodeY: number): number {
+	return nodeY - NODE_RADIUS - PILL_HEIGHT - 5;
 }
 
 export function SwimlaneGraph({
@@ -82,10 +121,14 @@ export function SwimlaneGraph({
 }: SwimlaneGraphProps) {
 	const maxLane = computeMaxLane(commits);
 	const width = computeGraphWidth(maxLane);
-	const height = commits.length * COMMIT_ROW_HEIGHT;
+	const height = computeGraphHeight(commits.length);
 
 	const hashIndex = useMemo(() => buildHashIndex(commits), [commits]);
 	const laneLabels = useMemo(() => computeLaneLabels(commits), [commits]);
+	const labeledCommitIndices = useMemo(
+		() => new Set([...laneLabels.values()].map((entry) => entry.commitIndex)),
+		[laneLabels],
+	);
 
 	const elements = useMemo(() => {
 		const items: ReactElement[] = [];
@@ -93,6 +136,7 @@ export function SwimlaneGraph({
 		for (let lane = 0; lane <= maxLane; lane++) {
 			const cx = laneCenterX(lane);
 			const dimmed = laneDimmed(lane, highlightedLane);
+			const color = laneColor(lane);
 			items.push(
 				<line
 					key={`track-${lane}`}
@@ -100,9 +144,9 @@ export function SwimlaneGraph({
 					y1={0}
 					x2={cx}
 					y2={height}
-					stroke={laneColor(lane)}
+					stroke={color}
 					strokeWidth={1}
-					opacity={dimmed ? 0.06 : 0.15}
+					opacity={dimmed ? 0.06 : 0.14}
 				/>,
 			);
 		}
@@ -115,7 +159,6 @@ export function SwimlaneGraph({
 			const lane = commit.graphLane ?? 0;
 			const cx = laneCenterX(lane);
 			const y = commitY(i);
-			const color = laneColor(lane);
 			const dimmed = laneDimmed(lane, highlightedLane);
 
 			for (const parentHash of commit.parentHashes) {
@@ -130,68 +173,22 @@ export function SwimlaneGraph({
 				const isMergeParent =
 					commit.parentHashes.length > 1 &&
 					parentHash !== commit.parentHashes[0];
-				const midY = (y + py) / 2;
+				const sameLane = lane === parentLane;
+				const strokeColor = laneColor(isMergeParent ? parentLane : lane);
 
-				if (lane === parentLane) {
-					items.push(
-						<line
-							key={`link-${commit.hash}-${parentHash}`}
-							x1={cx}
-							y1={y}
-							x2={px}
-							y2={py}
-							stroke={color}
-							strokeWidth={2}
-							opacity={dimmed ? 0.25 : 1}
-						/>,
-					);
-				} else {
-					items.push(
-						<path
-							key={`link-${commit.hash}-${parentHash}`}
-							d={`M ${cx} ${y} C ${cx} ${midY}, ${px} ${midY}, ${px} ${py}`}
-							fill="none"
-							stroke={laneColor(isMergeParent ? parentLane : lane)}
-							strokeWidth={2}
-							opacity={dimmed ? 0.25 : 1}
-						/>,
-					);
-				}
+				items.push(
+					<path
+						key={`link-${commit.hash}-${parentHash}`}
+						d={linkPath(cx, y, px, py, sameLane)}
+						fill="none"
+						stroke={strokeColor}
+						strokeWidth={2}
+						strokeLinecap="round"
+						strokeLinejoin="round"
+						opacity={dimmed ? 0.2 : 0.95}
+					/>,
+				);
 			}
-		}
-
-		for (const [lane, label] of laneLabels) {
-			const firstIndex = commits.findIndex((c) => (c.graphLane ?? 0) === lane);
-			if (firstIndex < 0) {
-				continue;
-			}
-			const cx = laneCenterX(lane);
-			const y = commitY(firstIndex) - COMMIT_ROW_HEIGHT / 2 + 2;
-			const dimmed = laneDimmed(lane, highlightedLane);
-			items.push(
-				<foreignObject
-					key={`label-${lane}-${label}`}
-					x={Math.max(0, cx - 36)}
-					y={Math.max(0, y)}
-					width={72}
-					height={16}
-					opacity={dimmed ? 0.4 : 1}
-				>
-					<button
-						type="button"
-						className="graph-branch-pill"
-						title={`${label} — click to checkout`}
-						onClick={(e) => {
-							e.stopPropagation();
-							onBranchAction?.(label, "checkout");
-						}}
-						onMouseEnter={() => onLaneHover(lane)}
-						onMouseLeave={() => onLaneHover(null)}
-					>
-						{label}
-					</button>
-				</foreignObject>,
-			);
 		}
 
 		for (let i = 0; i < commits.length; i++) {
@@ -206,35 +203,51 @@ export function SwimlaneGraph({
 			const selected = commit.hash === selectedHash;
 			const isHead = commit.hash === headHash;
 			const isMerge = commit.parentHashes.length > 1;
+			const hasBranchLabel = labeledCommitIndices.has(i);
 			const dimmed = laneDimmed(lane, highlightedLane);
-			const radius = isMerge ? 5 : 4;
 
-			if (isHead) {
+			if (isMerge) {
+				items.push(
+					<circle
+						key={`node-${commit.hash}`}
+						cx={cx}
+						cy={y}
+						r={NODE_RADIUS + 1}
+						fill="var(--color-app-bg)"
+						stroke={color}
+						strokeWidth={2}
+						opacity={dimmed ? 0.35 : 1}
+						style={{ pointerEvents: "none" }}
+					/>,
+				);
+				if (selected) {
+					items.push(
+						<circle
+							key={`sel-${commit.hash}`}
+							cx={cx}
+							cy={y}
+							r={NODE_RADIUS + 3}
+							fill="none"
+							stroke="var(--color-accent)"
+							strokeWidth={1.5}
+							opacity={dimmed ? 0.4 : 1}
+						/>,
+					);
+				}
+				continue;
+			}
+
+			if (isHead && !hasBranchLabel) {
 				items.push(
 					<circle
 						key={`head-ring-${commit.hash}`}
 						cx={cx}
 						cy={y}
-						r={8}
-						fill="none"
-						stroke="var(--color-accent)"
-						strokeWidth={1.5}
-						strokeDasharray="3 2"
-						opacity={dimmed ? 0.4 : 1}
-					/>,
-				);
-			}
-
-			if (isMerge) {
-				items.push(
-					<circle
-						key={`merge-ring-${commit.hash}`}
-						cx={cx}
-						cy={y}
-						r={radius + 2}
+						r={NODE_RADIUS + 3}
 						fill="none"
 						stroke={color}
 						strokeWidth={1.5}
+						strokeDasharray="3 2"
 						opacity={dimmed ? 0.35 : 0.85}
 					/>,
 				);
@@ -245,19 +258,51 @@ export function SwimlaneGraph({
 					key={`node-${commit.hash}`}
 					cx={cx}
 					cy={y}
-					r={selected ? radius + 1 : radius}
+					r={selected ? NODE_RADIUS + 0.5 : NODE_RADIUS}
 					fill={color}
-					stroke={
-						selected
-							? "var(--color-accent)"
-							: isHead
-								? "var(--color-accent)"
-								: "none"
-					}
-					strokeWidth={selected || isHead ? 2 : 0}
+					stroke={selected ? "var(--color-accent)" : "none"}
+					strokeWidth={selected ? 2 : 0}
 					opacity={dimmed ? 0.35 : 1}
 					style={{ pointerEvents: "none" }}
 				/>,
+			);
+		}
+
+		for (const [lane, { label, commitIndex }] of laneLabels) {
+			const cx = laneCenterX(lane);
+			const color = laneColor(lane);
+			const pillW = pillWidth(label);
+			const nodeY = commitY(commitIndex);
+			const pillY = pillYForNode(nodeY);
+			const dimmed = laneDimmed(lane, highlightedLane);
+			const pillStyle = {
+				"--graph-lane-color": color,
+			} as CSSProperties;
+
+			items.push(
+				<foreignObject
+					key={`label-${lane}-${label}`}
+					x={Math.max(2, cx - pillW / 2)}
+					y={pillY}
+					width={pillW}
+					height={PILL_HEIGHT}
+					opacity={dimmed ? 0.45 : 1}
+				>
+					<button
+						type="button"
+						className="graph-branch-pill"
+						style={pillStyle}
+						title={`${label} — click to checkout`}
+						onClick={(e) => {
+							e.stopPropagation();
+							onBranchAction?.(label, "checkout");
+						}}
+						onMouseEnter={() => onLaneHover(lane)}
+						onMouseLeave={() => onLaneHover(null)}
+					>
+						{label}
+					</button>
+				</foreignObject>,
 			);
 		}
 
@@ -269,6 +314,7 @@ export function SwimlaneGraph({
 		maxLane,
 		highlightedLane,
 		laneLabels,
+		labeledCommitIndices,
 		selectedHash,
 		headHash,
 		onBranchAction,
@@ -283,7 +329,7 @@ export function SwimlaneGraph({
 		<svg
 			width={width}
 			height={height}
-			className="block shrink-0"
+			className="block shrink-0 overflow-visible"
 			data-testid="swimlane-graph"
 			aria-hidden
 		>
