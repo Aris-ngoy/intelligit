@@ -6,6 +6,7 @@
 	"scripts": {
 		"dev": "vite",
 		"dev:gitlog": "vite --open '/?preview=gitlog'",
+		"dev:sidebar": "vite --open '/?preview=sidebar'",
 		"dev:rebase": "vite --open '/?preview=rebase'",
 		"dev:tidy": "vite --open '/?preview=tidy'",
 		"dev:conflicts": "vite --open '/?preview=conflicts'",

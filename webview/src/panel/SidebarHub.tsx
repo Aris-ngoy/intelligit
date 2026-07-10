@@ -2,6 +2,7 @@ import {
 	type ReactNode,
 	useCallback,
 	useEffect,
+	useMemo,
 	useRef,
 	useState,
 } from "react";
@@ -20,7 +21,6 @@ import {
 	LoaderIcon,
 	RadioIcon,
 	RefreshIcon,
-	SparklesIcon,
 	SwordsIcon,
 } from "../shared/icons";
 import type { RepositoryInfoDto } from "../shared/types";
@@ -91,7 +91,7 @@ const WORKSPACE_ACTIONS: ActionItem[] = [
 		id: "stashes",
 		icon: <ArchiveIcon size={16} />,
 		label: "Stashes",
-		description: "Search, apply, and delete saved changes",
+		description: "Set changes aside temporarily without committing",
 		command: "openStashes",
 	},
 ];
@@ -113,29 +113,69 @@ const BRANCH_ACTIONS: ActionItem[] = [
 	},
 ];
 
-const REBASE_ACTIONS: ActionItem[] = [
-	{
-		id: "rebase",
-		icon: <GitMergeIcon size={16} />,
-		label: "Rebase…",
-		description: "Move your branch onto another",
-		command: "openRebaseDialog",
-	},
-	{
-		id: "interactive-rebase",
-		icon: <SparklesIcon size={16} />,
-		label: "Tidy up changes",
-		description: "Interactive rebase with plain language",
-		command: "interactiveRebaseFromHere",
-	},
-	{
-		id: "conflicts",
-		icon: <SwordsIcon size={16} />,
-		label: "Resolve conflicts",
-		description: "Side-by-side conflict resolution",
-		command: "openConflicts",
-	},
-];
+const DEFAULT_REBASE_ACTION: ActionItem = {
+	id: "rebase",
+	icon: <GitMergeIcon size={16} />,
+	label: "Rebase…",
+	description: "Move your branch onto another",
+	command: "openRebaseDialog",
+};
+
+function buildRebaseActions(repoInfo: RepositoryInfoDto): ActionItem[] {
+	const operationInProgress =
+		repoInfo.isRebaseInProgress || repoInfo.isMergeInProgress;
+	const hasConflicts = repoInfo.conflictFileCount > 0;
+
+	if (!operationInProgress && !hasConflicts) {
+		return [DEFAULT_REBASE_ACTION];
+	}
+
+	const actions: ActionItem[] = [];
+
+	if (repoInfo.isRebaseInProgress) {
+		const remaining = repoInfo.rebaseCommitsRemaining;
+		const remainingLabel =
+			remaining === undefined
+				? "Pick up where you left off"
+				: `${remaining} commit${remaining === 1 ? "" : "s"} remaining`;
+
+		actions.push({
+			id: "continue-rebase",
+			icon: <GitMergeIcon size={16} />,
+			label: "Continue Rebase",
+			description: remainingLabel,
+			command: "continueOperation",
+			highlight: !hasConflicts,
+		});
+	} else if (repoInfo.isMergeInProgress) {
+		actions.push({
+			id: "continue-merge",
+			icon: <GitMergeIcon size={16} />,
+			label: "Continue Merge",
+			description: "Finish merging once conflicts are resolved",
+			command: "continueOperation",
+			highlight: !hasConflicts,
+		});
+	}
+
+	if (hasConflicts) {
+		const count = repoInfo.conflictFileCount;
+		actions.push({
+			id: "conflicts",
+			icon: <SwordsIcon size={16} />,
+			label: `Resolve conflicts (${count} file${count === 1 ? "" : "s"})`,
+			description: "Side-by-side conflict resolution",
+			command: "openConflicts",
+			highlight: true,
+		});
+	}
+
+	if (actions.length === 0) {
+		return [DEFAULT_REBASE_ACTION];
+	}
+
+	return actions;
+}
 
 export function SidebarHub() {
 	const [repoInfo, setRepoInfo] = useState<RepositoryInfoDto | null>(null);
@@ -171,7 +211,7 @@ export function SidebarHub() {
 
 	useEffect(() => {
 		return bridge.onEvent((event) => {
-			if (event === "gitStateChanged") {
+			if (event === "gitStateChanged" || event === "mergeStateChanged") {
 				void loadRepo();
 			}
 		});
@@ -192,6 +232,11 @@ export function SidebarHub() {
 		prevBranchRef.current = currentBranch;
 	}, [repoInfo?.currentBranch]);
 
+	const rebaseActions = useMemo(
+		() => (repoInfo ? buildRebaseActions(repoInfo) : [DEFAULT_REBASE_ACTION]),
+		[repoInfo],
+	);
+
 	async function runAction(action: ActionItem) {
 		setBusyAction(action.id);
 		setError(null);
@@ -208,6 +253,12 @@ export function SidebarHub() {
 					(action.command === "gitSwitchBranch" ||
 						action.command === "gitCreateBranch") &&
 					result.success
+				) {
+					await loadRepo();
+				}
+				if (
+					action.command === "continueOperation" ||
+					action.command === "openConflicts"
 				) {
 					await loadRepo();
 				}
@@ -233,6 +284,7 @@ export function SidebarHub() {
 		);
 	}
 
+	const hasConflicts = (repoInfo?.conflictFileCount ?? 0) > 0;
 	const operationInProgress =
 		repoInfo?.isRebaseInProgress || repoInfo?.isMergeInProgress;
 
@@ -260,13 +312,40 @@ export function SidebarHub() {
 				</div>
 			</header>
 
-			{operationInProgress && (
+			{hasConflicts && (
+				<div
+					className="shrink-0 border-b border-[var(--color-error)]/40 bg-[var(--color-error)]/10 px-3 py-2.5 text-[11px]"
+					role="status"
+				>
+					<div className="flex items-start justify-between gap-2">
+						<div>
+							<strong className="text-[var(--color-error)]">
+								Unresolved conflicts
+							</strong>
+							<p className="mt-0.5 text-[var(--color-muted)]">
+								{repoInfo?.conflictFileCount} file
+								{repoInfo?.conflictFileCount === 1 ? "" : "s"} need your
+								attention before you can continue.
+							</p>
+						</div>
+						<button
+							type="button"
+							className="shrink-0 rounded-md border border-[var(--color-error)]/50 bg-[var(--color-error)]/15 px-2 py-1 text-[10px] font-medium text-[var(--color-error)] hover:bg-[var(--color-error)]/25 focus:outline-none focus:ring-2 focus:ring-[var(--color-error)]/40"
+							onClick={() => void bridge.request("openConflicts")}
+						>
+							Resolve
+						</button>
+					</div>
+				</div>
+			)}
+
+			{operationInProgress && !hasConflicts && (
 				<div className="shrink-0 border-b border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 px-3 py-2 text-[11px]">
 					<strong>
 						{repoInfo?.isRebaseInProgress ? "Rebase" : "Merge"} in progress
 					</strong>
 					<span className="ml-1 text-[var(--color-muted)]">
-						— open conflicts to continue.
+						— use Continue below when you&apos;re ready.
 					</span>
 				</div>
 			)}
@@ -304,7 +383,7 @@ export function SidebarHub() {
 				/>
 				<ActionSection
 					title="Rebase & merge"
-					actions={REBASE_ACTIONS}
+					actions={rebaseActions}
 					busyAction={busyAction}
 					onRun={runAction}
 				/>

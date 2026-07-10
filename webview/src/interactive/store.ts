@@ -10,13 +10,18 @@ interface InteractiveRebaseStore {
 	loading: boolean;
 	error: string | null;
 	fromHash: string;
+	onto: string;
 	currentBranch: string;
 	repoRoot: string;
 	commits: InteractiveRebaseCommitDto[];
 	flags: RebaseFlagDto[];
 	rebasing: boolean;
 
-	init: (fromHash: string) => Promise<void>;
+	init: (
+		fromHash: string,
+		onto?: string,
+		flags?: RebaseFlagDto[],
+	) => Promise<void>;
 	setAction: (
 		index: number,
 		action: InteractiveRebaseCommitDto["action"],
@@ -38,14 +43,15 @@ export const useInteractiveRebaseStore = create<InteractiveRebaseStore>(
 		loading: true,
 		error: null,
 		fromHash: "",
+		onto: "",
 		currentBranch: "",
 		repoRoot: "",
 		commits: [],
 		flags: [],
 		rebasing: false,
 
-		async init(fromHash) {
-			set({ loading: true, error: null, fromHash });
+		async init(fromHash, onto = "", flags = []) {
+			set({ loading: true, error: null, fromHash, onto, flags });
 			try {
 				const data = await bridge.request<
 					| {
@@ -176,13 +182,14 @@ export const useInteractiveRebaseStore = create<InteractiveRebaseStore>(
 		},
 
 		async startRebase() {
-			const { fromHash, commits, flags } = get();
+			const { fromHash, onto, commits, flags } = get();
 			set({ rebasing: true, error: null });
 			try {
 				await bridge.request("startInteractiveRebase", {
 					fromHash,
 					commits,
 					flags,
+					onto: onto || undefined,
 				});
 			} catch (err) {
 				set({
@@ -197,9 +204,15 @@ export const useInteractiveRebaseStore = create<InteractiveRebaseStore>(
 
 bridge.onEvent((event, data) => {
 	if (event === "openInteractiveRebase") {
-		const payload = data as { fromCommitHash?: string };
+		const payload = data as {
+			fromCommitHash?: string;
+			onto?: string;
+			flags?: RebaseFlagDto[];
+		};
 		if (payload.fromCommitHash) {
-			void useInteractiveRebaseStore.getState().init(payload.fromCommitHash);
+			void useInteractiveRebaseStore
+				.getState()
+				.init(payload.fromCommitHash, payload.onto ?? "", payload.flags ?? []);
 		}
 	}
 });

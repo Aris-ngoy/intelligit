@@ -61,12 +61,18 @@ export class InteractiveRebaseManager {
 		private readonly messageRouter: MessageRouter,
 	) {}
 
-	open(fromCommitHash: string): void {
+	open(
+		fromCommitHash: string,
+		options: { onto?: string; flags?: string[] } = {},
+	): void {
+		const payload = {
+			fromCommitHash,
+			onto: options.onto,
+			flags: options.flags,
+		};
 		if (this.panel) {
 			this.panel.reveal(vscode.ViewColumn.One);
-			this.messageRouter.broadcastEvent("openInteractiveRebase", {
-				fromCommitHash,
-			});
+			this.messageRouter.broadcastEvent("openInteractiveRebase", payload);
 			return;
 		}
 
@@ -102,7 +108,7 @@ export class InteractiveRebaseManager {
 		void this.panel.webview.postMessage({
 			type: "event",
 			event: "openInteractiveRebase",
-			data: { fromCommitHash },
+			data: payload,
 		});
 	}
 

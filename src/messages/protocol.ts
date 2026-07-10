@@ -32,6 +32,7 @@ export type CommandType =
 	| "getInteractiveRebaseCommits"
 	| "startInteractiveRebase"
 	| "startStandardRebase"
+	| "openGuidedRebase"
 	| "openDiffEditor"
 	| "interactiveRebaseFromHere"
 	| "checkoutRevision"
