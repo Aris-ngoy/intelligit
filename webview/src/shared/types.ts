@@ -46,7 +46,8 @@ export interface ParsedLogDto {
 }
 
 export interface LogFiltersDto {
-	branchScope: "all" | "local" | "remote" | string;
+	branchScope: "all" | "local" | "remote" | "current" | string;
+	additionalBranches?: string[];
 	author?: string;
 	datePreset?: "today" | "yesterday" | "last-week" | "custom";
 	since?: string;

@@ -76,6 +76,39 @@ suite("Git Log Parser", () => {
 		assert.equal(commits[2]?.graphLane, 0);
 	});
 
+	test("keeps default branch on the leftmost lane", () => {
+		const makeRecord = (hash: string, parent: string, refs: string) =>
+			[
+				hash,
+				hash.slice(0, 7),
+				parent,
+				"A",
+				"a@b.c",
+				"1700000000",
+				"msg",
+				refs,
+				"",
+			].join(GIT_LOG_FIELD_SEP) + GIT_LOG_RECORD_SEP;
+
+		const raw =
+			makeRecord(
+				"cccccccccccccccccccccccccccccccccccccccc",
+				"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+				"HEAD -> main",
+			) +
+			makeRecord(
+				"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+				"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+				"feature/x",
+			) +
+			makeRecord("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "", "");
+
+		const { commits } = parseGitLog(raw, "main");
+		const mainTip = commits.find((c) => c.refs.includes("main"));
+		assert.ok(mainTip);
+		assert.equal(mainTip?.graphLane, 0);
+	});
+
 	test("formatCommitDate uses Today for same-day commits", () => {
 		const now = new Date(2026, 5, 19, 15, 30, 0); // June 19, 2026
 		const todayTs = Math.floor(

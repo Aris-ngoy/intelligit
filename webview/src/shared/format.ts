@@ -117,6 +117,14 @@ export function refDisplayLabel(ref: string): string {
 	return ref.replace(/^tag:\s*/, "").replace(/^HEAD ->\s*/, "");
 }
 
+/** Truncate long commit subjects; full text available via tooltip. */
+export function truncateMessage(message: string, maxLen = 72): string {
+	if (message.length <= maxLen) {
+		return message;
+	}
+	return `${message.slice(0, maxLen - 1)}…`;
+}
+
 export function statusLabel(status: string): string {
 	switch (status) {
 		case "A":

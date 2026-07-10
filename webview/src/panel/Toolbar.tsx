@@ -3,6 +3,7 @@ import { useGitLogStore } from "../shared/store";
 import { FilterSelect, IconButton } from "../shared/ui";
 
 const BRANCH_OPTIONS = [
+	{ value: "current", label: "Current branch" },
 	{ value: "all", label: "All branches" },
 	{ value: "local", label: "Local only" },
 	{ value: "remote", label: "Remote only" },

@@ -15,7 +15,10 @@ export interface GitCommit {
 
 /** Filters supported by the Git Log toolbar. */
 export interface GitLogFilters {
-	branchScope: "all" | "local" | "remote" | string;
+	/** `"current"` resolves to the checked-out branch at query time. */
+	branchScope: "all" | "local" | "remote" | "current" | string;
+	/** Extra branch refs to include in the graph (on-demand expansion). */
+	additionalBranches?: string[];
 	author?: string;
 	datePreset?: "today" | "yesterday" | "last-week" | "custom";
 	since?: string;
@@ -26,8 +29,12 @@ export interface GitLogFilters {
 /** Options passed to {@link GitService.getLog}. */
 export interface GitLogOptions {
 	maxCount?: number;
+	/** Skip the newest N commits (for incremental history loading). */
+	skip?: number;
 	filters?: GitLogFilters;
 	all?: boolean;
+	/** Default branch name — used to keep main on the leftmost lane. */
+	defaultBranch?: string;
 }
 
 /** Commit enriched with graph metadata (computed client-side). */
