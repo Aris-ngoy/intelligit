@@ -12,7 +12,8 @@
 			"!!**/out",
 			"!!**/.vscode-test",
 			"!!**/webview/test-results",
-			"!!**/*.css"
+			"!!**/*.css",
+			"!!**/*.md"
 		]
 	},
 	"formatter": {
