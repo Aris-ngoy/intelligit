@@ -1,16 +1,15 @@
-import { Allotment } from 'allotment';
-import { useEffect } from 'react';
-
-import { useGitLogStore } from '../shared/store';
-import { AlertTriangleIcon } from '../shared/icons';
-import { EmptyState } from '../shared/ui';
-import { BranchTree } from './BranchTree';
-import { CommitContextMenu } from './CommitContextMenu';
-import { CommitTable } from './CommitTable';
-import { DetailPanel } from './DetailPanel';
-import { GitLogFooter } from './GitLogFooter';
-import { RebaseInProgressBanner } from './RebaseInProgressBanner';
-import { Toolbar } from './Toolbar';
+import { Allotment } from "allotment";
+import { useEffect } from "react";
+import { AlertTriangleIcon } from "../shared/icons";
+import { useGitLogStore } from "../shared/store";
+import { EmptyState } from "../shared/ui";
+import { BranchTree } from "./BranchTree";
+import { CommitContextMenu } from "./CommitContextMenu";
+import { CommitTable } from "./CommitTable";
+import { DetailPanel } from "./DetailPanel";
+import { GitLogFooter } from "./GitLogFooter";
+import { RebaseInProgressBanner } from "./RebaseInProgressBanner";
+import { Toolbar } from "./Toolbar";
 
 export function GitLogApp() {
 	const loading = useGitLogStore((s) => s.loading);
@@ -25,13 +24,17 @@ export function GitLogApp() {
 
 	useEffect(() => {
 		const onClick = () => closeContextMenu();
-		window.addEventListener('click', onClick);
-		return () => window.removeEventListener('click', onClick);
+		window.addEventListener("click", onClick);
+		return () => window.removeEventListener("click", onClick);
 	}, [closeContextMenu]);
 
 	if (error && commits.length === 0) {
 		return (
-			<EmptyState icon={<AlertTriangleIcon size={32} />} title="Couldn't load history" description={error} />
+			<EmptyState
+				icon={<AlertTriangleIcon size={32} />}
+				title="Couldn't load history"
+				description={error}
+			/>
 		);
 	}
 

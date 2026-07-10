@@ -1,18 +1,17 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-
-import { useGitLogStore } from '../shared/store';
-import { formatRelativeDate } from '../shared/format';
-import { SearchIcon } from '../shared/icons';
-import { EmptyState } from '../shared/ui';
-import { CommitTableRow } from './CommitTableRow';
-import { CommitTableHeader } from './CommitTableHeader';
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { formatRelativeDate } from "../shared/format";
+import { SearchIcon } from "../shared/icons";
+import { useGitLogStore } from "../shared/store";
+import { EmptyState } from "../shared/ui";
+import { CommitTableHeader } from "./CommitTableHeader";
+import { CommitTableRow } from "./CommitTableRow";
 import {
+	type CommitTableColumnWidths,
 	loadStoredColumnWidths,
 	resolveColumnWidths,
 	saveColumnWidths,
-	type CommitTableColumnWidths,
-} from './commitTableLayout';
-import { computeGraphWidth, computeMaxLane } from './GraphCell';
+} from "./commitTableLayout";
+import { computeGraphWidth, computeMaxLane } from "./GraphCell";
 
 export function CommitTable() {
 	const commits = useGitLogStore((s) => s.commits);
@@ -23,8 +22,8 @@ export function CommitTable() {
 	const maxLane = computeMaxLane(commits);
 	const graphMinWidth = computeGraphWidth(maxLane);
 
-	const [columnWidths, setColumnWidths] = useState<CommitTableColumnWidths>(() =>
-		resolveColumnWidths(graphMinWidth, loadStoredColumnWidths()),
+	const [columnWidths, setColumnWidths] = useState<CommitTableColumnWidths>(
+		() => resolveColumnWidths(graphMinWidth, loadStoredColumnWidths()),
 	);
 
 	useEffect(() => {
@@ -78,7 +77,10 @@ export function CommitTable() {
 	}
 
 	return (
-		<div className="flex h-full flex-col overflow-hidden" data-testid="commit-table">
+		<div
+			className="flex h-full flex-col overflow-hidden"
+			data-testid="commit-table"
+		>
 			<CommitTableHeader
 				widths={columnWidths}
 				graphMinWidth={graphMinWidth}

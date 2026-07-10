@@ -1,13 +1,24 @@
-import { Allotment } from 'allotment';
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { Allotment } from "allotment";
+import {
+	type ReactNode,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from "react";
 
-import { bridge } from '../shared/bridge';
-import { AlertTriangleIcon } from '../shared/icons';
-import type { RepositoryInfoDto } from '../shared/types';
-import { EmptyState, LoadingState, PrimaryButton, SecondaryButton } from '../shared/ui';
-import type { FileVersionsDto } from './types';
-import type { MergeBlock } from './types';
-import { useMergeStore } from './store';
+import { bridge } from "../shared/bridge";
+import { AlertTriangleIcon } from "../shared/icons";
+import type { RepositoryInfoDto } from "../shared/types";
+import {
+	EmptyState,
+	LoadingState,
+	PrimaryButton,
+	SecondaryButton,
+} from "../shared/ui";
+import { useMergeStore } from "./store";
+import type { FileVersionsDto, MergeBlock } from "./types";
 
 interface MergeEditorAppProps {
 	filePath: string;
@@ -34,7 +45,7 @@ export function MergeEditorApp({ filePath }: MergeEditorAppProps) {
 	const allResolved = useMergeStore((s) => s.allResolved);
 
 	const conflictBlocks = useMemo(
-		() => blocks.filter((b) => b.state === 'conflict'),
+		() => blocks.filter((b) => b.state === "conflict"),
 		[blocks],
 	);
 	const unresolvedConflicts = useMemo(
@@ -42,25 +53,27 @@ export function MergeEditorApp({ filePath }: MergeEditorAppProps) {
 		[conflictBlocks],
 	);
 
-	const conflictCount = useMemo(() => getConflictCount(), [blocks, getConflictCount]);
+	const conflictCount = useMemo(() => getConflictCount(), [getConflictCount]);
 	const canApply = allResolved() && conflictCount === 0;
 
-	const oursBranch = repoInfo?.currentBranch ?? 'yours';
-	const theirsBranch = 'incoming';
+	const oursBranch = repoInfo?.currentBranch ?? "yours";
+	const theirsBranch = "incoming";
 
 	useEffect(() => {
 		let cancelled = false;
 		void (async () => {
 			try {
 				const [versions, repo] = await Promise.all([
-					bridge.request<FileVersionsDto>('getFileVersions', { filePath }),
-					bridge.request<RepositoryInfoDto | { status: string }>('getRepositoryInfo'),
+					bridge.request<FileVersionsDto>("getFileVersions", { filePath }),
+					bridge.request<RepositoryInfoDto | { status: string }>(
+						"getRepositoryInfo",
+					),
 				]);
 				if (cancelled) {
 					return;
 				}
 				setFile(filePath, versions.base, versions.ours, versions.theirs);
-				if (!('status' in repo)) {
+				if (!("status" in repo)) {
 					setRepoInfo(repo);
 				}
 			} catch (err) {
@@ -85,7 +98,9 @@ export function MergeEditorApp({ filePath }: MergeEditorAppProps) {
 				return;
 			}
 			setFocusedConflictIndex(index);
-			blockRefs.current.get(block.id)?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+			blockRefs.current
+				.get(block.id)
+				?.scrollIntoView({ block: "center", behavior: "smooth" });
 		},
 		[unresolvedConflicts],
 	);
@@ -97,18 +112,18 @@ export function MergeEditorApp({ filePath }: MergeEditorAppProps) {
 		setApplying(true);
 		setError(null);
 		try {
-			await bridge.request('saveMergedContent', {
+			await bridge.request("saveMergedContent", {
 				filePath,
 				content: getResultText(),
 			});
-			await bridge.request('stageFile', { filePath });
-			await bridge.request('closeMergeEditor', { filePath });
+			await bridge.request("stageFile", { filePath });
+			await bridge.request("closeMergeEditor", { filePath });
 
-			const remaining = await bridge.request<string[]>('getConflictFiles');
+			const remaining = await bridge.request<string[]>("getConflictFiles");
 			if (remaining.length === 0) {
-				await bridge.request('continueOperation', {});
+				await bridge.request("continueOperation", {});
 			} else {
-				await bridge.request('openConflicts', {});
+				await bridge.request("openConflicts", {});
 			}
 		} catch (err) {
 			setError(err instanceof Error ? err.message : String(err));
@@ -123,7 +138,11 @@ export function MergeEditorApp({ filePath }: MergeEditorAppProps) {
 
 	if (error && blocks.length === 0) {
 		return (
-			<EmptyState icon={<AlertTriangleIcon size={32} />} title="Couldn't load merge editor" description={error} />
+			<EmptyState
+				icon={<AlertTriangleIcon size={32} />}
+				title="Couldn't load merge editor"
+				description={error}
+			/>
 		);
 	}
 
@@ -148,7 +167,9 @@ export function MergeEditorApp({ filePath }: MergeEditorAppProps) {
 							<SecondaryButton
 								className="!px-2 !py-1"
 								onClick={() =>
-									scrollToConflict((focusedConflictIndex + 1) % unresolvedConflicts.length)
+									scrollToConflict(
+										(focusedConflictIndex + 1) % unresolvedConflicts.length,
+									)
 								}
 							>
 								Next →
@@ -158,11 +179,11 @@ export function MergeEditorApp({ filePath }: MergeEditorAppProps) {
 					<span
 						className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
 							conflictCount > 0
-								? 'bg-[var(--color-error)]/20 text-[var(--color-error)]'
-								: 'bg-green-500/20 text-green-400'
+								? "bg-[var(--color-error)]/20 text-[var(--color-error)]"
+								: "bg-green-500/20 text-green-400"
 						}`}
 					>
-						{conflictCount} conflict{conflictCount === 1 ? '' : 's'} remaining
+						{conflictCount} conflict{conflictCount === 1 ? "" : "s"} remaining
 					</span>
 				</div>
 			</div>
@@ -178,7 +199,7 @@ export function MergeEditorApp({ filePath }: MergeEditorAppProps) {
 									lines={block.leftLines}
 									side="left"
 									startLine={lineOffset(blocks, blockIndex)}
-									showArrow={block.state === 'conflict' && !block.isResolved}
+									showArrow={block.state === "conflict" && !block.isResolved}
 								/>
 							))}
 						</Column>
@@ -213,7 +234,7 @@ export function MergeEditorApp({ filePath }: MergeEditorAppProps) {
 									lines={block.rightLines}
 									side="right"
 									startLine={lineOffset(blocks, blockIndex)}
-									showArrow={block.state === 'conflict' && !block.isResolved}
+									showArrow={block.state === "conflict" && !block.isResolved}
 								/>
 							))}
 						</Column>
@@ -229,12 +250,18 @@ export function MergeEditorApp({ filePath }: MergeEditorAppProps) {
 
 			<div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-t border-[var(--color-border)] px-3 py-2">
 				<div className="flex gap-2">
-					<SecondaryButton onClick={acceptAllLeft}>Accept All Left</SecondaryButton>
-					<SecondaryButton onClick={acceptAllRight}>Accept All Right</SecondaryButton>
+					<SecondaryButton onClick={acceptAllLeft}>
+						Accept All Left
+					</SecondaryButton>
+					<SecondaryButton onClick={acceptAllRight}>
+						Accept All Right
+					</SecondaryButton>
 				</div>
 				<div className="flex gap-2">
 					<SecondaryButton
-						onClick={() => void bridge.request('closeMergeEditor', { filePath })}
+						onClick={() =>
+							void bridge.request("closeMergeEditor", { filePath })
+						}
 					>
 						Cancel
 					</SecondaryButton>
@@ -243,7 +270,7 @@ export function MergeEditorApp({ filePath }: MergeEditorAppProps) {
 						disabled={!canApply || applying}
 						onClick={() => void handleApply()}
 					>
-						{applying ? 'Applying…' : 'Apply & Save'}
+						{applying ? "Applying…" : "Apply & Save"}
 					</PrimaryButton>
 				</div>
 			</div>
@@ -256,7 +283,12 @@ function lineOffset(blocks: MergeBlock[], blockIndex: number): number {
 	for (let i = 0; i < blockIndex; i++) {
 		const b = blocks[i];
 		if (b) {
-			offset += Math.max(b.leftLines.length, b.rightLines.length, b.resultLines.length, 1);
+			offset += Math.max(
+				b.leftLines.length,
+				b.rightLines.length,
+				b.resultLines.length,
+				1,
+			);
 		}
 	}
 	return offset;
@@ -278,7 +310,9 @@ function Column({
 			<div className="flex shrink-0 items-center gap-2 border-b border-[var(--color-border)] px-2 py-1.5 text-[11px] font-semibold">
 				<span>{title}</span>
 				{readOnly && (
-					<span className="font-normal text-[var(--color-muted)]">(read-only)</span>
+					<span className="font-normal text-[var(--color-muted)]">
+						(read-only)
+					</span>
 				)}
 				{branch && (
 					<span className="ml-auto truncate rounded bg-[var(--color-input-bg)] px-1.5 py-0.5 font-mono text-[10px] font-normal text-[var(--color-muted)]">
@@ -302,37 +336,43 @@ function SideBlock({
 }: {
 	block: MergeBlock;
 	lines: string[];
-	side: 'left' | 'right';
+	side: "left" | "right";
 	startLine: number;
 	showArrow: boolean;
 }) {
-	const isConflict = block.state === 'conflict' && !block.isResolved;
+	const isConflict = block.state === "conflict" && !block.isResolved;
 	const bg =
-		isConflict && side === 'left'
-			? 'bg-red-500/10'
-			: isConflict && side === 'right'
-				? 'bg-green-500/10'
-				: '';
+		isConflict && side === "left"
+			? "bg-red-500/10"
+			: isConflict && side === "right"
+				? "bg-green-500/10"
+				: "";
+	const numberedLines = lines.map((text, offset) => ({
+		lineNumber: startLine + offset,
+		text,
+	}));
 
 	return (
 		<div className={`relative border-b border-[var(--color-border)]/30 ${bg}`}>
 			{showArrow && (
 				<span
-					className={`absolute top-1 ${side === 'left' ? 'right-1 text-red-400' : 'left-1 text-green-400'} text-xs font-bold`}
+					className={`absolute top-1 ${side === "left" ? "right-1 text-red-400" : "left-1 text-green-400"} text-xs font-bold`}
 					aria-hidden
 				>
-					{side === 'left' ? '⇒' : '⇐'}
+					{side === "left" ? "⇒" : "⇐"}
 				</span>
 			)}
 			{lines.length === 0 ? (
 				<div className="px-2 py-1 text-[var(--color-muted)]">&nbsp;</div>
 			) : (
-				lines.map((line, i) => (
-					<div key={i} className="flex">
+				numberedLines.map((row) => (
+					<div key={`${row.lineNumber}-${row.text}`} className="flex">
 						<span className="w-8 shrink-0 select-none pr-1 text-right text-[var(--color-muted)]">
-							{startLine + i}
+							{row.lineNumber}
 						</span>
-						<span className="min-w-0 flex-1 whitespace-pre-wrap px-1 py-0.5">{line}</span>
+						<span className="min-w-0 flex-1 whitespace-pre-wrap px-1 py-0.5">
+							{row.text}
+						</span>
 					</div>
 				))
 			)}
@@ -355,29 +395,34 @@ function ResultBlock({
 	onIgnore: () => void;
 	onChange: (text: string) => void;
 }) {
-	const isConflict = block.state === 'conflict' && !block.isResolved;
+	const isConflict = block.state === "conflict" && !block.isResolved;
 	const displayText = isConflict
 		? [
-				'/* CONFLICT START */',
+				"/* CONFLICT START */",
 				...block.leftLines,
-				'/* ======= */',
+				"/* ======= */",
 				...block.rightLines,
-				'/* CONFLICT END */',
-			].join('\n')
-		: block.resultLines.join('\n');
+				"/* CONFLICT END */",
+			].join("\n")
+		: block.resultLines.join("\n");
 
 	return (
 		<div
 			ref={blockRef}
 			className={`group relative border-b border-[var(--color-border)]/30 ${
-				isConflict ? 'bg-purple-500/10' : ''
+				isConflict ? "bg-purple-500/10" : ""
 			}`}
 		>
 			{isConflict && (
 				<>
 					<GutterButton side="left" label=">>" onClick={onAcceptLeft} />
 					<GutterButton side="right" label="<<" onClick={onAcceptRight} />
-					<GutterButton side="right" label="×" extraClass="right-8" onClick={onIgnore} />
+					<GutterButton
+						side="right"
+						label="×"
+						extraClass="right-8"
+						onClick={onIgnore}
+					/>
 				</>
 			)}
 			{isConflict ? (
@@ -386,7 +431,7 @@ function ResultBlock({
 				<textarea
 					className="block w-full resize-none border-0 bg-transparent px-8 py-1 font-mono text-[11px] leading-5 outline-none focus:ring-1 focus:ring-[var(--color-accent)]/30"
 					rows={Math.max(1, block.resultLines.length)}
-					value={block.resultLines.join('\n')}
+					value={block.resultLines.join("\n")}
 					onChange={(e) => onChange(e.target.value)}
 				/>
 			)}
@@ -398,9 +443,9 @@ function GutterButton({
 	side,
 	label,
 	onClick,
-	extraClass = '',
+	extraClass = "",
 }: {
-	side: 'left' | 'right';
+	side: "left" | "right";
 	label: string;
 	onClick: () => void;
 	extraClass?: string;
@@ -408,7 +453,7 @@ function GutterButton({
 	return (
 		<button
 			type="button"
-			className={`absolute top-1 ${side === 'left' ? 'left-1' : 'right-1'} z-10 hidden rounded border border-[var(--color-border)] bg-[var(--color-input-bg)] px-1 text-[10px] group-hover:block ${extraClass}`}
+			className={`absolute top-1 ${side === "left" ? "left-1" : "right-1"} z-10 hidden rounded border border-[var(--color-border)] bg-[var(--color-input-bg)] px-1 text-[10px] group-hover:block ${extraClass}`}
 			onClick={onClick}
 			aria-label={label}
 		>

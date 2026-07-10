@@ -1,7 +1,7 @@
-import { create } from 'zustand';
+import { create } from "zustand";
 
-import { bridge } from '../shared/bridge';
-import type { RebaseFlagDto } from '../shared/types';
+import { bridge } from "../shared/bridge";
+import type { RebaseFlagDto } from "../shared/types";
 
 interface RebaseDialogStore {
 	loading: boolean;
@@ -28,31 +28,34 @@ export const useRebaseDialogStore = create<RebaseDialogStore>((set, get) => ({
 	loading: true,
 	error: null,
 	refs: [],
-	currentBranch: '',
-	repoRoot: '',
-	onto: '',
-	from: '',
-	fromHash: '',
-	fromLabel: '',
+	currentBranch: "",
+	repoRoot: "",
+	onto: "",
+	from: "",
+	fromHash: "",
+	fromLabel: "",
 	commitCount: 0,
 	flags: [],
 	submitting: false,
 
-	async load(fromHash = '') {
+	async load(fromHash = "") {
 		set({ loading: true, error: null, fromHash });
 		try {
-			const data = await bridge.request<{
-				refs: string[];
-				currentBranch: string;
-				root: string;
-				fromHash?: string;
-				rebaseFrom?: string;
-				rebaseFromLabel?: string;
-				commitCount?: number;
-			} | { status: string }>('getRebaseRefs', fromHash ? { fromHash } : {});
+			const data = await bridge.request<
+				| {
+						refs: string[];
+						currentBranch: string;
+						root: string;
+						fromHash?: string;
+						rebaseFrom?: string;
+						rebaseFromLabel?: string;
+						commitCount?: number;
+				  }
+				| { status: string }
+			>("getRebaseRefs", fromHash ? { fromHash } : {});
 
-			if ('status' in data) {
-				set({ loading: false, error: 'No Git repository found.' });
+			if ("status" in data) {
+				set({ loading: false, error: "No Git repository found." });
 				return;
 			}
 
@@ -66,7 +69,7 @@ export const useRebaseDialogStore = create<RebaseDialogStore>((set, get) => ({
 				repoRoot: data.root,
 				from: rebaseFrom,
 				fromHash: resolvedFromHash,
-				fromLabel: data.rebaseFromLabel ?? '',
+				fromLabel: data.rebaseFromLabel ?? "",
 				commitCount: data.commitCount ?? 0,
 			});
 		} catch (err) {
@@ -88,19 +91,21 @@ export const useRebaseDialogStore = create<RebaseDialogStore>((set, get) => ({
 	toggleFlag(flag) {
 		const flags = get().flags;
 		set({
-			flags: flags.includes(flag) ? flags.filter((f) => f !== flag) : [...flags, flag],
+			flags: flags.includes(flag)
+				? flags.filter((f) => f !== flag)
+				: [...flags, flag],
 		});
 	},
 
 	async submit() {
 		const { onto, from, fromHash, flags } = get();
 		if (!onto.trim()) {
-			set({ error: 'Onto is required.' });
+			set({ error: "Onto is required." });
 			return;
 		}
 		set({ submitting: true, error: null });
 		try {
-			await bridge.request('startStandardRebase', {
+			await bridge.request("startStandardRebase", {
 				onto,
 				from: fromHash ? from : undefined,
 				flags,
@@ -114,11 +119,11 @@ export const useRebaseDialogStore = create<RebaseDialogStore>((set, get) => ({
 }));
 
 bridge.onEvent((event, data) => {
-	if (event === 'openRebaseDialog') {
+	if (event === "openRebaseDialog") {
 		const payload = data as { fromHash?: string };
-		void useRebaseDialogStore.getState().load(payload.fromHash ?? '');
+		void useRebaseDialogStore.getState().load(payload.fromHash ?? "");
 	}
-	if (event === 'closeRebaseDialog') {
+	if (event === "closeRebaseDialog") {
 		useRebaseDialogStore.setState({ submitting: false, error: null });
 	}
 });

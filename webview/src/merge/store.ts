@@ -1,14 +1,23 @@
-import { create } from 'zustand';
+import { create } from "zustand";
 
-import { blocksToText, countUnresolvedConflicts, parseMergeBlocks } from './mergeLogic';
-import type { MergeBlock } from './types';
+import {
+	blocksToText,
+	countUnresolvedConflicts,
+	parseMergeBlocks,
+} from "./mergeLogic";
+import type { MergeBlock } from "./types";
 
 interface MergeStore {
 	blocks: MergeBlock[];
 	filePath: string;
 	isDirty: boolean;
 
-	setFile: (filePath: string, base: string, ours: string, theirs: string) => void;
+	setFile: (
+		filePath: string,
+		base: string,
+		ours: string,
+		theirs: string,
+	) => void;
 	acceptLeft: (blockId: string) => void;
 	acceptRight: (blockId: string) => void;
 	ignoreBlock: (blockId: string) => void;
@@ -22,7 +31,7 @@ interface MergeStore {
 
 export const useMergeStore = create<MergeStore>((set, get) => ({
 	blocks: [],
-	filePath: '',
+	filePath: "",
 	isDirty: false,
 
 	setFile(filePath, base, ours, theirs) {
@@ -92,8 +101,8 @@ export const useMergeStore = create<MergeStore>((set, get) => ({
 				b.id === blockId
 					? {
 							...b,
-							resultLines: text.split('\n'),
-							isResolved: b.state !== 'conflict',
+							resultLines: text.split("\n"),
+							isResolved: b.state !== "conflict",
 						}
 					: b,
 			),
@@ -110,6 +119,6 @@ export const useMergeStore = create<MergeStore>((set, get) => ({
 
 	allResolved() {
 		const blocks = get().blocks;
-		return blocks.every((b) => b.state === 'equal' || b.isResolved);
+		return blocks.every((b) => b.state === "equal" || b.isResolved);
 	},
 }));

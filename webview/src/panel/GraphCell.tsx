@@ -1,7 +1,6 @@
-import type { ReactElement } from 'react';
-
-import type { CommitDto } from '../shared/types';
-import { laneColor } from '../shared/format';
+import type { ReactElement } from "react";
+import { laneColor } from "../shared/format";
+import type { CommitDto } from "../shared/types";
 
 const ROW_HEIGHT = 28;
 const LANE_WIDTH = 14;
@@ -14,7 +13,12 @@ interface GraphCellProps {
 	selected?: boolean;
 }
 
-export function GraphCell({ commit, nextCommit, maxLane, selected }: GraphCellProps) {
+export function GraphCell({
+	commit,
+	nextCommit,
+	maxLane,
+	selected,
+}: GraphCellProps) {
 	const lane = commit.graphLane ?? 0;
 	const width = (maxLane + 1) * LANE_WIDTH + PADDING * 2;
 	const cx = PADDING + lane * LANE_WIDTH + LANE_WIDTH / 2;
@@ -56,7 +60,7 @@ export function GraphCell({ commit, nextCommit, maxLane, selected }: GraphCellPr
 	}
 
 	for (const conn of commit.graphConnections ?? []) {
-		if (conn.type === 'merge') {
+		if (conn.type === "merge") {
 			const toCx = PADDING + conn.toLane * LANE_WIDTH + LANE_WIDTH / 2;
 			lines.push(
 				<path
@@ -71,14 +75,19 @@ export function GraphCell({ commit, nextCommit, maxLane, selected }: GraphCellPr
 	}
 
 	return (
-		<svg width={width} height={ROW_HEIGHT} className="block shrink-0" aria-hidden>
+		<svg
+			width={width}
+			height={ROW_HEIGHT}
+			className="block shrink-0"
+			aria-hidden
+		>
 			{lines}
 			<circle
 				cx={cx}
 				cy={ROW_HEIGHT / 2}
 				r={selected ? 5 : 4}
 				fill={color}
-				stroke={selected ? 'var(--color-accent)' : 'none'}
+				stroke={selected ? "var(--color-accent)" : "none"}
 				strokeWidth={selected ? 2 : 0}
 			/>
 		</svg>

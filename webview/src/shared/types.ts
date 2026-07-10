@@ -15,7 +15,7 @@ export interface CommitDto {
 export interface GraphConnectionDto {
 	fromLane: number;
 	toLane: number;
-	type: 'merge' | 'normal';
+	type: "merge" | "normal";
 }
 
 export interface CommitFileDto {
@@ -46,39 +46,39 @@ export interface ParsedLogDto {
 }
 
 export interface LogFiltersDto {
-	branchScope: 'all' | 'local' | 'remote' | string;
+	branchScope: "all" | "local" | "remote" | string;
 	author?: string;
-	datePreset?: 'today' | 'yesterday' | 'last-week' | 'custom';
+	datePreset?: "today" | "yesterday" | "last-week" | "custom";
 	since?: string;
 	until?: string;
 	path?: string;
 }
 
 export type RebaseFlagDto =
-	| '--no-verify'
-	| '--keep-empty'
-	| '--autosquash'
-	| '--autostash';
+	| "--no-verify"
+	| "--keep-empty"
+	| "--autosquash"
+	| "--autostash";
 
 export interface InteractiveRebaseCommitDto {
 	hash: string;
 	shortHash: string;
 	message: string;
-	action: 'pick' | 'reword' | 'edit' | 'squash' | 'fixup' | 'drop';
+	action: "pick" | "reword" | "edit" | "squash" | "fixup" | "drop";
 	timestamp?: number;
 }
 
 export type ContextMenuAction =
-	| 'interactiveRebase'
-	| 'rebase'
-	| 'cherryPick'
-	| 'checkout'
-	| 'copyHash'
-	| 'newTag'
-	| 'newBranch'
-	| 'resetSoft'
-	| 'resetMixed'
-	| 'resetHard';
+	| "interactiveRebase"
+	| "rebase"
+	| "cherryPick"
+	| "checkout"
+	| "copyHash"
+	| "newTag"
+	| "newBranch"
+	| "resetSoft"
+	| "resetMixed"
+	| "resetHard";
 
 export interface StashEntryDto {
 	index: number;

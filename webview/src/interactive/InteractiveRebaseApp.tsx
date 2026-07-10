@@ -1,6 +1,6 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { type ReactNode, useEffect, useState } from "react";
 
-import { formatRelativeDate } from '../shared/format';
+import { formatRelativeDate } from "../shared/format";
 import {
 	ArrowDownIcon,
 	ArrowUpIcon,
@@ -11,8 +11,8 @@ import {
 	LinkIcon,
 	PencilIcon,
 	TrashIcon,
-} from '../shared/icons';
-import type { InteractiveRebaseCommitDto } from '../shared/types';
+} from "../shared/icons";
+import type { InteractiveRebaseCommitDto } from "../shared/types";
 import {
 	ErrorStrip,
 	LoadingState,
@@ -20,10 +20,10 @@ import {
 	ReassuranceLine,
 	SegmentedActionButton,
 	TaskHeader,
-} from '../shared/ui';
-import { useInteractiveRebaseStore } from './store';
+} from "../shared/ui";
+import { useInteractiveRebaseStore } from "./store";
 
-type RebaseAction = InteractiveRebaseCommitDto['action'];
+type RebaseAction = InteractiveRebaseCommitDto["action"];
 
 interface FriendlyAction {
 	action: RebaseAction;
@@ -35,32 +35,32 @@ interface FriendlyAction {
 
 const ACTIONS: FriendlyAction[] = [
 	{
-		action: 'pick',
-		label: 'Keep',
+		action: "pick",
+		label: "Keep",
 		icon: <CheckIcon size={14} />,
-		help: 'Leave this change exactly as it is.',
-		active: 'bg-green-600 text-white border-green-600',
+		help: "Leave this change exactly as it is.",
+		active: "bg-green-600 text-white border-green-600",
 	},
 	{
-		action: 'reword',
-		label: 'Rename',
+		action: "reword",
+		label: "Rename",
 		icon: <PencilIcon size={14} />,
-		help: 'Keep the change but give it a new description.',
-		active: 'bg-blue-600 text-white border-blue-600',
+		help: "Keep the change but give it a new description.",
+		active: "bg-blue-600 text-white border-blue-600",
 	},
 	{
-		action: 'fixup',
-		label: 'Combine',
+		action: "fixup",
+		label: "Combine",
 		icon: <LinkIcon size={14} />,
-		help: 'Glue this into the box above it, like they were always one.',
-		active: 'bg-purple-600 text-white border-purple-600',
+		help: "Glue this into the box above it, like they were always one.",
+		active: "bg-purple-600 text-white border-purple-600",
 	},
 	{
-		action: 'drop',
-		label: 'Delete',
+		action: "drop",
+		label: "Delete",
 		icon: <TrashIcon size={14} />,
-		help: 'Throw this change away completely.',
-		active: 'bg-red-600 text-white border-red-600',
+		help: "Throw this change away completely.",
+		active: "bg-red-600 text-white border-red-600",
 	},
 ];
 
@@ -76,19 +76,21 @@ function combineTargetMessage(
 		return null;
 	}
 	const commit = commits[index];
-	if (!commit || (commit.action !== 'fixup' && commit.action !== 'squash')) {
+	if (!commit || (commit.action !== "fixup" && commit.action !== "squash")) {
 		return null;
 	}
 	for (let i = index - 1; i >= 0; i--) {
 		const prev = commits[i];
-		if (prev && prev.action !== 'drop') {
+		if (prev && prev.action !== "drop") {
 			return prev.message;
 		}
 	}
 	return null;
 }
 
-export function InteractiveRebaseApp({ initialFromHash }: InteractiveRebaseAppProps) {
+export function InteractiveRebaseApp({
+	initialFromHash,
+}: InteractiveRebaseAppProps) {
 	const loading = useInteractiveRebaseStore((s) => s.loading);
 	const error = useInteractiveRebaseStore((s) => s.error);
 	const commits = useInteractiveRebaseStore((s) => s.commits);
@@ -117,8 +119,10 @@ export function InteractiveRebaseApp({ initialFromHash }: InteractiveRebaseAppPr
 	}
 
 	const keptCount = commits.filter(
-		(c) => c.action !== 'drop' && c.action !== 'fixup' && c.action !== 'squash',
+		(c) => c.action !== "drop" && c.action !== "fixup" && c.action !== "squash",
 	).length;
+
+	const defaultAction = ACTIONS[0];
 
 	return (
 		<div className="flex h-full flex-col">
@@ -128,7 +132,9 @@ export function InteractiveRebaseApp({ initialFromHash }: InteractiveRebaseAppPr
 						{currentBranch}
 					</span>
 					{rebasing && (
-						<span className="italic text-[var(--color-muted)]">Working on it…</span>
+						<span className="italic text-[var(--color-muted)]">
+							Working on it…
+						</span>
 					)}
 				</div>
 			)}
@@ -136,7 +142,7 @@ export function InteractiveRebaseApp({ initialFromHash }: InteractiveRebaseAppPr
 			<TaskHeader
 				icon={<BrushIcon size={18} />}
 				title="Tidy up my changes"
-				description={`Each box below is something you saved on ${currentBranch || 'your branch'}. Choose what to do with each one. Drag a box (or use the arrows) to change the order.`}
+				description={`Each box below is something you saved on ${currentBranch || "your branch"}. Choose what to do with each one. Drag a box (or use the arrows) to change the order.`}
 			/>
 
 			{error && <ErrorStrip>{error}</ErrorStrip>}
@@ -144,9 +150,13 @@ export function InteractiveRebaseApp({ initialFromHash }: InteractiveRebaseAppPr
 			<div className="min-h-0 flex-1 space-y-2 overflow-y-auto p-3">
 				{commits.map((commit, index) => {
 					const isSelected = selectedIndex === index;
-					const isDropped = commit.action === 'drop';
+					const isDropped = commit.action === "drop";
 					const isWip = /^wip:/i.test(commit.message.trim());
-					const chosen = ACTIONS.find((a) => a.action === commit.action) ?? ACTIONS[0]!;
+					const chosen =
+						ACTIONS.find((a) => a.action === commit.action) ?? defaultAction;
+					if (!chosen) {
+						return null;
+					}
 					const isDragOver = dragOverIndex === index && dragIndex !== index;
 					const combineTarget = combineTargetMessage(commits, index);
 
@@ -155,11 +165,11 @@ export function InteractiveRebaseApp({ initialFromHash }: InteractiveRebaseAppPr
 							key={commit.hash}
 							className={`rounded-xl border p-3 transition ${
 								isSelected
-									? 'border-[var(--color-accent)] bg-[var(--color-input-bg)]/60'
-									: 'border-[var(--color-border)] bg-[var(--color-input-bg)]/20'
-							} ${isDropped ? 'opacity-50' : ''} ${
-								isDragOver ? 'ring-2 ring-[var(--color-accent)]' : ''
-							} ${dragIndex === index ? 'opacity-40' : ''}`}
+									? "border-[var(--color-accent)] bg-[var(--color-input-bg)]/60"
+									: "border-[var(--color-border)] bg-[var(--color-input-bg)]/20"
+							} ${isDropped ? "opacity-50" : ""} ${
+								isDragOver ? "ring-2 ring-[var(--color-accent)]" : ""
+							} ${dragIndex === index ? "opacity-40" : ""}`}
 							onClick={() => setSelectedIndex(index)}
 							onDragOver={(e) => {
 								if (dragIndex !== null) {
@@ -208,9 +218,8 @@ export function InteractiveRebaseApp({ initialFromHash }: InteractiveRebaseAppPr
 										)}
 									</div>
 
-									{commit.action === 'reword' ? (
+									{commit.action === "reword" ? (
 										<input
-											autoFocus
 											className="w-full rounded-lg border border-[var(--color-input-border)] bg-[var(--color-input-bg)] px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/50"
 											value={commit.message}
 											onChange={(e) => setMessage(index, e.target.value)}
@@ -220,8 +229,8 @@ export function InteractiveRebaseApp({ initialFromHash }: InteractiveRebaseAppPr
 									) : (
 										<p
 											className={`truncate text-sm font-medium ${
-												isDropped ? 'line-through' : ''
-											} ${isWip ? 'italic text-[var(--color-muted)]' : ''}`}
+												isDropped ? "line-through" : ""
+											} ${isWip ? "italic text-[var(--color-muted)]" : ""}`}
 											title={commit.message}
 										>
 											{commit.message}
@@ -265,7 +274,7 @@ export function InteractiveRebaseApp({ initialFromHash }: InteractiveRebaseAppPr
 							<div className="mt-3 grid grid-cols-4 gap-1.5">
 								{ACTIONS.map((a) => {
 									const isActive = commit.action === a.action;
-									const disabled = a.action === 'fixup' && index === 0;
+									const disabled = a.action === "fixup" && index === 0;
 									return (
 										<SegmentedActionButton
 											key={a.action}
@@ -274,7 +283,9 @@ export function InteractiveRebaseApp({ initialFromHash }: InteractiveRebaseAppPr
 											active={isActive}
 											activeClass={a.active}
 											disabled={disabled}
-											title={disabled ? 'Nothing above to combine with' : a.help}
+											title={
+												disabled ? "Nothing above to combine with" : a.help
+											}
 											onClick={(e) => {
 												e.stopPropagation();
 												setAction(index, a.action);
@@ -290,16 +301,17 @@ export function InteractiveRebaseApp({ initialFromHash }: InteractiveRebaseAppPr
 
 			<footer className="flex shrink-0 flex-col gap-2 border-t border-[var(--color-border)] px-4 py-3">
 				<p className="text-center text-xs text-[var(--color-muted)]">
-					You’ll end up with{' '}
-					<strong className="text-[var(--color-app-fg)]">{keptCount}</strong> change
-					{keptCount === 1 ? '' : 's'} when you’re done.
+					You’ll end up with{" "}
+					<strong className="text-[var(--color-app-fg)]">{keptCount}</strong>{" "}
+					change
+					{keptCount === 1 ? "" : "s"} when you’re done.
 				</p>
 				<PrimaryButton
 					disabled={rebasing || commits.length === 0}
 					onClick={() => void startRebase()}
 				>
 					{rebasing ? (
-						'Working on it…'
+						"Working on it…"
 					) : (
 						<span className="inline-flex items-center justify-center gap-2">
 							<CheckCircleIcon size={16} />
@@ -322,7 +334,7 @@ function ArrowButton({
 	disabled: boolean;
 	onClick: (e: React.MouseEvent) => void;
 }) {
-	const Icon = label === 'Move up' ? ArrowUpIcon : ArrowDownIcon;
+	const Icon = label === "Move up" ? ArrowUpIcon : ArrowDownIcon;
 	return (
 		<button
 			type="button"

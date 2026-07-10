@@ -1,4 +1,4 @@
-declare module 'node-diff3' {
+declare module "node-diff3" {
 	export interface IRegion {
 		stable: boolean;
 		bufferContent?: string[];

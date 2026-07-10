@@ -1,7 +1,7 @@
-import { create } from 'zustand';
+import { create } from "zustand";
 
-import { bridge } from '../shared/bridge';
-import type { StashEntryDto } from '../shared/types';
+import { bridge } from "../shared/bridge";
+import type { StashEntryDto } from "../shared/types";
 
 interface StashStore {
 	loading: boolean;
@@ -9,7 +9,7 @@ interface StashStore {
 	stashes: StashEntryDto[];
 	searchQuery: string;
 	busyIndex: number | null;
-	busyAction: 'apply' | 'drop' | 'clear' | null;
+	busyAction: "apply" | "drop" | "clear" | null;
 
 	load: () => Promise<void>;
 	setSearchQuery: (query: string) => void;
@@ -22,17 +22,17 @@ export const useStashStore = create<StashStore>((set, get) => ({
 	loading: true,
 	error: null,
 	stashes: [],
-	searchQuery: '',
+	searchQuery: "",
 	busyIndex: null,
 	busyAction: null,
 
 	async load() {
 		set({ loading: true, error: null });
 		try {
-			const stashes = await bridge.request<StashEntryDto[] | { status: string }>(
-				'getStashes',
-			);
-			if ('status' in stashes) {
+			const stashes = await bridge.request<
+				StashEntryDto[] | { status: string }
+			>("getStashes");
+			if ("status" in stashes) {
 				set({ loading: false, stashes: [] });
 				return;
 			}
@@ -50,9 +50,9 @@ export const useStashStore = create<StashStore>((set, get) => ({
 	},
 
 	async applyStash(index) {
-		set({ busyIndex: index, busyAction: 'apply', error: null });
+		set({ busyIndex: index, busyAction: "apply", error: null });
 		try {
-			await bridge.request('applyStash', { index });
+			await bridge.request("applyStash", { index });
 			await get().load();
 		} catch (err) {
 			set({ error: err instanceof Error ? err.message : String(err) });
@@ -62,11 +62,14 @@ export const useStashStore = create<StashStore>((set, get) => ({
 	},
 
 	async dropStash(index) {
-		set({ busyIndex: index, busyAction: 'drop', error: null });
+		set({ busyIndex: index, busyAction: "drop", error: null });
 		try {
-			const result = await bridge.request<{ cancelled?: boolean }>('dropStash', {
-				index,
-			});
+			const result = await bridge.request<{ cancelled?: boolean }>(
+				"dropStash",
+				{
+					index,
+				},
+			);
 			if (result?.cancelled) {
 				return;
 			}
@@ -79,9 +82,11 @@ export const useStashStore = create<StashStore>((set, get) => ({
 	},
 
 	async clearAll() {
-		set({ busyAction: 'clear', error: null });
+		set({ busyAction: "clear", error: null });
 		try {
-			const result = await bridge.request<{ cancelled?: boolean }>('clearStashes');
+			const result = await bridge.request<{ cancelled?: boolean }>(
+				"clearStashes",
+			);
 			if (result?.cancelled) {
 				return;
 			}
@@ -95,7 +100,7 @@ export const useStashStore = create<StashStore>((set, get) => ({
 }));
 
 bridge.onEvent((event) => {
-	if (event === 'gitStateChanged') {
+	if (event === "gitStateChanged") {
 		void useStashStore.getState().load();
 	}
 });
@@ -109,14 +114,9 @@ export function filterStashes(
 		return stashes;
 	}
 	return stashes.filter((stash) => {
-		const haystack = [
-			stash.message,
-			stash.branch,
-			stash.ref,
-			stash.commitHash,
-		]
+		const haystack = [stash.message, stash.branch, stash.ref, stash.commitHash]
 			.filter(Boolean)
-			.join(' ')
+			.join(" ")
 			.toLowerCase();
 		return haystack.includes(query);
 	});

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState } from "react";
 
 import {
 	fileStatusTone,
@@ -6,10 +6,16 @@ import {
 	refChipVariant,
 	refDisplayLabel,
 	statusLabel,
-} from '../shared/format';
-import { useGitLogStore } from '../shared/store';
-import { CopyIcon, FileIcon } from '../shared/icons';
-import { AuthorAvatar, Chip, EmptyState, IconButton, StatusBadge } from '../shared/ui';
+} from "../shared/format";
+import { CopyIcon, FileIcon } from "../shared/icons";
+import { useGitLogStore } from "../shared/store";
+import {
+	AuthorAvatar,
+	Chip,
+	EmptyState,
+	IconButton,
+	StatusBadge,
+} from "../shared/ui";
 
 export function DetailPanel() {
 	const commits = useGitLogStore((s) => s.commits);
@@ -38,12 +44,17 @@ export function DetailPanel() {
 					<span className="font-mono text-[11px] text-[var(--color-muted)]">
 						{commit.shortHash}
 					</span>
-					<IconButton label="Copy hash" onClick={() => void copyHash(commit.hash)}>
+					<IconButton
+						label="Copy hash"
+						onClick={() => void copyHash(commit.hash)}
+					>
 						<CopyIcon size={12} />
 					</IconButton>
 				</div>
 
-				<h2 className="mb-3 text-base font-semibold leading-snug">{commit.subject}</h2>
+				<h2 className="mb-3 text-base font-semibold leading-snug">
+					{commit.subject}
+				</h2>
 
 				<div className="mb-4 flex items-start gap-3 rounded-lg border border-[var(--color-border)]/60 bg-[var(--color-input-bg)]/30 p-3">
 					<AuthorAvatar name={commit.author} />
@@ -79,12 +90,14 @@ export function DetailPanel() {
 				</div>
 
 				{commitFiles.length === 0 ? (
-					<p className="text-xs text-[var(--color-muted)]">No file changes in this commit.</p>
+					<p className="text-xs text-[var(--color-muted)]">
+						No file changes in this commit.
+					</p>
 				) : (
 					<ul className="space-y-1">
 						{commitFiles.map((file) => {
 							const tone = fileStatusTone(file.status);
-							const deleted = tone === 'deleted';
+							const deleted = tone === "deleted";
 							return (
 								<li key={`${file.status}-${file.path}`}>
 									<button
@@ -97,7 +110,7 @@ export function DetailPanel() {
 											className="shrink-0 text-[var(--color-muted)]"
 										/>
 										<span
-											className={`min-w-0 flex-1 truncate font-mono text-xs ${deleted ? 'text-[var(--color-muted)] line-through' : ''}`}
+											className={`min-w-0 flex-1 truncate font-mono text-xs ${deleted ? "text-[var(--color-muted)] line-through" : ""}`}
 										>
 											{file.path}
 										</span>
@@ -124,7 +137,7 @@ export function DetailPanel() {
 						}
 					}}
 				>
-					{reverting ? 'Reverting…' : 'Revert this commit'}
+					{reverting ? "Reverting…" : "Revert this commit"}
 				</button>
 			</div>
 		</div>

@@ -1,13 +1,13 @@
-import { create } from 'zustand';
+import { create } from "zustand";
 
-import { bridge } from './bridge';
+import { bridge } from "./bridge";
 import type {
 	CommitDto,
 	CommitFileDto,
 	LogFiltersDto,
 	ParsedLogDto,
 	RepositoryInfoDto,
-} from './types';
+} from "./types";
 
 interface GitLogStore {
 	loading: boolean;
@@ -41,23 +41,25 @@ export const useGitLogStore = create<GitLogStore>((set, get) => ({
 	selectedHash: null,
 	commitFiles: [],
 	contextMenu: null,
-	filters: { branchScope: 'all' },
+	filters: { branchScope: "all" },
 
 	async fetchAll() {
 		set({ loading: true, error: null });
 		try {
 			const [repoInfo, log] = await Promise.all([
-				bridge.request<RepositoryInfoDto | { status: string }>('getRepositoryInfo'),
-				bridge.request<ParsedLogDto | { status: string }>('getLog', {
+				bridge.request<RepositoryInfoDto | { status: string }>(
+					"getRepositoryInfo",
+				),
+				bridge.request<ParsedLogDto | { status: string }>("getLog", {
 					maxCount: 300,
 					filters: get().filters,
 				}),
 			]);
 
-			if ('status' in repoInfo || 'status' in log) {
+			if ("status" in repoInfo || "status" in log) {
 				set({
 					loading: false,
-					error: 'No Git repository found in workspace.',
+					error: "No Git repository found in workspace.",
 					repoInfo: null,
 					commits: [],
 					authors: [],
@@ -100,10 +102,10 @@ export const useGitLogStore = create<GitLogStore>((set, get) => ({
 		set({ selectedHash: hash, commitFiles: [] });
 		try {
 			const files = await bridge.request<CommitFileDto[] | { status: string }>(
-				'getCommitFiles',
+				"getCommitFiles",
 				{ hash },
 			);
-			if (!('status' in files)) {
+			if (!("status" in files)) {
 				set({ commitFiles: files });
 			}
 		} catch {
@@ -129,20 +131,20 @@ export const useGitLogStore = create<GitLogStore>((set, get) => ({
 
 		try {
 			switch (action) {
-				case 'interactiveRebase':
-					await bridge.request('interactiveRebaseFromHere', { hash });
+				case "interactiveRebase":
+					await bridge.request("interactiveRebaseFromHere", { hash });
 					break;
-				case 'rebase':
-					await bridge.request('openRebaseDialog', { fromHash: hash });
+				case "rebase":
+					await bridge.request("openRebaseDialog", { fromHash: hash });
 					break;
-				case 'copyHash':
+				case "copyHash":
 					await get().copyHash(hash);
 					break;
-				case 'cherryPick':
-					await bridge.request('cherryPick', { hash });
+				case "cherryPick":
+					await bridge.request("cherryPick", { hash });
 					break;
-				case 'checkout':
-					await bridge.request('checkoutRevision', { hash });
+				case "checkout":
+					await bridge.request("checkoutRevision", { hash });
 					break;
 				default:
 					break;
@@ -155,7 +157,7 @@ export const useGitLogStore = create<GitLogStore>((set, get) => ({
 
 	async openDiffEditor(commitHash, filePath) {
 		try {
-			await bridge.request('openDiffEditor', { commit: commitHash, filePath });
+			await bridge.request("openDiffEditor", { commit: commitHash, filePath });
 		} catch (err) {
 			set({ error: err instanceof Error ? err.message : String(err) });
 		}
@@ -163,7 +165,7 @@ export const useGitLogStore = create<GitLogStore>((set, get) => ({
 
 	async revertCommit(hash) {
 		try {
-			await bridge.request('revertCommit', { hash });
+			await bridge.request("revertCommit", { hash });
 			await get().fetchAll();
 		} catch (err) {
 			set({ error: err instanceof Error ? err.message : String(err) });
@@ -172,7 +174,7 @@ export const useGitLogStore = create<GitLogStore>((set, get) => ({
 
 	async copyHash(hash) {
 		try {
-			await bridge.request('copyToClipboard', { text: hash });
+			await bridge.request("copyToClipboard", { text: hash });
 		} catch {
 			try {
 				await navigator.clipboard.writeText(hash);
@@ -184,15 +186,15 @@ export const useGitLogStore = create<GitLogStore>((set, get) => ({
 
 	async openExternal(url) {
 		try {
-			await bridge.request('openExternal', { url });
+			await bridge.request("openExternal", { url });
 		} catch {
-			window.open(url, '_blank', 'noopener,noreferrer');
+			window.open(url, "_blank", "noopener,noreferrer");
 		}
 	},
 }));
 
 bridge.onEvent((event) => {
-	if (event === 'gitStateChanged') {
+	if (event === "gitStateChanged") {
 		void useGitLogStore.getState().fetchAll();
 	}
 });

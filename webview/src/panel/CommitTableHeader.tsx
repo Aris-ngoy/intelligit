@@ -1,6 +1,6 @@
-import { ColumnResizeHandle } from './ColumnResizeHandle';
-import type { CommitTableColumnWidths } from './commitTableLayout';
-import { MIN_AUTHOR_WIDTH, MIN_DATE_WIDTH } from './commitTableLayout';
+import { ColumnResizeHandle } from "./ColumnResizeHandle";
+import type { CommitTableColumnWidths } from "./commitTableLayout";
+import { MIN_AUTHOR_WIDTH, MIN_DATE_WIDTH } from "./commitTableLayout";
 
 interface CommitTableHeaderProps {
 	widths: CommitTableColumnWidths;
@@ -8,7 +8,11 @@ interface CommitTableHeaderProps {
 	onWidthsChange: (widths: CommitTableColumnWidths) => void;
 }
 
-export function CommitTableHeader({ widths, graphMinWidth, onWidthsChange }: CommitTableHeaderProps) {
+export function CommitTableHeader({
+	widths,
+	graphMinWidth,
+	onWidthsChange,
+}: CommitTableHeaderProps) {
 	const resizeGraph = (delta: number) => {
 		onWidthsChange({
 			...widths,
@@ -43,7 +47,10 @@ export function CommitTableHeader({ widths, graphMinWidth, onWidthsChange }: Com
 				Graph
 				<ColumnResizeHandle onResize={resizeGraph} />
 			</div>
-			<div className="relative min-w-0 flex-1 pr-3" data-testid="commit-table-column-message">
+			<div
+				className="relative min-w-0 flex-1 pr-3"
+				data-testid="commit-table-column-message"
+			>
 				Message
 				<ColumnResizeHandle onResize={resizeAuthor} />
 			</div>

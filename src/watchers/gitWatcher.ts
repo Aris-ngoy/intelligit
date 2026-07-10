@@ -1,7 +1,7 @@
-import * as vscode from 'vscode';
+import * as vscode from "vscode";
 
-import { gitService } from '../git';
-import type { MessageRouter } from '../messages/messageRouter';
+import { gitService } from "../git";
+import type { MessageRouter } from "../messages/messageRouter";
 
 export class GitWatcher implements vscode.Disposable {
 	private disposables: vscode.Disposable[] = [];
@@ -20,11 +20,11 @@ export class GitWatcher implements vscode.Disposable {
 	private setupWatchers(): void {
 		const gitBase = vscode.Uri.file(`${this.repoRoot}/.git`);
 		const patterns = [
-			'HEAD',
-			'index',
-			'MERGE_HEAD',
-			'rebase-merge/**',
-			'rebase-apply/**',
+			"HEAD",
+			"index",
+			"MERGE_HEAD",
+			"rebase-merge/**",
+			"rebase-apply/**",
 		];
 
 		for (const pattern of patterns) {
@@ -49,8 +49,10 @@ export class GitWatcher implements vscode.Disposable {
 		}
 		this.debounceTimer = setTimeout(() => {
 			this.debounceTimer = undefined;
-			this.messageRouter.broadcastEvent('mergeStateChanged', {});
-			this.messageRouter.broadcastEvent('gitStateChanged', { scope: 'workingTree' });
+			this.messageRouter.broadcastEvent("mergeStateChanged", {});
+			this.messageRouter.broadcastEvent("gitStateChanged", {
+				scope: "workingTree",
+			});
 			void this.checkConflicts();
 		}, 300);
 	}

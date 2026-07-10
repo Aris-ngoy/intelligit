@@ -1,7 +1,7 @@
-import * as vscode from 'vscode';
+import * as vscode from "vscode";
 
-import type { MessageRouter } from '../messages/messageRouter';
-import { getWebviewHtml } from './html';
+import type { MessageRouter } from "../messages/messageRouter";
+import { getWebviewHtml } from "./html";
 
 export class GitLogPanelManager {
 	private panel: vscode.WebviewPanel | undefined;
@@ -18,27 +18,33 @@ export class GitLogPanelManager {
 		}
 
 		this.panel = vscode.window.createWebviewPanel(
-			'intelligit.gitLogPanel',
-			'IntelliGit — Git Log',
+			"intelligit.gitLogPanel",
+			"IntelliGit — Git Log",
 			vscode.ViewColumn.Active,
 			{
 				enableScripts: true,
 				retainContextWhenHidden: true,
-				localResourceRoots: [vscode.Uri.joinPath(this.extensionUri, 'dist')],
+				localResourceRoots: [vscode.Uri.joinPath(this.extensionUri, "dist")],
 			},
 		);
 
 		this.panel.iconPath = vscode.Uri.joinPath(
 			this.extensionUri,
-			'media',
-			'icon.png',
+			"media",
+			"icon.png",
 		);
 
-		this.panel.webview.html = getWebviewHtml(this.panel.webview, this.extensionUri, {
-			mode: 'panel',
-		});
+		this.panel.webview.html = getWebviewHtml(
+			this.panel.webview,
+			this.extensionUri,
+			{
+				mode: "panel",
+			},
+		);
 
-		const routerDisposable = this.messageRouter.registerWebview(this.panel.webview);
+		const routerDisposable = this.messageRouter.registerWebview(
+			this.panel.webview,
+		);
 
 		this.panel.onDidDispose(() => {
 			routerDisposable.dispose();
@@ -58,27 +64,35 @@ export class InteractiveRebaseManager {
 	open(fromCommitHash: string): void {
 		if (this.panel) {
 			this.panel.reveal(vscode.ViewColumn.One);
-			this.messageRouter.broadcastEvent('openInteractiveRebase', { fromCommitHash });
+			this.messageRouter.broadcastEvent("openInteractiveRebase", {
+				fromCommitHash,
+			});
 			return;
 		}
 
 		this.panel = vscode.window.createWebviewPanel(
-			'intelligit.interactiveRebase',
-			'Tidy up my changes',
+			"intelligit.interactiveRebase",
+			"Tidy up my changes",
 			vscode.ViewColumn.One,
 			{
 				enableScripts: true,
 				retainContextWhenHidden: true,
-				localResourceRoots: [vscode.Uri.joinPath(this.extensionUri, 'dist')],
+				localResourceRoots: [vscode.Uri.joinPath(this.extensionUri, "dist")],
 			},
 		);
 
-		this.panel.webview.html = getWebviewHtml(this.panel.webview, this.extensionUri, {
-			mode: 'interactiveRebase',
-			fromHash: fromCommitHash,
-		});
+		this.panel.webview.html = getWebviewHtml(
+			this.panel.webview,
+			this.extensionUri,
+			{
+				mode: "interactiveRebase",
+				fromHash: fromCommitHash,
+			},
+		);
 
-		const routerDisposable = this.messageRouter.registerWebview(this.panel.webview);
+		const routerDisposable = this.messageRouter.registerWebview(
+			this.panel.webview,
+		);
 
 		this.panel.onDidDispose(() => {
 			routerDisposable.dispose();
@@ -86,8 +100,8 @@ export class InteractiveRebaseManager {
 		});
 
 		void this.panel.webview.postMessage({
-			type: 'event',
-			event: 'openInteractiveRebase',
+			type: "event",
+			event: "openInteractiveRebase",
 			data: { fromCommitHash },
 		});
 	}
@@ -114,30 +128,36 @@ export class RebaseDialogManager {
 		if (this.panel) {
 			this.panel.reveal(vscode.ViewColumn.Active);
 			void this.panel.webview.postMessage({
-				type: 'event',
-				event: 'openRebaseDialog',
-				data: { fromHash: options.fromHash ?? '' },
+				type: "event",
+				event: "openRebaseDialog",
+				data: { fromHash: options.fromHash ?? "" },
 			});
 			return;
 		}
 
 		this.panel = vscode.window.createWebviewPanel(
-			'intelligit.rebaseDialog',
-			'Move my work',
+			"intelligit.rebaseDialog",
+			"Move my work",
 			vscode.ViewColumn.Active,
 			{
 				enableScripts: true,
 				retainContextWhenHidden: false,
-				localResourceRoots: [vscode.Uri.joinPath(this.extensionUri, 'dist')],
+				localResourceRoots: [vscode.Uri.joinPath(this.extensionUri, "dist")],
 			},
 		);
 
-		this.panel.webview.html = getWebviewHtml(this.panel.webview, this.extensionUri, {
-			mode: 'rebaseDialog',
-			rebaseFromHash: options.fromHash ?? '',
-		});
+		this.panel.webview.html = getWebviewHtml(
+			this.panel.webview,
+			this.extensionUri,
+			{
+				mode: "rebaseDialog",
+				rebaseFromHash: options.fromHash ?? "",
+			},
+		);
 
-		const routerDisposable = this.messageRouter.registerWebview(this.panel.webview);
+		const routerDisposable = this.messageRouter.registerWebview(
+			this.panel.webview,
+		);
 
 		this.panel.onDidDispose(() => {
 			routerDisposable.dispose();
@@ -161,26 +181,34 @@ export class StashManager {
 	open(): void {
 		if (this.panel) {
 			this.panel.reveal(vscode.ViewColumn.One);
-			this.messageRouter.broadcastEvent('gitStateChanged', { scope: 'stashes' });
+			this.messageRouter.broadcastEvent("gitStateChanged", {
+				scope: "stashes",
+			});
 			return;
 		}
 
 		this.panel = vscode.window.createWebviewPanel(
-			'intelligit.stashes',
-			'Saved changes',
+			"intelligit.stashes",
+			"Saved changes",
 			vscode.ViewColumn.One,
 			{
 				enableScripts: true,
 				retainContextWhenHidden: true,
-				localResourceRoots: [vscode.Uri.joinPath(this.extensionUri, 'dist')],
+				localResourceRoots: [vscode.Uri.joinPath(this.extensionUri, "dist")],
 			},
 		);
 
-		this.panel.webview.html = getWebviewHtml(this.panel.webview, this.extensionUri, {
-			mode: 'stash',
-		});
+		this.panel.webview.html = getWebviewHtml(
+			this.panel.webview,
+			this.extensionUri,
+			{
+				mode: "stash",
+			},
+		);
 
-		const routerDisposable = this.messageRouter.registerWebview(this.panel.webview);
+		const routerDisposable = this.messageRouter.registerWebview(
+			this.panel.webview,
+		);
 		this.panel.onDidDispose(() => {
 			routerDisposable.dispose();
 			this.panel = undefined;
@@ -199,26 +227,32 @@ export class CommitManager {
 	open(): void {
 		if (this.panel) {
 			this.panel.reveal(vscode.ViewColumn.One);
-			this.messageRouter.broadcastEvent('gitStateChanged', { scope: 'commit' });
+			this.messageRouter.broadcastEvent("gitStateChanged", { scope: "commit" });
 			return;
 		}
 
 		this.panel = vscode.window.createWebviewPanel(
-			'intelligit.commit',
-			'Describe your changes',
+			"intelligit.commit",
+			"Describe your changes",
 			vscode.ViewColumn.One,
 			{
 				enableScripts: true,
 				retainContextWhenHidden: true,
-				localResourceRoots: [vscode.Uri.joinPath(this.extensionUri, 'dist')],
+				localResourceRoots: [vscode.Uri.joinPath(this.extensionUri, "dist")],
 			},
 		);
 
-		this.panel.webview.html = getWebviewHtml(this.panel.webview, this.extensionUri, {
-			mode: 'commit',
-		});
+		this.panel.webview.html = getWebviewHtml(
+			this.panel.webview,
+			this.extensionUri,
+			{
+				mode: "commit",
+			},
+		);
 
-		const routerDisposable = this.messageRouter.registerWebview(this.panel.webview);
+		const routerDisposable = this.messageRouter.registerWebview(
+			this.panel.webview,
+		);
 		this.panel.onDidDispose(() => {
 			routerDisposable.dispose();
 			this.panel = undefined;
@@ -237,26 +271,32 @@ export class ConflictsManager {
 	open(): void {
 		if (this.panel) {
 			this.panel.reveal(vscode.ViewColumn.One);
-			this.messageRouter.broadcastEvent('mergeStateChanged', {});
+			this.messageRouter.broadcastEvent("mergeStateChanged", {});
 			return;
 		}
 
 		this.panel = vscode.window.createWebviewPanel(
-			'intelligit.conflicts',
-			'Two versions don\'t agree',
+			"intelligit.conflicts",
+			"Two versions don't agree",
 			vscode.ViewColumn.One,
 			{
 				enableScripts: true,
 				retainContextWhenHidden: true,
-				localResourceRoots: [vscode.Uri.joinPath(this.extensionUri, 'dist')],
+				localResourceRoots: [vscode.Uri.joinPath(this.extensionUri, "dist")],
 			},
 		);
 
-		this.panel.webview.html = getWebviewHtml(this.panel.webview, this.extensionUri, {
-			mode: 'conflicts',
-		});
+		this.panel.webview.html = getWebviewHtml(
+			this.panel.webview,
+			this.extensionUri,
+			{
+				mode: "conflicts",
+			},
+		);
 
-		const routerDisposable = this.messageRouter.registerWebview(this.panel.webview);
+		const routerDisposable = this.messageRouter.registerWebview(
+			this.panel.webview,
+		);
 		this.panel.onDidDispose(() => {
 			routerDisposable.dispose();
 			this.panel = undefined;
@@ -280,18 +320,18 @@ export class MergeEditorManager {
 		}
 
 		const panel = vscode.window.createWebviewPanel(
-			'intelligit.mergeEditor',
+			"intelligit.mergeEditor",
 			`Merge: ${pathBasename(filePath)}`,
 			vscode.ViewColumn.One,
 			{
 				enableScripts: true,
 				retainContextWhenHidden: true,
-				localResourceRoots: [vscode.Uri.joinPath(this.extensionUri, 'dist')],
+				localResourceRoots: [vscode.Uri.joinPath(this.extensionUri, "dist")],
 			},
 		);
 
 		panel.webview.html = getWebviewHtml(panel.webview, this.extensionUri, {
-			mode: 'merge',
+			mode: "merge",
 			file: filePath,
 		});
 
@@ -310,6 +350,6 @@ export class MergeEditorManager {
 }
 
 function pathBasename(filePath: string): string {
-	const idx = filePath.lastIndexOf('/');
+	const idx = filePath.lastIndexOf("/");
 	return idx >= 0 ? filePath.slice(idx + 1) : filePath;
 }

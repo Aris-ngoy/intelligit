@@ -1,4 +1,4 @@
-import { useGitLogStore } from '../shared/store';
+import { useGitLogStore } from "../shared/store";
 
 export function GitLogFooter() {
 	const openExternal = useGitLogStore((s) => s.openExternal);
@@ -11,7 +11,7 @@ export function GitLogFooter() {
 					type="button"
 					className="hover:text-[var(--color-app-fg)] hover:underline"
 					onClick={() =>
-						void openExternal('https://github.com/Aris-ngoy/intelligit#readme')
+						void openExternal("https://github.com/Aris-ngoy/intelligit#readme")
 					}
 				>
 					Documentation
@@ -20,7 +20,7 @@ export function GitLogFooter() {
 					type="button"
 					className="hover:text-[var(--color-app-fg)] hover:underline"
 					onClick={() =>
-						void openExternal('https://github.com/Aris-ngoy/intelligit/issues')
+						void openExternal("https://github.com/Aris-ngoy/intelligit/issues")
 					}
 				>
 					Support

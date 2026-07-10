@@ -1,22 +1,22 @@
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { type ReactNode, useCallback, useEffect, useState } from "react";
 
-import { bridge } from '../shared/bridge';
+import { bridge } from "../shared/bridge";
 import {
 	AlertTriangleIcon,
 	ArchiveIcon,
 	ArrowDownIcon,
 	ArrowUpIcon,
+	GitCommitIcon,
 	GitMergeIcon,
 	HistoryIcon,
-	GitCommitIcon,
 	LoaderIcon,
 	RadioIcon,
 	RefreshIcon,
 	SparklesIcon,
 	SwordsIcon,
-} from '../shared/icons';
-import type { RepositoryInfoDto } from '../shared/types';
-import { EmptyState, SectionHeader } from '../shared/ui';
+} from "../shared/icons";
+import type { RepositoryInfoDto } from "../shared/types";
+import { EmptyState, SectionHeader } from "../shared/ui";
 
 interface ActionItem {
 	id: string;
@@ -30,85 +30,85 @@ interface ActionItem {
 
 const HISTORY_ACTIONS: ActionItem[] = [
 	{
-		id: 'git-log',
+		id: "git-log",
 		icon: <HistoryIcon size={16} />,
-		label: 'Git History',
-		description: 'Visual commit graph and branch tree',
-		command: 'openGitLogPanel',
+		label: "Git History",
+		description: "Visual commit graph and branch tree",
+		command: "openGitLogPanel",
 		highlight: true,
 	},
 	{
-		id: 'refresh',
+		id: "refresh",
 		icon: <RefreshIcon size={16} />,
-		label: 'Refresh',
-		description: 'Reload branches and commits',
-		command: 'refreshGitLog',
+		label: "Refresh",
+		description: "Reload branches and commits",
+		command: "refreshGitLog",
 	},
 ];
 
 const SYNC_ACTIONS: ActionItem[] = [
 	{
-		id: 'pull',
+		id: "pull",
 		icon: <ArrowDownIcon size={16} />,
-		label: 'Pull',
-		description: 'Download changes from remote',
-		command: 'gitPull',
+		label: "Pull",
+		description: "Download changes from remote",
+		command: "gitPull",
 	},
 	{
-		id: 'push',
+		id: "push",
 		icon: <ArrowUpIcon size={16} />,
-		label: 'Push',
-		description: 'Upload commits to remote',
-		command: 'gitPush',
+		label: "Push",
+		description: "Upload commits to remote",
+		command: "gitPush",
 	},
 	{
-		id: 'fetch',
+		id: "fetch",
 		icon: <RadioIcon size={16} />,
-		label: 'Fetch',
-		description: 'Update remote refs without merging',
-		command: 'gitFetch',
+		label: "Fetch",
+		description: "Update remote refs without merging",
+		command: "gitFetch",
 	},
 ];
 
 const WORKSPACE_ACTIONS: ActionItem[] = [
 	{
-		id: 'commit',
+		id: "commit",
 		icon: <GitCommitIcon size={16} />,
-		label: 'Commit…',
-		description: 'Write a message and save staged changes',
-		command: 'openCommit',
+		label: "Commit…",
+		description: "Write a message and save staged changes",
+		command: "openCommit",
 		highlight: true,
 	},
 	{
-		id: 'stashes',
+		id: "stashes",
 		icon: <ArchiveIcon size={16} />,
-		label: 'Stashes',
-		description: 'Search, apply, and delete saved changes',
-		command: 'openStashes',
+		label: "Stashes",
+		description: "Search, apply, and delete saved changes",
+		command: "openStashes",
 	},
 ];
 
 const REBASE_ACTIONS: ActionItem[] = [
 	{
-		id: 'rebase',
+		id: "rebase",
 		icon: <GitMergeIcon size={16} />,
-		label: 'Rebase…',
-		description: 'Move your branch onto another',
-		command: 'openRebaseDialog',
+		label: "Rebase…",
+		description: "Move your branch onto another",
+		command: "openRebaseDialog",
 	},
 	{
-		id: 'interactive-rebase',
+		id: "interactive-rebase",
 		icon: <SparklesIcon size={16} />,
-		label: 'Tidy up changes',
-		description: 'Interactive rebase with plain language',
-		command: 'interactiveRebaseFromHere',
+		label: "Tidy up changes",
+		description: "Interactive rebase with plain language",
+		command: "interactiveRebaseFromHere",
 	},
 	{
-		id: 'conflicts',
+		id: "conflicts",
 		icon: <SwordsIcon size={16} />,
-		label: 'Resolve conflicts',
-		description: 'Side-by-side conflict resolution',
-		command: 'openConflicts',
+		label: "Resolve conflicts",
+		description: "Side-by-side conflict resolution",
+		command: "openConflicts",
 	},
 ];
 
@@ -123,11 +123,11 @@ export function SidebarHub() {
 		setError(null);
 		try {
 			const info = await bridge.request<RepositoryInfoDto | { status: string }>(
-				'getRepositoryInfo',
+				"getRepositoryInfo",
 			);
-			if ('status' in info) {
+			if ("status" in info) {
 				setRepoInfo(null);
-				setError('No Git repository found in workspace.');
+				setError("No Git repository found in workspace.");
 			} else {
 				setRepoInfo(info);
 			}
@@ -144,7 +144,7 @@ export function SidebarHub() {
 
 	useEffect(() => {
 		return bridge.onEvent((event) => {
-			if (event === 'gitStateChanged') {
+			if (event === "gitStateChanged") {
 				void loadRepo();
 			}
 		});
@@ -154,8 +154,8 @@ export function SidebarHub() {
 		setBusyAction(action.id);
 		setError(null);
 		try {
-			if (action.command === 'refreshGitLog') {
-				await bridge.request('getLog', { maxCount: 1 });
+			if (action.command === "refreshGitLog") {
+				await bridge.request("getLog", { maxCount: 1 });
 				await loadRepo();
 			} else {
 				await bridge.request(action.command, action.params ?? {});
@@ -207,7 +207,7 @@ export function SidebarHub() {
 			{operationInProgress && (
 				<div className="shrink-0 border-b border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 px-3 py-2 text-[11px]">
 					<strong>
-						{repoInfo?.isRebaseInProgress ? 'Rebase' : 'Merge'} in progress
+						{repoInfo?.isRebaseInProgress ? "Rebase" : "Merge"} in progress
 					</strong>
 					<span className="ml-1 text-[var(--color-muted)]">
 						— open conflicts to continue.
@@ -222,10 +222,30 @@ export function SidebarHub() {
 			)}
 
 			<div className="min-h-0 flex-1 overflow-y-auto py-2">
-				<ActionSection title="History" actions={HISTORY_ACTIONS} busyAction={busyAction} onRun={runAction} />
-				<ActionSection title="Sync" actions={SYNC_ACTIONS} busyAction={busyAction} onRun={runAction} />
-				<ActionSection title="Workspace" actions={WORKSPACE_ACTIONS} busyAction={busyAction} onRun={runAction} />
-				<ActionSection title="Rebase & merge" actions={REBASE_ACTIONS} busyAction={busyAction} onRun={runAction} />
+				<ActionSection
+					title="History"
+					actions={HISTORY_ACTIONS}
+					busyAction={busyAction}
+					onRun={runAction}
+				/>
+				<ActionSection
+					title="Sync"
+					actions={SYNC_ACTIONS}
+					busyAction={busyAction}
+					onRun={runAction}
+				/>
+				<ActionSection
+					title="Workspace"
+					actions={WORKSPACE_ACTIONS}
+					busyAction={busyAction}
+					onRun={runAction}
+				/>
+				<ActionSection
+					title="Rebase & merge"
+					actions={REBASE_ACTIONS}
+					busyAction={busyAction}
+					onRun={runAction}
+				/>
 			</div>
 
 			<footer className="shrink-0 border-t border-[var(--color-border)] px-3 py-2 text-[10px] text-[var(--color-muted)]">
@@ -235,8 +255,8 @@ export function SidebarHub() {
 						type="button"
 						className="hover:text-[var(--color-app-fg)] hover:underline"
 						onClick={() =>
-							void bridge.request('openExternal', {
-								url: 'https://github.com/Aris-ngoy/intelligit#readme',
+							void bridge.request("openExternal", {
+								url: "https://github.com/Aris-ngoy/intelligit#readme",
 							})
 						}
 					>
@@ -246,8 +266,8 @@ export function SidebarHub() {
 						type="button"
 						className="hover:text-[var(--color-app-fg)] hover:underline"
 						onClick={() =>
-							void bridge.request('openExternal', {
-								url: 'https://github.com/Aris-ngoy/intelligit/issues',
+							void bridge.request("openExternal", {
+								url: "https://github.com/Aris-ngoy/intelligit/issues",
 							})
 						}
 					>
@@ -305,8 +325,8 @@ function ActionButton({
 			disabled={disabled || busy}
 			className={`flex w-full items-start gap-2.5 rounded-lg px-2 py-2 text-left transition focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/50 disabled:opacity-50 ${
 				action.highlight
-					? 'bg-[var(--color-selected)] text-[var(--color-selected-fg)]'
-					: 'hover:bg-[var(--color-hover)]'
+					? "bg-[var(--color-selected)] text-[var(--color-selected-fg)]"
+					: "hover:bg-[var(--color-hover)]"
 			}`}
 			onClick={onRun}
 			title={action.description}
@@ -315,12 +335,14 @@ function ActionButton({
 				{busy ? <LoaderIcon size={16} /> : action.icon}
 			</span>
 			<span className="min-w-0">
-				<span className="block text-xs font-medium leading-tight">{action.label}</span>
+				<span className="block text-xs font-medium leading-tight">
+					{action.label}
+				</span>
 				<span
 					className={`mt-0.5 block truncate text-[10px] leading-snug ${
 						action.highlight
-							? 'text-[var(--color-selected-fg)]/75'
-							: 'text-[var(--color-muted)]'
+							? "text-[var(--color-selected-fg)]/75"
+							: "text-[var(--color-muted)]"
 					}`}
 				>
 					{action.description}

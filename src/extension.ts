@@ -1,26 +1,30 @@
-import * as vscode from 'vscode';
+import * as vscode from "vscode";
 
-import { gitService } from './git';
-import { createRebaseService } from './git/rebaseService';
-import type { GitLogFilters, InteractiveRebaseCommit, RebaseFlag } from './git/types';
-import { MessageRouter } from './messages/messageRouter';
-import { NOT_GIT_REPO } from './messages/protocol';
-import { GitWatcher } from './watchers/gitWatcher';
+import { gitService } from "./git";
+import { createRebaseService } from "./git/rebaseService";
+import type {
+	GitLogFilters,
+	InteractiveRebaseCommit,
+	RebaseFlag,
+} from "./git/types";
+import { MessageRouter } from "./messages/messageRouter";
+import { NOT_GIT_REPO } from "./messages/protocol";
 import {
 	GitContentProvider,
 	INTELLIGIT_GIT_SCHEME,
 	openCommitFileDiff,
-} from './views/gitContentProvider';
-import { GitLogViewProvider } from './views/gitLogViewProvider';
+} from "./views/gitContentProvider";
+import { GitLogViewProvider } from "./views/gitLogViewProvider";
 import {
-	ConflictsManager,
 	CommitManager,
+	ConflictsManager,
 	GitLogPanelManager,
 	InteractiveRebaseManager,
 	MergeEditorManager,
 	RebaseDialogManager,
 	StashManager,
-} from './views/panelManagers';
+} from "./views/panelManagers";
+import { GitWatcher } from "./watchers/gitWatcher";
 
 let outputChannel: vscode.OutputChannel;
 let interactiveRebaseManager: InteractiveRebaseManager;
@@ -43,10 +47,9 @@ async function getActiveRepository(): Promise<string | undefined> {
 
 function parseLogFilters(params: Record<string, unknown>): GitLogFilters {
 	return {
-		branchScope:
-			(params.branchScope as GitLogFilters['branchScope']) ?? 'all',
+		branchScope: (params.branchScope as GitLogFilters["branchScope"]) ?? "all",
 		author: params.author as string | undefined,
-		datePreset: params.datePreset as GitLogFilters['datePreset'],
+		datePreset: params.datePreset as GitLogFilters["datePreset"],
 		since: params.since as string | undefined,
 		until: params.until as string | undefined,
 		path: params.path as string | undefined,
@@ -54,7 +57,7 @@ function parseLogFilters(params: Record<string, unknown>): GitLogFilters {
 }
 
 export function activate(context: vscode.ExtensionContext): void {
-	outputChannel = vscode.window.createOutputChannel('IntelliGit');
+	outputChannel = vscode.window.createOutputChannel("IntelliGit");
 	context.subscriptions.push(outputChannel);
 
 	const messageRouter = new MessageRouter();
@@ -62,10 +65,19 @@ export function activate(context: vscode.ExtensionContext): void {
 		context.extensionUri,
 		messageRouter,
 	);
-	rebaseDialogManager = new RebaseDialogManager(context.extensionUri, messageRouter);
+	rebaseDialogManager = new RebaseDialogManager(
+		context.extensionUri,
+		messageRouter,
+	);
 	conflictsManager = new ConflictsManager(context.extensionUri, messageRouter);
-	mergeEditorManager = new MergeEditorManager(context.extensionUri, messageRouter);
-	gitLogPanelManager = new GitLogPanelManager(context.extensionUri, messageRouter);
+	mergeEditorManager = new MergeEditorManager(
+		context.extensionUri,
+		messageRouter,
+	);
+	gitLogPanelManager = new GitLogPanelManager(
+		context.extensionUri,
+		messageRouter,
+	);
 	stashManager = new StashManager(context.extensionUri, messageRouter);
 	commitManager = new CommitManager(context.extensionUri, messageRouter);
 
@@ -97,14 +109,16 @@ export function activate(context: vscode.ExtensionContext): void {
 				context.subscriptions.push(
 					new GitWatcher(repoRoot, messageRouter, () => {
 						conflictsManager.open();
-						void vscode.window.showWarningMessage(
-							'Merge conflicts detected. Open the Conflicts panel to resolve them.',
-							'Open Conflicts',
-						).then((choice) => {
-							if (choice === 'Open Conflicts') {
-								conflictsManager.open();
-							}
-						});
+						void vscode.window
+							.showWarningMessage(
+								"Merge conflicts detected. Open the Conflicts panel to resolve them.",
+								"Open Conflicts",
+							)
+							.then((choice) => {
+								if (choice === "Open Conflicts") {
+									conflictsManager.open();
+								}
+							});
 					}),
 				);
 			}
@@ -112,53 +126,56 @@ export function activate(context: vscode.ExtensionContext): void {
 	}
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand('intelligit.openGitLog', () => {
+		vscode.commands.registerCommand("intelligit.openGitLog", () => {
 			gitLogPanelManager.open();
 		}),
 
-		vscode.commands.registerCommand('intelligit.openGitLogInEditor', () => {
+		vscode.commands.registerCommand("intelligit.openGitLogInEditor", () => {
 			gitLogPanelManager.open();
 		}),
 
-		vscode.commands.registerCommand('intelligit.refreshGitLog', () => {
-			messageRouter.broadcastEvent('gitStateChanged', { scope: 'all' });
+		vscode.commands.registerCommand("intelligit.refreshGitLog", () => {
+			messageRouter.broadcastEvent("gitStateChanged", { scope: "all" });
 		}),
 
-		vscode.commands.registerCommand('intelligit.rebase', () => {
+		vscode.commands.registerCommand("intelligit.rebase", () => {
 			rebaseDialogManager.open();
 		}),
 
-		vscode.commands.registerCommand('intelligit.openConflicts', () => {
+		vscode.commands.registerCommand("intelligit.openConflicts", () => {
 			conflictsManager.open();
 		}),
 
-		vscode.commands.registerCommand('intelligit.openStashes', () => {
+		vscode.commands.registerCommand("intelligit.openStashes", () => {
 			stashManager.open();
 		}),
 
-		vscode.commands.registerCommand('intelligit.commit', () => {
+		vscode.commands.registerCommand("intelligit.commit", () => {
 			commitManager.open();
 		}),
 
-		vscode.commands.registerCommand('intelligit.openMergeEditor', (filePath?: string) => {
-			if (filePath) {
-				mergeEditorManager.open(filePath);
-			}
-		}),
+		vscode.commands.registerCommand(
+			"intelligit.openMergeEditor",
+			(filePath?: string) => {
+				if (filePath) {
+					mergeEditorManager.open(filePath);
+				}
+			},
+		),
 
 		vscode.commands.registerCommand(
-			'intelligit.interactiveRebaseFromHere',
+			"intelligit.interactiveRebaseFromHere",
 			async (fromHash?: string) => {
 				if (!fromHash) {
 					const repoRoot = await getActiveRepository();
 					if (!repoRoot) {
-						void vscode.window.showWarningMessage('No Git repository found.');
+						void vscode.window.showWarningMessage("No Git repository found.");
 						return;
 					}
 					const log = await gitService.getLog(repoRoot, { maxCount: 1 });
 					fromHash = log.commits[0]?.hash;
 					if (!fromHash) {
-						void vscode.window.showWarningMessage('No commits to rebase.');
+						void vscode.window.showWarningMessage("No commits to rebase.");
 						return;
 					}
 				}
@@ -166,52 +183,52 @@ export function activate(context: vscode.ExtensionContext): void {
 			},
 		),
 
-		vscode.commands.registerCommand('intelligit.showCommitInOutput', () => {
+		vscode.commands.registerCommand("intelligit.showCommitInOutput", () => {
 			void dumpGitLogToOutput();
 		}),
 
-		vscode.commands.registerCommand('intelligit.pull', async () => {
+		vscode.commands.registerCommand("intelligit.pull", async () => {
 			const repoRoot = await getActiveRepository();
 			if (!repoRoot) {
-				void vscode.window.showWarningMessage('No Git repository found.');
+				void vscode.window.showWarningMessage("No Git repository found.");
 				return;
 			}
 			try {
 				const output = await gitService.pull(repoRoot);
-				messageRouter.broadcastEvent('gitStateChanged', { scope: 'all' });
-				void vscode.window.showInformationMessage(output || 'Pull completed.');
+				messageRouter.broadcastEvent("gitStateChanged", { scope: "all" });
+				void vscode.window.showInformationMessage(output || "Pull completed.");
 			} catch (err) {
 				const message = err instanceof Error ? err.message : String(err);
 				void vscode.window.showErrorMessage(`Pull failed: ${message}`);
 			}
 		}),
 
-		vscode.commands.registerCommand('intelligit.push', async () => {
+		vscode.commands.registerCommand("intelligit.push", async () => {
 			const repoRoot = await getActiveRepository();
 			if (!repoRoot) {
-				void vscode.window.showWarningMessage('No Git repository found.');
+				void vscode.window.showWarningMessage("No Git repository found.");
 				return;
 			}
 			try {
 				const output = await gitService.push(repoRoot);
-				messageRouter.broadcastEvent('gitStateChanged', { scope: 'all' });
-				void vscode.window.showInformationMessage(output || 'Push completed.');
+				messageRouter.broadcastEvent("gitStateChanged", { scope: "all" });
+				void vscode.window.showInformationMessage(output || "Push completed.");
 			} catch (err) {
 				const message = err instanceof Error ? err.message : String(err);
 				void vscode.window.showErrorMessage(`Push failed: ${message}`);
 			}
 		}),
 
-		vscode.commands.registerCommand('intelligit.fetch', async () => {
+		vscode.commands.registerCommand("intelligit.fetch", async () => {
 			const repoRoot = await getActiveRepository();
 			if (!repoRoot) {
-				void vscode.window.showWarningMessage('No Git repository found.');
+				void vscode.window.showWarningMessage("No Git repository found.");
 				return;
 			}
 			try {
 				const output = await gitService.fetch(repoRoot);
-				messageRouter.broadcastEvent('gitStateChanged', { scope: 'all' });
-				void vscode.window.showInformationMessage(output || 'Fetch completed.');
+				messageRouter.broadcastEvent("gitStateChanged", { scope: "all" });
+				void vscode.window.showInformationMessage(output || "Fetch completed.");
 			} catch (err) {
 				const message = err instanceof Error ? err.message : String(err);
 				void vscode.window.showErrorMessage(`Fetch failed: ${message}`);
@@ -221,7 +238,7 @@ export function activate(context: vscode.ExtensionContext): void {
 }
 
 function registerMessageHandlers(messageRouter: MessageRouter): void {
-	messageRouter.handle('getRepositoryInfo', async () => {
+	messageRouter.handle("getRepositoryInfo", async () => {
 		const repoRoot = await getActiveRepository();
 		if (!repoRoot) {
 			return NOT_GIT_REPO;
@@ -229,7 +246,7 @@ function registerMessageHandlers(messageRouter: MessageRouter): void {
 		return gitService.getRepositoryInfo(repoRoot);
 	});
 
-	messageRouter.handle('getLog', async (params) => {
+	messageRouter.handle("getLog", async (params) => {
 		const repoRoot = await getActiveRepository();
 		if (!repoRoot) {
 			return NOT_GIT_REPO;
@@ -241,7 +258,7 @@ function registerMessageHandlers(messageRouter: MessageRouter): void {
 		return gitService.getLog(repoRoot, { maxCount, filters });
 	});
 
-	messageRouter.handle('getCommitFiles', async (params) => {
+	messageRouter.handle("getCommitFiles", async (params) => {
 		const repoRoot = await getActiveRepository();
 		if (!repoRoot) {
 			return NOT_GIT_REPO;
@@ -249,7 +266,7 @@ function registerMessageHandlers(messageRouter: MessageRouter): void {
 		return gitService.getCommitFiles(repoRoot, params.hash as string);
 	});
 
-	messageRouter.handle('getRebaseRefs', async (params) => {
+	messageRouter.handle("getRebaseRefs", async (params) => {
 		const repoRoot = await getActiveRepository();
 		if (!repoRoot) {
 			return NOT_GIT_REPO;
@@ -263,7 +280,10 @@ function registerMessageHandlers(messageRouter: MessageRouter): void {
 		let commitCount: number | undefined;
 
 		if (fromHash) {
-			rebaseFrom = await rebaseService.resolveRebaseUpstream(repoRoot, fromHash);
+			rebaseFrom = await rebaseService.resolveRebaseUpstream(
+				repoRoot,
+				fromHash,
+			);
 			const range = await gitService.getRebaseCommitRange(repoRoot, fromHash);
 			commitCount = range.length;
 			const first = range[0];
@@ -276,25 +296,33 @@ function registerMessageHandlers(messageRouter: MessageRouter): void {
 			refs,
 			currentBranch: info.currentBranch,
 			root: info.root,
-			fromHash: fromHash ?? '',
+			fromHash: fromHash ?? "",
 			rebaseFrom,
 			rebaseFromLabel,
 			commitCount,
 		};
 	});
 
-	messageRouter.handle('getInteractiveRebaseCommits', async (params) => {
+	messageRouter.handle("getInteractiveRebaseCommits", async (params) => {
 		const repoRoot = await getActiveRepository();
 		if (!repoRoot) {
 			return NOT_GIT_REPO;
 		}
 		const fromHash = params.fromHash as string;
-		const commits = await rebaseService.loadInteractiveCommits(repoRoot, fromHash);
+		const commits = await rebaseService.loadInteractiveCommits(
+			repoRoot,
+			fromHash,
+		);
 		const info = await gitService.getRepositoryInfo(repoRoot);
-		return { commits, currentBranch: info.currentBranch, root: info.root, fromHash };
+		return {
+			commits,
+			currentBranch: info.currentBranch,
+			root: info.root,
+			fromHash,
+		};
 	});
 
-	messageRouter.handle('startInteractiveRebase', async (params) => {
+	messageRouter.handle("startInteractiveRebase", async (params) => {
 		const repoRoot = await getActiveRepository();
 		if (!repoRoot) {
 			return NOT_GIT_REPO;
@@ -304,10 +332,17 @@ function registerMessageHandlers(messageRouter: MessageRouter): void {
 		const flags = (params.flags as RebaseFlag[]) ?? [];
 
 		try {
-			await rebaseService.runInteractiveRebase(repoRoot, fromHash, commits, flags);
+			await rebaseService.runInteractiveRebase(
+				repoRoot,
+				fromHash,
+				commits,
+				flags,
+			);
 			interactiveRebaseManager.close();
-			messageRouter.broadcastEvent('gitStateChanged', { scope: 'all' });
-			void vscode.window.showInformationMessage('Rebase completed successfully.');
+			messageRouter.broadcastEvent("gitStateChanged", { scope: "all" });
+			void vscode.window.showInformationMessage(
+				"Rebase completed successfully.",
+			);
 			return { success: true };
 		} catch (err) {
 			const message = err instanceof Error ? err.message : String(err);
@@ -324,7 +359,7 @@ function registerMessageHandlers(messageRouter: MessageRouter): void {
 		}
 	});
 
-	messageRouter.handle('startStandardRebase', async (params) => {
+	messageRouter.handle("startStandardRebase", async (params) => {
 		const repoRoot = await getActiveRepository();
 		if (!repoRoot) {
 			return NOT_GIT_REPO;
@@ -336,9 +371,11 @@ function registerMessageHandlers(messageRouter: MessageRouter): void {
 				flags: (params.flags as RebaseFlag[]) ?? [],
 			});
 			rebaseDialogManager.close();
-			messageRouter.broadcastEvent('gitStateChanged', { scope: 'all' });
-			messageRouter.broadcastEvent('closeRebaseDialog', {});
-			void vscode.window.showInformationMessage('Rebase completed successfully.');
+			messageRouter.broadcastEvent("gitStateChanged", { scope: "all" });
+			messageRouter.broadcastEvent("closeRebaseDialog", {});
+			void vscode.window.showInformationMessage(
+				"Rebase completed successfully.",
+			);
 			return { success: true };
 		} catch (err) {
 			const message = err instanceof Error ? err.message : String(err);
@@ -351,7 +388,7 @@ function registerMessageHandlers(messageRouter: MessageRouter): void {
 		}
 	});
 
-	messageRouter.handle('openDiffEditor', async (params) => {
+	messageRouter.handle("openDiffEditor", async (params) => {
 		const repoRoot = await getActiveRepository();
 		if (!repoRoot) {
 			return NOT_GIT_REPO;
@@ -365,7 +402,7 @@ function registerMessageHandlers(messageRouter: MessageRouter): void {
 		return { success: true };
 	});
 
-	messageRouter.handle('getMergeState', async () => {
+	messageRouter.handle("getMergeState", async () => {
 		const repoRoot = await getActiveRepository();
 		if (!repoRoot) {
 			return NOT_GIT_REPO;
@@ -373,7 +410,7 @@ function registerMessageHandlers(messageRouter: MessageRouter): void {
 		return gitService.getMergeOperationState(repoRoot);
 	});
 
-	messageRouter.handle('getConflictFiles', async () => {
+	messageRouter.handle("getConflictFiles", async () => {
 		const repoRoot = await getActiveRepository();
 		if (!repoRoot) {
 			return NOT_GIT_REPO;
@@ -381,7 +418,7 @@ function registerMessageHandlers(messageRouter: MessageRouter): void {
 		return gitService.getConflictFiles(repoRoot);
 	});
 
-	messageRouter.handle('getFileVersions', async (params) => {
+	messageRouter.handle("getFileVersions", async (params) => {
 		const repoRoot = await getActiveRepository();
 		if (!repoRoot) {
 			return NOT_GIT_REPO;
@@ -389,7 +426,7 @@ function registerMessageHandlers(messageRouter: MessageRouter): void {
 		return gitService.getFileVersions(repoRoot, params.filePath as string);
 	});
 
-	messageRouter.handle('saveMergedContent', async (params) => {
+	messageRouter.handle("saveMergedContent", async (params) => {
 		const repoRoot = await getActiveRepository();
 		if (!repoRoot) {
 			return NOT_GIT_REPO;
@@ -402,53 +439,53 @@ function registerMessageHandlers(messageRouter: MessageRouter): void {
 		return { success: true };
 	});
 
-	messageRouter.handle('stageFile', async (params) => {
+	messageRouter.handle("stageFile", async (params) => {
 		const repoRoot = await getActiveRepository();
 		if (!repoRoot) {
 			return NOT_GIT_REPO;
 		}
 		await gitService.stageFile(repoRoot, params.filePath as string);
-		messageRouter.broadcastEvent('mergeStateChanged', {});
+		messageRouter.broadcastEvent("mergeStateChanged", {});
 		return { success: true };
 	});
 
-	messageRouter.handle('acceptOurs', async (params) => {
+	messageRouter.handle("acceptOurs", async (params) => {
 		const repoRoot = await getActiveRepository();
 		if (!repoRoot) {
 			return NOT_GIT_REPO;
 		}
 		await gitService.acceptOurs(repoRoot, params.filePath as string);
-		messageRouter.broadcastEvent('mergeStateChanged', {});
+		messageRouter.broadcastEvent("mergeStateChanged", {});
 		return { success: true };
 	});
 
-	messageRouter.handle('acceptTheirs', async (params) => {
+	messageRouter.handle("acceptTheirs", async (params) => {
 		const repoRoot = await getActiveRepository();
 		if (!repoRoot) {
 			return NOT_GIT_REPO;
 		}
 		await gitService.acceptTheirs(repoRoot, params.filePath as string);
-		messageRouter.broadcastEvent('mergeStateChanged', {});
+		messageRouter.broadcastEvent("mergeStateChanged", {});
 		return { success: true };
 	});
 
-	messageRouter.handle('openMergeEditor', async (params) => {
+	messageRouter.handle("openMergeEditor", async (params) => {
 		const filePath = params.filePath as string;
 		mergeEditorManager.open(filePath);
 		return { success: true };
 	});
 
-	messageRouter.handle('openConflicts', async () => {
+	messageRouter.handle("openConflicts", async () => {
 		conflictsManager.open();
 		return { success: true };
 	});
 
-	messageRouter.handle('closeMergeEditor', async (params) => {
+	messageRouter.handle("closeMergeEditor", async (params) => {
 		mergeEditorManager.close(params.filePath as string);
 		return { success: true };
 	});
 
-	messageRouter.handle('continueOperation', async () => {
+	messageRouter.handle("continueOperation", async () => {
 		const repoRoot = await getActiveRepository();
 		if (!repoRoot) {
 			return NOT_GIT_REPO;
@@ -463,12 +500,12 @@ function registerMessageHandlers(messageRouter: MessageRouter): void {
 		} else if (state.isMergeInProgress) {
 			await gitService.mergeContinue(repoRoot);
 		}
-		messageRouter.broadcastEvent('gitStateChanged', { scope: 'all' });
-		messageRouter.broadcastEvent('mergeStateChanged', {});
+		messageRouter.broadcastEvent("gitStateChanged", { scope: "all" });
+		messageRouter.broadcastEvent("mergeStateChanged", {});
 		return { success: true };
 	});
 
-	messageRouter.handle('abortOperation', async () => {
+	messageRouter.handle("abortOperation", async () => {
 		const repoRoot = await getActiveRepository();
 		if (!repoRoot) {
 			return NOT_GIT_REPO;
@@ -477,14 +514,16 @@ function registerMessageHandlers(messageRouter: MessageRouter): void {
 		if (state.isRebaseInProgress) {
 			await gitService.rebaseAbort(repoRoot);
 		} else {
-			await gitService.exec(repoRoot, ['merge', '--abort'], { allowFailure: true });
+			await gitService.exec(repoRoot, ["merge", "--abort"], {
+				allowFailure: true,
+			});
 		}
-		messageRouter.broadcastEvent('gitStateChanged', { scope: 'all' });
-		messageRouter.broadcastEvent('mergeStateChanged', {});
+		messageRouter.broadcastEvent("gitStateChanged", { scope: "all" });
+		messageRouter.broadcastEvent("mergeStateChanged", {});
 		return { success: true };
 	});
 
-	messageRouter.handle('checkoutRevision', async (params) => {
+	messageRouter.handle("checkoutRevision", async (params) => {
 		const repoRoot = await getActiveRepository();
 		if (!repoRoot) {
 			return NOT_GIT_REPO;
@@ -493,27 +532,27 @@ function registerMessageHandlers(messageRouter: MessageRouter): void {
 		const choice = await vscode.window.showWarningMessage(
 			`Checkout ${hash.slice(0, 7)}? This may detach HEAD.`,
 			{ modal: true },
-			'Checkout',
+			"Checkout",
 		);
-		if (choice !== 'Checkout') {
+		if (choice !== "Checkout") {
 			return { cancelled: true };
 		}
 		await gitService.checkoutRevision(repoRoot, hash);
-		messageRouter.broadcastEvent('gitStateChanged', { scope: 'all' });
+		messageRouter.broadcastEvent("gitStateChanged", { scope: "all" });
 		return { success: true };
 	});
 
-	messageRouter.handle('cherryPick', async (params) => {
+	messageRouter.handle("cherryPick", async (params) => {
 		const repoRoot = await getActiveRepository();
 		if (!repoRoot) {
 			return NOT_GIT_REPO;
 		}
 		await gitService.cherryPick(repoRoot, params.hash as string);
-		messageRouter.broadcastEvent('gitStateChanged', { scope: 'all' });
+		messageRouter.broadcastEvent("gitStateChanged", { scope: "all" });
 		return { success: true };
 	});
 
-	messageRouter.handle('revertCommit', async (params) => {
+	messageRouter.handle("revertCommit", async (params) => {
 		const repoRoot = await getActiveRepository();
 		if (!repoRoot) {
 			return NOT_GIT_REPO;
@@ -522,85 +561,94 @@ function registerMessageHandlers(messageRouter: MessageRouter): void {
 		const choice = await vscode.window.showWarningMessage(
 			`Revert commit ${hash.slice(0, 7)}? This creates a new commit that undoes those changes.`,
 			{ modal: true },
-			'Revert',
+			"Revert",
 		);
-		if (choice !== 'Revert') {
+		if (choice !== "Revert") {
 			return { cancelled: true };
 		}
 		await gitService.revertCommit(repoRoot, hash);
-		messageRouter.broadcastEvent('gitStateChanged', { scope: 'all' });
-		void vscode.window.showInformationMessage('Commit reverted successfully.');
+		messageRouter.broadcastEvent("gitStateChanged", { scope: "all" });
+		void vscode.window.showInformationMessage("Commit reverted successfully.");
 		return { success: true };
 	});
 
-	messageRouter.handle('copyToClipboard', async (params) => {
+	messageRouter.handle("copyToClipboard", async (params) => {
 		await vscode.env.clipboard.writeText(params.text as string);
 		return { success: true };
 	});
 
-	messageRouter.handle('openExternal', async (params) => {
+	messageRouter.handle("openExternal", async (params) => {
 		const url = params.url as string;
 		await vscode.env.openExternal(vscode.Uri.parse(url));
 		return { success: true };
 	});
 
-	messageRouter.handle('interactiveRebaseFromHere', async (params) => {
+	messageRouter.handle("interactiveRebaseFromHere", async (params) => {
 		const hash = params.hash as string | undefined;
-		await vscode.commands.executeCommand('intelligit.interactiveRebaseFromHere', hash);
+		await vscode.commands.executeCommand(
+			"intelligit.interactiveRebaseFromHere",
+			hash,
+		);
 		return { success: true };
 	});
 
-	messageRouter.handle('openRebaseDialog', async (params) => {
+	messageRouter.handle("openRebaseDialog", async (params) => {
 		const fromHash = params.fromHash as string | undefined;
 		rebaseDialogManager.open(fromHash ? { fromHash } : {});
 		return { success: true };
 	});
 
-	messageRouter.handle('openGitLogPanel', async () => {
+	messageRouter.handle("openGitLogPanel", async () => {
 		gitLogPanelManager.open();
 		return { success: true };
 	});
 
-	messageRouter.handle('gitPull', async () => {
+	messageRouter.handle("gitPull", async () => {
 		const repoRoot = await getActiveRepository();
 		if (!repoRoot) {
 			return NOT_GIT_REPO;
 		}
 		const output = await gitService.pull(repoRoot);
-		messageRouter.broadcastEvent('gitStateChanged', { scope: 'all' });
+		messageRouter.broadcastEvent("gitStateChanged", { scope: "all" });
 		void vscode.window.showInformationMessage(
-			output.length > 120 ? `${output.slice(0, 120)}…` : output || 'Pull completed.',
+			output.length > 120
+				? `${output.slice(0, 120)}…`
+				: output || "Pull completed.",
 		);
 		return { success: true, output };
 	});
 
-	messageRouter.handle('gitPush', async () => {
+	messageRouter.handle("gitPush", async () => {
 		const repoRoot = await getActiveRepository();
 		if (!repoRoot) {
 			return NOT_GIT_REPO;
 		}
 		const output = await gitService.push(repoRoot);
-		messageRouter.broadcastEvent('gitStateChanged', { scope: 'all' });
+		messageRouter.broadcastEvent("gitStateChanged", { scope: "all" });
 		void vscode.window.showInformationMessage(
-			output.length > 120 ? `${output.slice(0, 120)}…` : output || 'Push completed.',
+			output.length > 120
+				? `${output.slice(0, 120)}…`
+				: output || "Push completed.",
 		);
 		return { success: true, output };
 	});
 
-	messageRouter.handle('gitFetch', async () => {
+	messageRouter.handle("gitFetch", async () => {
 		const repoRoot = await getActiveRepository();
 		if (!repoRoot) {
 			return NOT_GIT_REPO;
 		}
 		const output = await gitService.fetch(repoRoot);
-		messageRouter.broadcastEvent('gitStateChanged', { scope: 'all' });
+		messageRouter.broadcastEvent("gitStateChanged", { scope: "all" });
 		void vscode.window.showInformationMessage(
-			output.length > 120 ? `${output.slice(0, 120)}…` : output || 'Fetch completed.',
+			output.length > 120
+				? `${output.slice(0, 120)}…`
+				: output || "Fetch completed.",
 		);
 		return { success: true, output };
 	});
 
-	messageRouter.handle('getStashes', async () => {
+	messageRouter.handle("getStashes", async () => {
 		const repoRoot = await getActiveRepository();
 		if (!repoRoot) {
 			return NOT_GIT_REPO;
@@ -608,18 +656,20 @@ function registerMessageHandlers(messageRouter: MessageRouter): void {
 		return gitService.listStashes(repoRoot);
 	});
 
-	messageRouter.handle('applyStash', async (params) => {
+	messageRouter.handle("applyStash", async (params) => {
 		const repoRoot = await getActiveRepository();
 		if (!repoRoot) {
 			return NOT_GIT_REPO;
 		}
 		await gitService.applyStash(repoRoot, params.index as number);
-		messageRouter.broadcastEvent('gitStateChanged', { scope: 'all' });
-		void vscode.window.showInformationMessage('Stash applied to your working tree.');
+		messageRouter.broadcastEvent("gitStateChanged", { scope: "all" });
+		void vscode.window.showInformationMessage(
+			"Stash applied to your working tree.",
+		);
 		return { success: true };
 	});
 
-	messageRouter.handle('dropStash', async (params) => {
+	messageRouter.handle("dropStash", async (params) => {
 		const repoRoot = await getActiveRepository();
 		if (!repoRoot) {
 			return NOT_GIT_REPO;
@@ -628,41 +678,41 @@ function registerMessageHandlers(messageRouter: MessageRouter): void {
 		const choice = await vscode.window.showWarningMessage(
 			`Delete stash@{${index}}? This cannot be undone.`,
 			{ modal: true },
-			'Delete',
+			"Delete",
 		);
-		if (choice !== 'Delete') {
+		if (choice !== "Delete") {
 			return { cancelled: true };
 		}
 		await gitService.dropStash(repoRoot, index);
-		messageRouter.broadcastEvent('gitStateChanged', { scope: 'stashes' });
+		messageRouter.broadcastEvent("gitStateChanged", { scope: "stashes" });
 		return { success: true };
 	});
 
-	messageRouter.handle('clearStashes', async () => {
+	messageRouter.handle("clearStashes", async () => {
 		const repoRoot = await getActiveRepository();
 		if (!repoRoot) {
 			return NOT_GIT_REPO;
 		}
 		const choice = await vscode.window.showWarningMessage(
-			'Delete all stashes? This cannot be undone.',
+			"Delete all stashes? This cannot be undone.",
 			{ modal: true },
-			'Clear all',
+			"Clear all",
 		);
-		if (choice !== 'Clear all') {
+		if (choice !== "Clear all") {
 			return { cancelled: true };
 		}
 		await gitService.clearStashes(repoRoot);
-		messageRouter.broadcastEvent('gitStateChanged', { scope: 'stashes' });
-		void vscode.window.showInformationMessage('All stashes cleared.');
+		messageRouter.broadcastEvent("gitStateChanged", { scope: "stashes" });
+		void vscode.window.showInformationMessage("All stashes cleared.");
 		return { success: true };
 	});
 
-	messageRouter.handle('openStashes', async () => {
+	messageRouter.handle("openStashes", async () => {
 		stashManager.open();
 		return { success: true };
 	});
 
-	messageRouter.handle('getWorkingTreeStatus', async () => {
+	messageRouter.handle("getWorkingTreeStatus", async () => {
 		const repoRoot = await getActiveRepository();
 		if (!repoRoot) {
 			return NOT_GIT_REPO;
@@ -670,7 +720,7 @@ function registerMessageHandlers(messageRouter: MessageRouter): void {
 		return gitService.getWorkingTreeStatus(repoRoot);
 	});
 
-	messageRouter.handle('createCommit', async (params) => {
+	messageRouter.handle("createCommit", async (params) => {
 		const repoRoot = await getActiveRepository();
 		if (!repoRoot) {
 			return NOT_GIT_REPO;
@@ -683,29 +733,29 @@ function registerMessageHandlers(messageRouter: MessageRouter): void {
 		if (amend) {
 			const status = await gitService.getWorkingTreeStatus(repoRoot);
 			if (!status.canAmend) {
-				throw new Error('Nothing to amend — no commits on this branch yet.');
+				throw new Error("Nothing to amend — no commits on this branch yet.");
 			}
 			if (status.lastCommitLikelyPushed) {
 				const choice = await vscode.window.showWarningMessage(
-					'The last commit may already be on the remote. Amending rewrites history and can cause problems for others.',
+					"The last commit may already be on the remote. Amending rewrites history and can cause problems for others.",
 					{ modal: true },
-					'Amend anyway',
+					"Amend anyway",
 				);
-				if (choice !== 'Amend anyway') {
+				if (choice !== "Amend anyway") {
 					return { cancelled: true };
 				}
 			}
 		}
 
 		await gitService.createCommit(repoRoot, message, { amend, noVerify });
-		messageRouter.broadcastEvent('gitStateChanged', { scope: 'all' });
+		messageRouter.broadcastEvent("gitStateChanged", { scope: "all" });
 		void vscode.window.showInformationMessage(
-			amend ? 'Last commit updated.' : 'Changes committed.',
+			amend ? "Last commit updated." : "Changes committed.",
 		);
 		return { success: true };
 	});
 
-	messageRouter.handle('openCommit', async () => {
+	messageRouter.handle("openCommit", async () => {
 		commitManager.open();
 		return { success: true };
 	});
@@ -714,7 +764,9 @@ function registerMessageHandlers(messageRouter: MessageRouter): void {
 async function dumpGitLogToOutput(): Promise<void> {
 	const repoRoot = await getActiveRepository();
 	if (!repoRoot) {
-		void vscode.window.showWarningMessage('No Git repository found in workspace.');
+		void vscode.window.showWarningMessage(
+			"No Git repository found in workspace.",
+		);
 		return;
 	}
 
@@ -723,7 +775,7 @@ async function dumpGitLogToOutput(): Promise<void> {
 		outputChannel.clear();
 		outputChannel.appendLine(`Repository: ${repoRoot}`);
 		outputChannel.appendLine(`Commits: ${log.commits.length}`);
-		outputChannel.appendLine('---');
+		outputChannel.appendLine("---");
 		for (const c of log.commits) {
 			outputChannel.appendLine(`${c.shortHash} | ${c.author} | ${c.subject}`);
 		}
