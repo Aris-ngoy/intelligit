@@ -13,6 +13,7 @@ import {
 	GitContentProvider,
 	INTELLIGIT_GIT_SCHEME,
 	openCommitFileDiff,
+	openWorkingTreeFileDiff,
 } from "./views/gitContentProvider";
 import { GitLogViewProvider } from "./views/gitLogViewProvider";
 import {
@@ -446,6 +447,50 @@ function registerMessageHandlers(messageRouter: MessageRouter): void {
 		}
 		await gitService.stageFile(repoRoot, params.filePath as string);
 		messageRouter.broadcastEvent("mergeStateChanged", {});
+		messageRouter.broadcastEvent("gitStateChanged", { scope: "workingTree" });
+		return { success: true };
+	});
+
+	messageRouter.handle("unstageFile", async (params) => {
+		const repoRoot = await getActiveRepository();
+		if (!repoRoot) {
+			return NOT_GIT_REPO;
+		}
+		await gitService.unstageFile(repoRoot, params.filePath as string);
+		messageRouter.broadcastEvent("gitStateChanged", { scope: "workingTree" });
+		return { success: true };
+	});
+
+	messageRouter.handle("stageAll", async () => {
+		const repoRoot = await getActiveRepository();
+		if (!repoRoot) {
+			return NOT_GIT_REPO;
+		}
+		await gitService.stageAll(repoRoot);
+		messageRouter.broadcastEvent("gitStateChanged", { scope: "workingTree" });
+		return { success: true };
+	});
+
+	messageRouter.handle("unstageAll", async () => {
+		const repoRoot = await getActiveRepository();
+		if (!repoRoot) {
+			return NOT_GIT_REPO;
+		}
+		await gitService.unstageAll(repoRoot);
+		messageRouter.broadcastEvent("gitStateChanged", { scope: "workingTree" });
+		return { success: true };
+	});
+
+	messageRouter.handle("openWorkingTreeDiff", async (params) => {
+		const repoRoot = await getActiveRepository();
+		if (!repoRoot) {
+			return NOT_GIT_REPO;
+		}
+		await openWorkingTreeFileDiff(
+			repoRoot,
+			params.filePath as string,
+			params.kind as "staged" | "unstaged",
+		);
 		return { success: true };
 	});
 

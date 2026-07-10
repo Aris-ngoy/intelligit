@@ -45,6 +45,12 @@ export function isPreviewMode(): boolean {
 }
 
 export function createPreviewBridge(): Bridge {
+	let workingTreeStatus = structuredClone(previewWorkingTreeStatus);
+
+	const resetWorkingTreeStatus = () => {
+		workingTreeStatus = structuredClone(previewWorkingTreeStatus);
+	};
+
 	return {
 		async request<T>(
 			command: string,
@@ -52,6 +58,9 @@ export function createPreviewBridge(): Bridge {
 		): Promise<T> {
 			await new Promise((r) => setTimeout(r, 80));
 			switch (command) {
+				case "resetPreviewState":
+					resetWorkingTreeStatus();
+					return { success: true } as T;
 				case "getRepositoryInfo":
 					return previewRepoInfo as T;
 				case "getLog":
@@ -84,7 +93,7 @@ export function createPreviewBridge(): Bridge {
 				case "getStashes":
 					return previewStashes as T;
 				case "getWorkingTreeStatus":
-					return previewWorkingTreeStatus as T;
+					return workingTreeStatus as T;
 				case "getFileVersions":
 					return previewMergeVersions as T;
 				case "copyToClipboard":
@@ -97,7 +106,7 @@ export function createPreviewBridge(): Bridge {
 				case "continueOperation":
 				case "abortOperation":
 				case "saveMergedContent":
-				case "stageFile":
+				case "openWorkingTreeDiff":
 				case "closeMergeEditor":
 				case "startInteractiveRebase":
 				case "startStandardRebase":
@@ -115,6 +124,65 @@ export function createPreviewBridge(): Bridge {
 				case "clearStashes":
 				case "interactiveRebaseFromHere":
 					return { success: true } as T;
+				case "stageFile": {
+					const filePath = params.filePath as string;
+					const file = workingTreeStatus.unstaged.find(
+						(entry) => entry.path === filePath,
+					);
+					if (file) {
+						workingTreeStatus = {
+							...workingTreeStatus,
+							unstaged: workingTreeStatus.unstaged.filter(
+								(entry) => entry.path !== filePath,
+							),
+							staged: [...workingTreeStatus.staged, file],
+							hasStagedChanges: true,
+						};
+					}
+					return { success: true } as T;
+				}
+				case "unstageFile": {
+					const filePath = params.filePath as string;
+					const file = workingTreeStatus.staged.find(
+						(entry) => entry.path === filePath,
+					);
+					if (file) {
+						const staged = workingTreeStatus.staged.filter(
+							(entry) => entry.path !== filePath,
+						);
+						workingTreeStatus = {
+							...workingTreeStatus,
+							staged,
+							unstaged: [...workingTreeStatus.unstaged, file],
+							hasStagedChanges: staged.length > 0,
+						};
+					}
+					return { success: true } as T;
+				}
+				case "stageAll": {
+					workingTreeStatus = {
+						...workingTreeStatus,
+						staged: [
+							...workingTreeStatus.staged,
+							...workingTreeStatus.unstaged,
+						],
+						unstaged: [],
+						hasStagedChanges: true,
+					};
+					return { success: true } as T;
+				}
+				case "unstageAll": {
+					workingTreeStatus = {
+						...workingTreeStatus,
+						unstaged: [
+							...workingTreeStatus.unstaged,
+							...workingTreeStatus.staged,
+						],
+						staged: [],
+						hasStagedChanges: false,
+					};
+					return { success: true } as T;
+				}
 				default:
 					return { success: true } as T;
 			}
