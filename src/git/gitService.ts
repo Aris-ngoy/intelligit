@@ -487,6 +487,141 @@ export class GitService {
 		return result.stdout.trim() || result.stderr.trim() || "Fetch completed.";
 	}
 
+	async getLocallyChangedFiles(repoRoot: string): Promise<string[]> {
+		const [staged, unstaged, untracked] = await Promise.all([
+			this.exec(repoRoot, ["diff", "--cached", "--name-only"], {
+				allowFailure: true,
+			}),
+			this.exec(repoRoot, ["diff", "--name-only"], { allowFailure: true }),
+			this.exec(repoRoot, ["ls-files", "--others", "--exclude-standard"], {
+				allowFailure: true,
+			}),
+		]);
+
+		const files = new Set<string>();
+		for (const result of [staged, unstaged, untracked]) {
+			if (result.exitCode !== 0) {
+				continue;
+			}
+			for (const line of result.stdout.split("\n")) {
+				const trimmed = line.trim();
+				if (trimmed) {
+					files.add(trimmed);
+				}
+			}
+		}
+		return [...files];
+	}
+
+	async getFilesDifferingFromRef(
+		repoRoot: string,
+		ref: string,
+	): Promise<string[]> {
+		const result = await this.exec(
+			repoRoot,
+			["diff", "--name-only", "HEAD", ref],
+			{ allowFailure: true },
+		);
+		if (result.exitCode !== 0) {
+			return [];
+		}
+		return result.stdout
+			.split("\n")
+			.map((line) => line.trim())
+			.filter(Boolean);
+	}
+
+	async wouldCheckoutOverwriteChanges(
+		repoRoot: string,
+		targetBranch: string,
+	): Promise<boolean> {
+		const [localChanges, branchDiff] = await Promise.all([
+			this.getLocallyChangedFiles(repoRoot),
+			this.getFilesDifferingFromRef(repoRoot, targetBranch),
+		]);
+		if (localChanges.length === 0) {
+			return false;
+		}
+		const branchFiles = new Set(branchDiff);
+		return localChanges.some((file) => branchFiles.has(file));
+	}
+
+	async stashPush(repoRoot: string, message?: string): Promise<void> {
+		const args = ["stash", "push", "-u"];
+		if (message) {
+			args.push("-m", message);
+		}
+		await this.exec(repoRoot, args);
+	}
+
+	async checkoutBranch(
+		repoRoot: string,
+		branchName: string,
+		branches: GitBranch[],
+	): Promise<void> {
+		const branch = branches.find((entry) => entry.name === branchName);
+		if (!branch) {
+			throw new Error(`Branch not found: ${branchName}`);
+		}
+		if (branch.current) {
+			return;
+		}
+
+		if (branch.remote) {
+			const slash = branchName.indexOf("/");
+			const localName = slash >= 0 ? branchName.slice(slash + 1) : branchName;
+			const localExists = branches.some(
+				(entry) => !entry.remote && entry.name === localName,
+			);
+			if (localExists) {
+				await this.exec(repoRoot, ["checkout", localName]);
+				return;
+			}
+			await this.exec(repoRoot, ["checkout", "-t", branchName]);
+			return;
+		}
+
+		await this.exec(repoRoot, ["checkout", branchName]);
+	}
+
+	async createBranch(
+		repoRoot: string,
+		name: string,
+		options: { checkout?: boolean; startPoint?: string } = {},
+	): Promise<void> {
+		const trimmed = name.trim();
+		const validationError = this.validateBranchName(trimmed);
+		if (validationError) {
+			throw new Error(validationError);
+		}
+
+		const { checkout = true, startPoint } = options;
+		if (checkout) {
+			const args = ["checkout", "-b", trimmed];
+			if (startPoint) {
+				args.push(startPoint);
+			}
+			await this.exec(repoRoot, args);
+			return;
+		}
+
+		const args = ["branch", trimmed];
+		if (startPoint) {
+			args.push(startPoint);
+		}
+		await this.exec(repoRoot, args);
+	}
+
+	validateBranchName(name: string): string | undefined {
+		if (!name || name.trim() !== name) {
+			return "Branch name cannot have leading or trailing spaces.";
+		}
+		if (!isValidBranchName(name)) {
+			return "Invalid branch name. Avoid spaces, '..', and special characters.";
+		}
+		return undefined;
+	}
+
 	async listStashes(repoRoot: string): Promise<GitStashEntry[]> {
 		const result = await this.exec(
 			repoRoot,
@@ -680,6 +815,28 @@ function parseAheadBehind(statusOutput: string): {
 		ahead: aheadMatch ? Number.parseInt(aheadMatch[1] ?? "0", 10) : 0,
 		behind: behindMatch ? Number.parseInt(behindMatch[1] ?? "0", 10) : 0,
 	};
+}
+
+function isValidBranchName(name: string): boolean {
+	if (!name || name.trim() !== name) {
+		return false;
+	}
+	if (name.includes(" ") || name.includes("..")) {
+		return false;
+	}
+	if (/[~^:?*[\\]/.test(name)) {
+		return false;
+	}
+	if (name.startsWith(".") || name.endsWith(".")) {
+		return false;
+	}
+	if (name.startsWith("/") || name.endsWith("/")) {
+		return false;
+	}
+	if (name.includes("//") || name.includes("@{")) {
+		return false;
+	}
+	return true;
 }
 
 function parseNameStatusLine(line: string): CommitFile | undefined {

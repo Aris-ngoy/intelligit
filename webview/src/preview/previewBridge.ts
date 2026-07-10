@@ -46,9 +46,13 @@ export function isPreviewMode(): boolean {
 
 export function createPreviewBridge(): Bridge {
 	let workingTreeStatus = structuredClone(previewWorkingTreeStatus);
+	let previewBranch = previewRepoInfo.currentBranch;
+	let previewBranches = structuredClone(previewRepoInfo.branches);
 
 	const resetWorkingTreeStatus = () => {
 		workingTreeStatus = structuredClone(previewWorkingTreeStatus);
+		previewBranch = previewRepoInfo.currentBranch;
+		previewBranches = structuredClone(previewRepoInfo.branches);
 	};
 
 	return {
@@ -62,7 +66,11 @@ export function createPreviewBridge(): Bridge {
 					resetWorkingTreeStatus();
 					return { success: true } as T;
 				case "getRepositoryInfo":
-					return previewRepoInfo as T;
+					return {
+						...previewRepoInfo,
+						currentBranch: previewBranch,
+						branches: previewBranches,
+					} as T;
 				case "getLog":
 					return {
 						commits: previewCommits,
@@ -124,6 +132,28 @@ export function createPreviewBridge(): Bridge {
 				case "clearStashes":
 				case "interactiveRebaseFromHere":
 					return { success: true } as T;
+				case "gitSwitchBranch":
+					previewBranch = "feature/auth-provider";
+					previewBranches = previewBranches.map((branch) => ({
+						...branch,
+						current: branch.name === "feature/auth-provider",
+					}));
+					return { success: true, branch: previewBranch } as T;
+				case "gitCreateBranch":
+					previewBranch = "feature/new-work";
+					previewBranches = [
+						...previewBranches.map((branch) => ({ ...branch, current: false })),
+						{
+							name: "feature/new-work",
+							remote: false,
+							current: true,
+						},
+					];
+					return {
+						success: true,
+						branch: previewBranch,
+						checkout: true,
+					} as T;
 				case "stageFile": {
 					const filePath = params.filePath as string;
 					const file = workingTreeStatus.unstaged.find(

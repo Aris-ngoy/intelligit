@@ -60,6 +60,8 @@ export type CommandType =
 	| "gitPull"
 	| "gitPush"
 	| "gitFetch"
+	| "gitSwitchBranch"
+	| "gitCreateBranch"
 	| "getStashes"
 	| "applyStash"
 	| "dropStash"

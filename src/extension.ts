@@ -3,6 +3,7 @@ import * as vscode from "vscode";
 import { gitService } from "./git";
 import { createRebaseService } from "./git/rebaseService";
 import type {
+	GitBranch,
 	GitLogFilters,
 	InteractiveRebaseCommit,
 	RebaseFlag,
@@ -55,6 +56,73 @@ function parseLogFilters(params: Record<string, unknown>): GitLogFilters {
 		until: params.until as string | undefined,
 		path: params.path as string | undefined,
 	};
+}
+
+function buildBranchQuickPickItems(
+	branches: GitBranch[],
+): vscode.QuickPickItem[] {
+	const local = branches.filter((branch) => !branch.remote);
+	const remote = branches.filter(
+		(branch) => branch.remote && !branch.name.endsWith("/HEAD"),
+	);
+
+	const items: vscode.QuickPickItem[] = [];
+	for (const branch of local) {
+		items.push({
+			label: branch.current ? `$(check) ${branch.name}` : branch.name,
+			description: branch.current ? "current" : undefined,
+			detail: branch.upstream ? `tracks ${branch.upstream}` : undefined,
+			picked: branch.current,
+		});
+	}
+
+	if (remote.length > 0) {
+		items.push({
+			label: "remote",
+			kind: vscode.QuickPickItemKind.Separator,
+		});
+		for (const branch of remote) {
+			items.push({
+				label: branch.name,
+				description: "remote",
+				detail: branch.upstream ? `tracks ${branch.upstream}` : undefined,
+			});
+		}
+	}
+
+	return items;
+}
+
+function resolveBranchNameFromQuickPick(label: string): string {
+	return label.replace(/^\$\(check\)\s+/, "").trim();
+}
+
+async function performBranchCheckout(
+	repoRoot: string,
+	branchName: string,
+	branches: GitBranch[],
+): Promise<void> {
+	const wouldOverwrite = await gitService.wouldCheckoutOverwriteChanges(
+		repoRoot,
+		branchName,
+	);
+	if (wouldOverwrite) {
+		const choice = await vscode.window.showWarningMessage(
+			"You have unsaved changes that would be overwritten. Stash them first?",
+			{ modal: true },
+			"Stash & Switch",
+			"Cancel",
+		);
+		if (choice !== "Stash & Switch") {
+			throw new Error("Branch switch cancelled");
+		}
+		await gitService.stashPush(
+			repoRoot,
+			`IntelliGit: before switching to ${branchName}`,
+		);
+	}
+
+	await gitService.checkoutBranch(repoRoot, branchName, branches);
 }
 
 export function activate(context: vscode.ExtensionContext): void {
@@ -691,6 +759,118 @@ function registerMessageHandlers(messageRouter: MessageRouter): void {
 				: output || "Fetch completed.",
 		);
 		return { success: true, output };
+	});
+
+	messageRouter.handle("gitSwitchBranch", async () => {
+		const repoRoot = await getActiveRepository();
+		if (!repoRoot) {
+			return NOT_GIT_REPO;
+		}
+
+		const repoInfo = await gitService.getRepositoryInfo(repoRoot);
+		const items = buildBranchQuickPickItems(repoInfo.branches);
+		if (items.length === 0) {
+			void vscode.window.showInformationMessage("No branches found.");
+			return { cancelled: true };
+		}
+
+		const picked = await vscode.window.showQuickPick(items, {
+			title: "Switch Branch",
+			placeHolder: "Choose a branch to switch to",
+			matchOnDescription: true,
+			matchOnDetail: true,
+		});
+		if (!picked || picked.kind === vscode.QuickPickItemKind.Separator) {
+			return { cancelled: true };
+		}
+
+		const branchName = resolveBranchNameFromQuickPick(picked.label);
+		const target = repoInfo.branches.find(
+			(branch) => branch.name === branchName,
+		);
+		if (!target || target.current) {
+			return { cancelled: true };
+		}
+
+		try {
+			await performBranchCheckout(repoRoot, branchName, repoInfo.branches);
+		} catch (error) {
+			if (
+				error instanceof Error &&
+				error.message === "Branch switch cancelled"
+			) {
+				return { cancelled: true };
+			}
+			throw error;
+		}
+
+		messageRouter.broadcastEvent("gitStateChanged", { scope: "all" });
+		void vscode.window.showInformationMessage(`Switched to ${branchName}.`);
+		return { success: true, branch: branchName };
+	});
+
+	messageRouter.handle("gitCreateBranch", async () => {
+		const repoRoot = await getActiveRepository();
+		if (!repoRoot) {
+			return NOT_GIT_REPO;
+		}
+
+		const repoInfo = await gitService.getRepositoryInfo(repoRoot);
+		const branchName = await vscode.window.showInputBox({
+			title: "New Branch",
+			prompt: `Branch from ${repoInfo.currentBranch}. This won't affect your current branch.`,
+			placeHolder: "feature/my-new-branch",
+			validateInput: (value) => {
+				const trimmed = value.trim();
+				if (!trimmed) {
+					return "Enter a branch name.";
+				}
+				const formatError = gitService.validateBranchName(trimmed);
+				if (formatError) {
+					return formatError;
+				}
+				if (repoInfo.branches.some((branch) => branch.name === trimmed)) {
+					return "A branch with this name already exists.";
+				}
+				return undefined;
+			},
+		});
+		if (!branchName?.trim()) {
+			return { cancelled: true };
+		}
+
+		const switchChoice = await vscode.window.showQuickPick(
+			[
+				{
+					label: "Create and switch",
+					description: "Check out the new branch right away",
+					picked: true,
+				},
+				{
+					label: "Create only",
+					description: "Stay on your current branch",
+				},
+			],
+			{
+				title: "New Branch",
+				placeHolder: "Also switch to this branch?",
+			},
+		);
+		if (!switchChoice) {
+			return { cancelled: true };
+		}
+
+		const checkout = switchChoice.label === "Create and switch";
+		await gitService.createBranch(repoRoot, branchName.trim(), { checkout });
+
+		messageRouter.broadcastEvent("gitStateChanged", { scope: "all" });
+		const trimmed = branchName.trim();
+		void vscode.window.showInformationMessage(
+			checkout
+				? `Created and switched to ${trimmed}.`
+				: `Created branch ${trimmed}.`,
+		);
+		return { success: true, branch: trimmed, checkout };
 	});
 
 	messageRouter.handle("getStashes", async () => {

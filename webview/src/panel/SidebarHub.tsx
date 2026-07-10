@@ -1,4 +1,10 @@
-import { type ReactNode, useCallback, useEffect, useState } from "react";
+import {
+	type ReactNode,
+	useCallback,
+	useEffect,
+	useRef,
+	useState,
+} from "react";
 
 import { bridge } from "../shared/bridge";
 import {
@@ -6,6 +12,8 @@ import {
 	ArchiveIcon,
 	ArrowDownIcon,
 	ArrowUpIcon,
+	GitBranchIcon,
+	GitBranchPlusIcon,
 	GitCommitIcon,
 	GitMergeIcon,
 	HistoryIcon,
@@ -88,6 +96,23 @@ const WORKSPACE_ACTIONS: ActionItem[] = [
 	},
 ];
 
+const BRANCH_ACTIONS: ActionItem[] = [
+	{
+		id: "switch-branch",
+		icon: <GitBranchIcon size={16} />,
+		label: "Switch Branch…",
+		description: "Jump to another branch",
+		command: "gitSwitchBranch",
+	},
+	{
+		id: "new-branch",
+		icon: <GitBranchPlusIcon size={16} />,
+		label: "New Branch…",
+		description: "Start a new line of work",
+		command: "gitCreateBranch",
+	},
+];
+
 const REBASE_ACTIONS: ActionItem[] = [
 	{
 		id: "rebase",
@@ -117,6 +142,8 @@ export function SidebarHub() {
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const [busyAction, setBusyAction] = useState<string | null>(null);
+	const [branchFlash, setBranchFlash] = useState(false);
+	const prevBranchRef = useRef<string | undefined>(undefined);
 
 	const loadRepo = useCallback(async () => {
 		setLoading(true);
@@ -150,6 +177,21 @@ export function SidebarHub() {
 		});
 	}, [loadRepo]);
 
+	useEffect(() => {
+		const currentBranch = repoInfo?.currentBranch;
+		if (
+			currentBranch &&
+			prevBranchRef.current &&
+			currentBranch !== prevBranchRef.current
+		) {
+			setBranchFlash(true);
+			const timer = window.setTimeout(() => setBranchFlash(false), 1200);
+			prevBranchRef.current = currentBranch;
+			return () => window.clearTimeout(timer);
+		}
+		prevBranchRef.current = currentBranch;
+	}, [repoInfo?.currentBranch]);
+
 	async function runAction(action: ActionItem) {
 		setBusyAction(action.id);
 		setError(null);
@@ -158,7 +200,17 @@ export function SidebarHub() {
 				await bridge.request("getLog", { maxCount: 1 });
 				await loadRepo();
 			} else {
-				await bridge.request(action.command, action.params ?? {});
+				const result = await bridge.request<{
+					success?: boolean;
+					cancelled?: boolean;
+				}>(action.command, action.params ?? {});
+				if (
+					(action.command === "gitSwitchBranch" ||
+						action.command === "gitCreateBranch") &&
+					result.success
+				) {
+					await loadRepo();
+				}
 			}
 		} catch (err) {
 			setError(err instanceof Error ? err.message : String(err));
@@ -193,12 +245,16 @@ export function SidebarHub() {
 				<div className="min-w-0 flex-1">
 					<div className="font-semibold leading-tight">IntelliGit</div>
 					{repoInfo && (
-						<div className="flex items-center gap-1.5 truncate text-[11px] text-[var(--color-muted)]">
+						<div className="flex items-center gap-1.5 text-[11px] text-[var(--color-muted)]">
 							<span
-								className="h-1.5 w-1.5 shrink-0 rounded-full bg-green-500"
+								className={`h-1.5 w-1.5 shrink-0 rounded-full bg-green-500 ${
+									branchFlash ? "branch-dot-flash" : ""
+								}`}
 								aria-hidden
 							/>
-							<span className="truncate">{repoInfo.currentBranch}</span>
+							<span className="min-w-0 break-words leading-snug">
+								{repoInfo.currentBranch}
+							</span>
 						</div>
 					)}
 				</div>
@@ -237,6 +293,12 @@ export function SidebarHub() {
 				<ActionSection
 					title="Workspace"
 					actions={WORKSPACE_ACTIONS}
+					busyAction={busyAction}
+					onRun={runAction}
+				/>
+				<ActionSection
+					title="Branches"
+					actions={BRANCH_ACTIONS}
 					busyAction={busyAction}
 					onRun={runAction}
 				/>
@@ -339,7 +401,7 @@ function ActionButton({
 					{action.label}
 				</span>
 				<span
-					className={`mt-0.5 block truncate text-[10px] leading-snug ${
+					className={`mt-0.5 block text-[10px] leading-snug ${
 						action.highlight
 							? "text-[var(--color-selected-fg)]/75"
 							: "text-[var(--color-muted)]"
