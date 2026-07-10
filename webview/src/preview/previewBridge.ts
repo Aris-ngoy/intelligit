@@ -139,6 +139,15 @@ export function createPreviewBridge(): Bridge {
 						current: branch.name === "feature/auth-provider",
 					}));
 					return { success: true, branch: previewBranch } as T;
+				case "gitCheckoutBranch": {
+					const branchName = params.branchName as string;
+					previewBranch = branchName;
+					previewBranches = previewBranches.map((branch) => ({
+						...branch,
+						current: branch.name === branchName,
+					}));
+					return { success: true, branch: branchName } as T;
+				}
 				case "gitCreateBranch":
 					previewBranch = "feature/new-work";
 					previewBranches = [

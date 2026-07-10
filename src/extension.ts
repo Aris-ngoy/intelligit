@@ -48,8 +48,13 @@ async function getActiveRepository(): Promise<string | undefined> {
 }
 
 function parseLogFilters(params: Record<string, unknown>): GitLogFilters {
+	const additionalBranches = params.additionalBranches;
 	return {
-		branchScope: (params.branchScope as GitLogFilters["branchScope"]) ?? "all",
+		branchScope:
+			(params.branchScope as GitLogFilters["branchScope"]) ?? "current",
+		additionalBranches: Array.isArray(additionalBranches)
+			? additionalBranches.filter((b): b is string => typeof b === "string")
+			: undefined,
 		author: params.author as string | undefined,
 		datePreset: params.datePreset as GitLogFilters["datePreset"],
 		since: params.since as string | undefined,
@@ -125,11 +130,39 @@ async function performBranchCheckout(
 	await gitService.checkoutBranch(repoRoot, branchName, branches);
 }
 
+async function checkoutNamedBranch(
+	repoRoot: string,
+	branchName: string,
+	branches: GitBranch[],
+): Promise<{ success: true; branch: string } | { cancelled: true }> {
+	const target = branches.find((branch) => branch.name === branchName);
+	if (!target || target.current) {
+		return { cancelled: true };
+	}
+
+	try {
+		await performBranchCheckout(repoRoot, branchName, branches);
+	} catch (error) {
+		if (error instanceof Error && error.message === "Branch switch cancelled") {
+			return { cancelled: true };
+		}
+		throw error;
+	}
+
+	messageRouterSingleton?.broadcastEvent("gitStateChanged", { scope: "all" });
+	void vscode.window.showInformationMessage(`Switched to ${branchName}.`);
+	return { success: true, branch: branchName };
+}
+
+/** Set during activate so branch helpers can broadcast without circular refs. */
+let messageRouterSingleton: MessageRouter | undefined;
+
 export function activate(context: vscode.ExtensionContext): void {
 	outputChannel = vscode.window.createOutputChannel("IntelliGit");
 	context.subscriptions.push(outputChannel);
 
 	const messageRouter = new MessageRouter();
+	messageRouterSingleton = messageRouter;
 	interactiveRebaseManager = new InteractiveRebaseManager(
 		context.extensionUri,
 		messageRouter,
@@ -320,11 +353,21 @@ function registerMessageHandlers(messageRouter: MessageRouter): void {
 		if (!repoRoot) {
 			return NOT_GIT_REPO;
 		}
-		const maxCount = (params.maxCount as number) ?? 300;
-		const filters = params.filters
+		const maxCount = (params.maxCount as number) ?? 75;
+		const skip = (params.skip as number) ?? 0;
+		const repoInfo = await gitService.getRepositoryInfo(repoRoot);
+		let filters = params.filters
 			? parseLogFilters(params.filters as Record<string, unknown>)
 			: undefined;
-		return gitService.getLog(repoRoot, { maxCount, filters });
+		if (filters?.branchScope === "current") {
+			filters = { ...filters, branchScope: repoInfo.currentBranch };
+		}
+		return gitService.getLog(repoRoot, {
+			maxCount,
+			skip,
+			filters,
+			defaultBranch: repoInfo.currentBranch,
+		});
 	});
 
 	messageRouter.handle("getCommitFiles", async (params) => {
@@ -785,28 +828,20 @@ function registerMessageHandlers(messageRouter: MessageRouter): void {
 		}
 
 		const branchName = resolveBranchNameFromQuickPick(picked.label);
-		const target = repoInfo.branches.find(
-			(branch) => branch.name === branchName,
-		);
-		if (!target || target.current) {
-			return { cancelled: true };
-		}
+		return checkoutNamedBranch(repoRoot, branchName, repoInfo.branches);
+	});
 
-		try {
-			await performBranchCheckout(repoRoot, branchName, repoInfo.branches);
-		} catch (error) {
-			if (
-				error instanceof Error &&
-				error.message === "Branch switch cancelled"
-			) {
-				return { cancelled: true };
-			}
-			throw error;
+	messageRouter.handle("gitCheckoutBranch", async (params) => {
+		const repoRoot = await getActiveRepository();
+		if (!repoRoot) {
+			return NOT_GIT_REPO;
 		}
-
-		messageRouter.broadcastEvent("gitStateChanged", { scope: "all" });
-		void vscode.window.showInformationMessage(`Switched to ${branchName}.`);
-		return { success: true, branch: branchName };
+		const branchName = (params.branchName as string)?.trim();
+		if (!branchName) {
+			return { cancelled: true, error: "Branch name required." };
+		}
+		const repoInfo = await gitService.getRepositoryInfo(repoRoot);
+		return checkoutNamedBranch(repoRoot, branchName, repoInfo.branches);
 	});
 
 	messageRouter.handle("gitCreateBranch", async () => {

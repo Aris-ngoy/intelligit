@@ -9,8 +9,13 @@ import type {
 	RepositoryInfoDto,
 } from "./types";
 
+/** Default number of commits loaded per page in the graph view. */
+export const HISTORY_PAGE_SIZE = 75;
+
 interface GitLogStore {
 	loading: boolean;
+	loadingMore: boolean;
+	hasMore: boolean;
 	error: string | null;
 	repoInfo: RepositoryInfoDto | null;
 	commits: CommitDto[];
@@ -19,9 +24,13 @@ interface GitLogStore {
 	commitFiles: CommitFileDto[];
 	contextMenu: { x: number; y: number; hash: string } | null;
 	filters: LogFiltersDto;
+	highlightedLane: number | null;
 
 	fetchAll: () => Promise<void>;
+	loadMore: () => Promise<void>;
 	setFilters: (partial: Partial<LogFiltersDto>) => void;
+	addExtraBranch: (branchName: string) => void;
+	setHighlightedLane: (lane: number | null) => void;
 	selectCommit: (hash: string) => Promise<void>;
 	closeContextMenu: () => void;
 	openContextMenu: (x: number, y: number, hash: string) => void;
@@ -34,6 +43,8 @@ interface GitLogStore {
 
 export const useGitLogStore = create<GitLogStore>((set, get) => ({
 	loading: true,
+	loadingMore: false,
+	hasMore: true,
 	error: null,
 	repoInfo: null,
 	commits: [],
@@ -41,17 +52,19 @@ export const useGitLogStore = create<GitLogStore>((set, get) => ({
 	selectedHash: null,
 	commitFiles: [],
 	contextMenu: null,
-	filters: { branchScope: "all" },
+	filters: { branchScope: "current", additionalBranches: [] },
+	highlightedLane: null,
 
 	async fetchAll() {
-		set({ loading: true, error: null });
+		set({ loading: true, error: null, hasMore: true });
 		try {
 			const [repoInfo, log] = await Promise.all([
 				bridge.request<RepositoryInfoDto | { status: string }>(
 					"getRepositoryInfo",
 				),
 				bridge.request<ParsedLogDto | { status: string }>("getLog", {
-					maxCount: 300,
+					maxCount: HISTORY_PAGE_SIZE,
+					skip: 0,
 					filters: get().filters,
 				}),
 			]);
@@ -63,6 +76,7 @@ export const useGitLogStore = create<GitLogStore>((set, get) => ({
 					repoInfo: null,
 					commits: [],
 					authors: [],
+					hasMore: false,
 				});
 				return;
 			}
@@ -79,6 +93,7 @@ export const useGitLogStore = create<GitLogStore>((set, get) => ({
 				commits: log.commits,
 				authors: log.authors,
 				selectedHash,
+				hasMore: log.commits.length >= HISTORY_PAGE_SIZE,
 			});
 
 			if (selectedHash) {
@@ -92,10 +107,60 @@ export const useGitLogStore = create<GitLogStore>((set, get) => ({
 		}
 	},
 
+	async loadMore() {
+		const { commits, loadingMore, hasMore, filters } = get();
+		if (loadingMore || !hasMore || commits.length === 0) {
+			return;
+		}
+
+		const nextCount = commits.length + HISTORY_PAGE_SIZE;
+		set({ loadingMore: true });
+		try {
+			const log = await bridge.request<ParsedLogDto | { status: string }>(
+				"getLog",
+				{
+					maxCount: nextCount,
+					skip: 0,
+					filters,
+				},
+			);
+
+			if ("status" in log) {
+				set({ loadingMore: false, hasMore: false });
+				return;
+			}
+
+			set({
+				loadingMore: false,
+				commits: log.commits,
+				hasMore: log.commits.length >= nextCount,
+			});
+		} catch (err) {
+			set({
+				loadingMore: false,
+				error: err instanceof Error ? err.message : String(err),
+			});
+		}
+	},
+
 	setFilters(partial) {
 		const filters = { ...get().filters, ...partial };
 		set({ filters });
 		void get().fetchAll();
+	},
+
+	addExtraBranch(branchName) {
+		const current = get().filters.additionalBranches ?? [];
+		if (current.includes(branchName)) {
+			return;
+		}
+		get().setFilters({
+			additionalBranches: [...current, branchName],
+		});
+	},
+
+	setHighlightedLane(lane) {
+		set({ highlightedLane: lane });
 	},
 
 	async selectCommit(hash) {

@@ -4,6 +4,7 @@ import { SettingsIcon } from "../shared/icons";
 import { useGitLogStore } from "../shared/store";
 import type { GitBranchDto } from "../shared/types";
 import { SectionHeader } from "../shared/ui";
+import { ShowBranchPicker } from "./ShowBranchPicker";
 
 function groupBranches(branches: GitBranchDto[]) {
 	const current = branches.filter((b) => b.current);
@@ -24,6 +25,7 @@ export function BranchTree() {
 
 	const { current, local, remote } = groupBranches(repoInfo.branches);
 	const selected = filters.branchScope;
+	const currentBranch = repoInfo.currentBranch;
 
 	return (
 		<div className="flex h-full flex-col border-r border-[var(--color-border)] text-xs">
@@ -35,11 +37,21 @@ export function BranchTree() {
 			</div>
 
 			<div className="min-h-0 flex-1 overflow-y-auto py-2">
-				<Section title="All">
+				<Section title="Scope">
+					<BranchItem
+						name={`Current (${currentBranch})`}
+						selected={selected === "current"}
+						onSelect={() =>
+							setFilters({ branchScope: "current", additionalBranches: [] })
+						}
+						current
+					/>
 					<BranchItem
 						name="All History"
 						selected={selected === "all"}
-						onSelect={() => setFilters({ branchScope: "all" })}
+						onSelect={() =>
+							setFilters({ branchScope: "all", additionalBranches: [] })
+						}
 					/>
 				</Section>
 
@@ -50,7 +62,9 @@ export function BranchTree() {
 								key={b.name}
 								name={b.name}
 								selected={selected === b.name}
-								onSelect={() => setFilters({ branchScope: b.name })}
+								onSelect={() =>
+									setFilters({ branchScope: b.name, additionalBranches: [] })
+								}
 								current
 							/>
 						))}
@@ -64,7 +78,9 @@ export function BranchTree() {
 								key={b.name}
 								name={b.name}
 								selected={selected === b.name}
-								onSelect={() => setFilters({ branchScope: b.name })}
+								onSelect={() =>
+									setFilters({ branchScope: b.name, additionalBranches: [] })
+								}
 							/>
 						))}
 					</Section>
@@ -77,12 +93,16 @@ export function BranchTree() {
 								key={b.name}
 								name={b.name}
 								selected={selected === b.name}
-								onSelect={() => setFilters({ branchScope: b.name })}
+								onSelect={() =>
+									setFilters({ branchScope: b.name, additionalBranches: [] })
+								}
 							/>
 						))}
 					</Section>
 				)}
 			</div>
+
+			<ShowBranchPicker />
 
 			<div className="border-t border-[var(--color-border)] p-2">
 				<button

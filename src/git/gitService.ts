@@ -147,16 +147,21 @@ export class GitService {
 	): Promise<ParsedGitLog> {
 		const args = this.buildLogArgs(options);
 		const result = await this.exec(repoRoot, args);
-		return parseGitLog(result.stdout);
+		const parsed = parseGitLog(result.stdout, options.defaultBranch);
+		return parsed;
 	}
 
 	buildLogArgs(options: GitLogOptions): string[] {
-		const { maxCount = 500, filters } = options;
+		const { maxCount = 75, skip = 0, filters } = options;
 		const args: string[] = [
 			"log",
 			`--pretty=format:${GIT_LOG_PRETTY_FORMAT}`,
 			"--date-order",
 		];
+
+		if (skip > 0) {
+			args.push(`--skip=${skip}`);
+		}
 
 		if (maxCount > 0) {
 			args.push(`-n`, String(maxCount));
@@ -174,12 +179,15 @@ export class GitService {
 	private applyLogFilters(args: string[], filters: GitLogFilters): void {
 		const {
 			branchScope,
+			additionalBranches,
 			author,
 			datePreset,
 			since,
 			until,
 			path: pathFilter,
 		} = filters;
+
+		const branchRefs: string[] = [];
 
 		switch (branchScope) {
 			case "local":
@@ -193,11 +201,23 @@ export class GitService {
 				break;
 			default:
 				if (branchScope) {
-					args.push(branchScope);
+					branchRefs.push(branchScope);
 				} else {
 					args.push("--all");
 				}
 				break;
+		}
+
+		if (additionalBranches?.length) {
+			for (const branch of additionalBranches) {
+				if (branch && !branchRefs.includes(branch)) {
+					branchRefs.push(branch);
+				}
+			}
+		}
+
+		if (branchRefs.length > 0) {
+			args.push(...branchRefs);
 		}
 
 		if (author) {

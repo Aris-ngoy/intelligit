@@ -23,7 +23,7 @@ const FIELD_COUNT = 9;
 /**
  * Parse raw `git log` output produced with {@link GIT_LOG_PRETTY_FORMAT}.
  */
-export function parseGitLog(raw: string): ParsedGitLog {
+export function parseGitLog(raw: string, defaultBranch?: string): ParsedGitLog {
 	const commits: GitLogEntry[] = [];
 	const authorSet = new Set<string>();
 	const refSet = new Set<string>();
@@ -44,7 +44,7 @@ export function parseGitLog(raw: string): ParsedGitLog {
 		commits.push(commit);
 	}
 
-	assignGraphLanes(commits);
+	assignGraphLanes(commits, defaultBranch);
 
 	return {
 		commits,
@@ -124,11 +124,31 @@ function normalizeRef(ref: string): string {
 	return ref;
 }
 
+function isLocalBranchRef(ref: string): boolean {
+	return (
+		!ref.startsWith("origin/") &&
+		!ref.startsWith("remotes/") &&
+		!/^v?\d/.test(ref)
+	);
+}
+
+function branchRefOnCommit(commit: GitLogEntry, branchName: string): boolean {
+	return commit.refs.some(
+		(ref) =>
+			ref === branchName ||
+			ref === `origin/${branchName}` ||
+			ref.endsWith(`/${branchName}`),
+	);
+}
+
 /**
  * Assign horizontal lanes for branch graph rendering.
- * Uses a simplified lane-assignment algorithm based on parent links.
+ * Processes commits newest-first (git log order).
  */
-export function assignGraphLanes(commits: GitLogEntry[]): void {
+export function assignGraphLanes(
+	commits: GitLogEntry[],
+	defaultBranch?: string,
+): void {
 	const hashToIndex = new Map<string, number>();
 	for (let i = 0; i < commits.length; i++) {
 		const entry = commits[i];
@@ -137,7 +157,7 @@ export function assignGraphLanes(commits: GitLogEntry[]): void {
 		}
 	}
 
-	const activeLanes = new Map<number, string>(); // lane -> commit hash at tip
+	const activeLanes = new Map<number, string>();
 	let nextFreeLane = 0;
 
 	for (let i = 0; i < commits.length; i++) {
@@ -145,8 +165,8 @@ export function assignGraphLanes(commits: GitLogEntry[]): void {
 		if (!commit) {
 			continue;
 		}
-		let lane = findLaneForCommit(activeLanes, commit.hash);
 
+		let lane = findLaneForCommit(activeLanes, commit.hash);
 		if (lane === undefined) {
 			lane = nextFreeLane;
 			nextFreeLane++;
@@ -154,8 +174,6 @@ export function assignGraphLanes(commits: GitLogEntry[]): void {
 
 		commit.graphLane = lane;
 		commit.graphConnections = [];
-
-		// Release this lane; parents may occupy lanes below
 		activeLanes.delete(lane);
 
 		const parents = commit.parentHashes;
@@ -163,19 +181,30 @@ export function assignGraphLanes(commits: GitLogEntry[]): void {
 			continue;
 		}
 
-		// First parent continues in same lane
 		const firstParent = parents[0];
 		if (!firstParent) {
 			continue;
 		}
-		activeLanes.set(lane, firstParent);
-		commit.graphConnections.push({
-			fromLane: lane,
-			toLane: lane,
-			type: "normal",
-		});
 
-		// Merge parents get new lanes
+		let firstParentLane = findLaneByHash(activeLanes, firstParent);
+		if (firstParentLane === undefined) {
+			firstParentLane = lane;
+		}
+		activeLanes.set(firstParentLane, firstParent);
+		if (firstParentLane !== lane) {
+			commit.graphConnections.push({
+				fromLane: lane,
+				toLane: firstParentLane,
+				type: "normal",
+			});
+		} else {
+			commit.graphConnections.push({
+				fromLane: lane,
+				toLane: lane,
+				type: "normal",
+			});
+		}
+
 		for (let p = 1; p < parents.length; p++) {
 			const parentHash = parents[p];
 			if (!parentHash) {
@@ -192,6 +221,41 @@ export function assignGraphLanes(commits: GitLogEntry[]): void {
 				toLane: parentLane,
 				type: "merge",
 			});
+		}
+	}
+
+	if (defaultBranch) {
+		normalizeDefaultBranchLane(commits, defaultBranch);
+	}
+}
+
+function normalizeDefaultBranchLane(
+	commits: GitLogEntry[],
+	defaultBranch: string,
+): void {
+	const tip = commits.find((c) => branchRefOnCommit(c, defaultBranch));
+	if (tip?.graphLane === undefined || tip.graphLane === 0) {
+		return;
+	}
+
+	const mainLane = tip.graphLane;
+	const swap = (lane: number): number => {
+		if (lane === mainLane) {
+			return 0;
+		}
+		if (lane === 0) {
+			return mainLane;
+		}
+		return lane;
+	};
+
+	for (const commit of commits) {
+		if (commit.graphLane !== undefined) {
+			commit.graphLane = swap(commit.graphLane);
+		}
+		for (const conn of commit.graphConnections ?? []) {
+			conn.fromLane = swap(conn.fromLane);
+			conn.toLane = swap(conn.toLane);
 		}
 	}
 }
@@ -218,6 +282,22 @@ function findLaneByHash(
 		}
 	}
 	return undefined;
+}
+
+/** Branch labels keyed by lane index (first local branch ref on that lane). */
+export function laneBranchLabels(commits: GitLogEntry[]): Map<number, string> {
+	const labels = new Map<number, string>();
+	for (const commit of commits) {
+		const lane = commit.graphLane;
+		if (lane === undefined || labels.has(lane)) {
+			continue;
+		}
+		const branchRef = commit.refs.find(isLocalBranchRef);
+		if (branchRef) {
+			labels.set(lane, branchRef);
+		}
+	}
+	return labels;
 }
 
 /**
