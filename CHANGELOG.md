@@ -4,6 +4,12 @@ All notable changes to the IntelliGit extension are documented here. This projec
 follows [Keep a Changelog](http://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.6.1] - 2026-07-11
+
+### Changed
+- Swimlane commit graph polish: elbow routing between commits, lane-colored branch
+  pills, and improved row alignment for main and feature branches.
+
 ## [0.6.0] - 2026-07-10
 
 ### Added
