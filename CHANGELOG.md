@@ -4,6 +4,14 @@ All notable changes to the IntelliGit extension are documented here. This projec
 follows [Keep a Changelog](http://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.6.2] - 2026-07-16
+
+### Added
+- Live pre-commit and git output streaming in the commit panel.
+
+### Changed
+- Raised the commit bridge timeout to 15 minutes so slow hooks no longer fail at 30s.
+
 ## [0.6.1] - 2026-07-11
 
 ### Changed
