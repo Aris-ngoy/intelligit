@@ -19,6 +19,7 @@ export type {
 	GitLogEntry,
 	GitLogFilters,
 	GitLogOptions,
+	GitOutputStream,
 	GitRepositoryInfo,
 	GitStashEntry,
 	GraphConnection,

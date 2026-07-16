@@ -50,6 +50,13 @@ export function createPreviewBridge(): Bridge {
 	let workingTreeStatus = structuredClone(previewWorkingTreeStatus);
 	let previewBranch = previewRepoInfo.currentBranch;
 	let previewBranches = structuredClone(previewRepoInfo.branches);
+	const eventHandlers = new Set<(event: string, data: unknown) => void>();
+
+	const emit = (event: string, data: unknown) => {
+		for (const handler of eventHandlers) {
+			handler(event, data);
+		}
+	};
 
 	const resetWorkingTreeStatus = () => {
 		workingTreeStatus = structuredClone(previewWorkingTreeStatus);
@@ -125,7 +132,6 @@ export function createPreviewBridge(): Bridge {
 				case "openConflicts":
 				case "openStashes":
 				case "openCommit":
-				case "createCommit":
 				case "openGitLogPanel":
 				case "gitPull":
 				case "gitPush":
@@ -135,6 +141,48 @@ export function createPreviewBridge(): Bridge {
 				case "clearStashes":
 				case "interactiveRebaseFromHere":
 					return { success: true } as T;
+				case "createCommit": {
+					emit("gitCommandProgress", {
+						command: "createCommit",
+						phase: "running",
+						message: "Running commit (including pre-commit hooks)…",
+						hasHooks: true,
+					});
+					await new Promise((r) => setTimeout(r, 120));
+					emit("gitCommandOutput", {
+						command: "createCommit",
+						chunk: "> husky - pre-commit\n",
+						stream: "stderr",
+					});
+					await new Promise((r) => setTimeout(r, 80));
+					emit("gitCommandOutput", {
+						command: "createCommit",
+						chunk: "✓ lint-staged passed\n",
+						stream: "stdout",
+					});
+					await new Promise((r) => setTimeout(r, 80));
+					emit("gitCommandOutput", {
+						command: "createCommit",
+						chunk: "> husky - commit-msg\n",
+						stream: "stderr",
+					});
+					workingTreeStatus = {
+						...workingTreeStatus,
+						staged: [],
+						hasStagedChanges: false,
+						lastCommitMessage: String(params.message ?? ""),
+					};
+					emit("gitCommandProgress", {
+						command: "createCommit",
+						phase: "done",
+						message: params.amend
+							? "Last commit updated."
+							: "Changes committed.",
+						hasHooks: true,
+					});
+					emit("gitStateChanged", { scope: "all" });
+					return { success: true } as T;
+				}
 				case "gitSwitchBranch":
 					previewBranch = "feature/auth-provider";
 					previewBranches = previewBranches.map((branch) => ({
@@ -229,8 +277,11 @@ export function createPreviewBridge(): Bridge {
 					return { success: true } as T;
 			}
 		},
-		onEvent() {
-			return () => {};
+		onEvent(handler) {
+			eventHandlers.add(handler);
+			return () => {
+				eventHandlers.delete(handler);
+			};
 		},
 	};
 }

@@ -61,4 +61,21 @@ test.describe("Commit panel staging", () => {
 			.click();
 		await expect(page.getByText("Describe your changes")).toBeVisible();
 	});
+
+	test("commit shows live pre-commit hook output", async ({ page }) => {
+		await page
+			.getByPlaceholder(/Short summary on the first line/)
+			.fill("feat: preview commit with hooks");
+		await page.getByRole("button", { name: "Save changes" }).click();
+
+		await expect(page.getByText("Git output")).toBeVisible();
+		await expect(
+			page.getByText(/Running commit \(including pre-commit hooks\)/),
+		).toBeVisible();
+		await expect(page.getByText(/husky - pre-commit/)).toBeVisible();
+		await expect(page.getByText(/lint-staged passed/)).toBeVisible();
+		await expect(page.getByText("Staged (0)")).toBeVisible({
+			timeout: 5_000,
+		});
+	});
 });

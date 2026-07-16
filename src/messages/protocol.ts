@@ -79,7 +79,9 @@ export type EventType =
 	| "openInteractiveRebase"
 	| "openRebaseDialog"
 	| "closeRebaseDialog"
-	| "mergeStateChanged";
+	| "mergeStateChanged"
+	| "gitCommandOutput"
+	| "gitCommandProgress";
 
 export enum ErrorCode {
 	GIT_NOT_FOUND = "GIT_NOT_FOUND",

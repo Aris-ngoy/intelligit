@@ -29,6 +29,31 @@ export interface Bridge {
 	onEvent(handler: (event: string, data: unknown) => void): () => void;
 }
 
+/** Default RPC wait; short UI reads stay snappy. */
+const DEFAULT_REQUEST_TIMEOUT_MS = 30_000;
+
+/**
+ * Commits (hooks), network git, and rebase can exceed 30s.
+ * Without a longer window the webview shows "timed out" while git keeps running.
+ */
+const LONG_RUNNING_REQUEST_TIMEOUT_MS = 15 * 60_000;
+
+const LONG_RUNNING_COMMANDS = new Set([
+	"createCommit",
+	"gitPush",
+	"gitPull",
+	"gitFetch",
+	"startInteractiveRebase",
+	"startStandardRebase",
+	"continueOperation",
+]);
+
+function requestTimeoutMs(command: string): number {
+	return LONG_RUNNING_COMMANDS.has(command)
+		? LONG_RUNNING_REQUEST_TIMEOUT_MS
+		: DEFAULT_REQUEST_TIMEOUT_MS;
+}
+
 declare function acquireVsCodeApi(): {
 	postMessage(msg: unknown): void;
 };
@@ -67,10 +92,18 @@ function createVSCodeBridge(): Bridge {
 		): Promise<T> {
 			return new Promise<T>((resolve, reject) => {
 				const id = crypto.randomUUID();
+				const timeoutMs = requestTimeoutMs(command);
 				const timeout = setTimeout(() => {
 					pendingRequests.delete(id);
-					reject(new Error(`Request '${command}' timed out`));
-				}, 30_000);
+					const minutes = Math.round(timeoutMs / 60_000);
+					reject(
+						new Error(
+							LONG_RUNNING_COMMANDS.has(command)
+								? `Request '${command}' timed out after ${minutes} minutes. Check Git output — hooks or network may still be running.`
+								: `Request '${command}' timed out`,
+						),
+					);
+				}, timeoutMs);
 
 				pendingRequests.set(id, {
 					resolve: (v) => {

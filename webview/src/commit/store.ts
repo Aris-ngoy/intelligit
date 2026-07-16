@@ -12,6 +12,10 @@ interface CommitStore {
 	mode: CommitMode;
 	busy: boolean;
 	messageDirty: boolean;
+	/** Live stdout/stderr from git commit / hooks. */
+	commitOutput: string;
+	/** Status line while commit runs (e.g. running hooks). */
+	commitPhase: string | null;
 
 	load: () => Promise<void>;
 	setMessage: (message: string) => void;
@@ -25,6 +29,9 @@ interface CommitStore {
 	unstageAll: () => Promise<void>;
 	openDiff: (filePath: string, kind: "staged" | "unstaged") => Promise<void>;
 	commit: () => Promise<boolean>;
+	appendCommitOutput: (chunk: string) => void;
+	setCommitPhase: (phase: string | null) => void;
+	clearCommitOutput: () => void;
 }
 
 function joinMessage(current: string, addition: string): string {
@@ -39,6 +46,8 @@ function joinMessage(current: string, addition: string): string {
 	return `${trimmedCurrent}\n\n${trimmedAddition}`;
 }
 
+const MAX_COMMIT_OUTPUT_CHARS = 200_000;
+
 export const useCommitStore = create<CommitStore>((set, get) => ({
 	loading: true,
 	error: null,
@@ -47,6 +56,8 @@ export const useCommitStore = create<CommitStore>((set, get) => ({
 	mode: "new",
 	busy: false,
 	messageDirty: false,
+	commitOutput: "",
+	commitPhase: null,
 
 	async load() {
 		set({ loading: true, error: null });
@@ -176,6 +187,26 @@ export const useCommitStore = create<CommitStore>((set, get) => ({
 		}
 	},
 
+	appendCommitOutput(chunk) {
+		set((state) => {
+			const next = state.commitOutput + chunk;
+			return {
+				commitOutput:
+					next.length > MAX_COMMIT_OUTPUT_CHARS
+						? next.slice(next.length - MAX_COMMIT_OUTPUT_CHARS)
+						: next,
+			};
+		});
+	},
+
+	setCommitPhase(phase) {
+		set({ commitPhase: phase });
+	},
+
+	clearCommitOutput() {
+		set({ commitOutput: "", commitPhase: null });
+	},
+
 	async commit() {
 		const { message, mode, status } = get();
 		if (!message.trim()) {
@@ -193,7 +224,12 @@ export const useCommitStore = create<CommitStore>((set, get) => ({
 			return false;
 		}
 
-		set({ busy: true, error: null });
+		set({
+			busy: true,
+			error: null,
+			commitOutput: "",
+			commitPhase: amend ? "Updating last commit…" : "Starting commit…",
+		});
 		try {
 			const result = await bridge.request<{ cancelled?: boolean }>(
 				"createCommit",
@@ -203,13 +239,22 @@ export const useCommitStore = create<CommitStore>((set, get) => ({
 				},
 			);
 			if (result?.cancelled) {
+				set({ commitPhase: null });
 				return false;
 			}
-			set({ message: "", messageDirty: false, mode: "new" });
+			set({
+				message: "",
+				messageDirty: false,
+				mode: "new",
+				commitPhase: null,
+			});
 			await get().load();
 			return true;
 		} catch (err) {
-			set({ error: err instanceof Error ? err.message : String(err) });
+			set({
+				error: err instanceof Error ? err.message : String(err),
+				commitPhase: "Commit failed — see output below.",
+			});
 			return false;
 		} finally {
 			set({ busy: false });
@@ -217,8 +262,38 @@ export const useCommitStore = create<CommitStore>((set, get) => ({
 	},
 }));
 
-bridge.onEvent((event) => {
+bridge.onEvent((event, data) => {
 	if (event === "gitStateChanged") {
-		void useCommitStore.getState().load();
+		// Avoid flashing the panel while commit/hooks are still running.
+		if (!useCommitStore.getState().busy) {
+			void useCommitStore.getState().load();
+		}
+	}
+
+	if (event === "gitCommandOutput") {
+		const payload = data as { command?: string; chunk?: string };
+		if (
+			payload.command === "createCommit" &&
+			typeof payload.chunk === "string"
+		) {
+			useCommitStore.getState().appendCommitOutput(payload.chunk);
+		}
+	}
+
+	if (event === "gitCommandProgress") {
+		const payload = data as {
+			command?: string;
+			message?: string;
+			phase?: string;
+		};
+		if (payload.command !== "createCommit") {
+			return;
+		}
+		if (typeof payload.message === "string") {
+			useCommitStore.getState().setCommitPhase(payload.message);
+		}
+		if (payload.phase === "done") {
+			// Keep phase briefly; commit() clears it on success.
+		}
 	}
 });

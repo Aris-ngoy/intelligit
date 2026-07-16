@@ -1,4 +1,4 @@
-import { execFile } from "node:child_process";
+import { execFile, spawn } from "node:child_process";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
@@ -17,6 +17,7 @@ import type {
 	GitExecResult,
 	GitLogFilters,
 	GitLogOptions,
+	GitOutputStream,
 	GitRepositoryInfo,
 	GitStashEntry,
 	MergeOperationState,
@@ -72,6 +73,109 @@ export class GitService {
 				throw new Error(`git ${args.join(" ")}: ${msg}`);
 			}
 			return result;
+		}
+	}
+
+	/**
+	 * Run a git command with live stdout/stderr chunks (needed for hooks).
+	 * Throws on non-zero exit unless `allowFailure` is true.
+	 */
+	async execStreaming(
+		repoRoot: string,
+		args: string[],
+		options: {
+			allowFailure?: boolean;
+			env?: Record<string, string | undefined>;
+			onOutput?: (chunk: string, stream: GitOutputStream) => void;
+		} = {},
+	): Promise<GitExecResult> {
+		const { allowFailure = false, env, onOutput } = options;
+
+		return new Promise<GitExecResult>((resolve, reject) => {
+			const child = spawn("git", args, {
+				cwd: repoRoot,
+				env: { ...process.env, GIT_TERMINAL_PROMPT: "0", ...env },
+			});
+
+			let stdout = "";
+			let stderr = "";
+
+			child.stdout?.on("data", (buf: Buffer | string) => {
+				const chunk = typeof buf === "string" ? buf : buf.toString("utf8");
+				stdout += chunk;
+				onOutput?.(chunk, "stdout");
+			});
+			child.stderr?.on("data", (buf: Buffer | string) => {
+				const chunk = typeof buf === "string" ? buf : buf.toString("utf8");
+				stderr += chunk;
+				onOutput?.(chunk, "stderr");
+			});
+			child.on("error", (error) => {
+				reject(error);
+			});
+			child.on("close", (code) => {
+				const exitCode = code ?? 1;
+				const result: GitExecResult = { stdout, stderr, exitCode };
+				if (exitCode !== 0 && !allowFailure) {
+					const msg = stderr.trim() || stdout.trim() || "Git command failed";
+					reject(new Error(`git ${args.join(" ")}: ${msg}`));
+					return;
+				}
+				resolve(result);
+			});
+		});
+	}
+
+	/** True when commit-time hooks (pre-commit / commit-msg / …) are present. */
+	async hasCommitHooks(repoRoot: string): Promise<boolean> {
+		const hooksDir = await this.resolveHooksDir(repoRoot);
+		if (!hooksDir) {
+			return false;
+		}
+		for (const name of [
+			"pre-commit",
+			"prepare-commit-msg",
+			"commit-msg",
+			"post-commit",
+		]) {
+			if (await this.hookFilePresent(path.join(hooksDir, name))) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private async resolveHooksDir(repoRoot: string): Promise<string | undefined> {
+		const configured = await this.exec(
+			repoRoot,
+			["config", "--get", "core.hooksPath"],
+			{ allowFailure: true },
+		);
+		if (configured.exitCode === 0 && configured.stdout.trim()) {
+			const hooksPath = configured.stdout.trim();
+			return path.isAbsolute(hooksPath)
+				? hooksPath
+				: path.join(repoRoot, hooksPath);
+		}
+
+		const gitPath = await this.exec(
+			repoRoot,
+			["rev-parse", "--git-path", "hooks"],
+			{ allowFailure: true },
+		);
+		if (gitPath.exitCode !== 0 || !gitPath.stdout.trim()) {
+			return path.join(repoRoot, ".git", "hooks");
+		}
+		const resolved = gitPath.stdout.trim();
+		return path.isAbsolute(resolved) ? resolved : path.join(repoRoot, resolved);
+	}
+
+	private async hookFilePresent(filePath: string): Promise<boolean> {
+		try {
+			const stat = await fs.stat(filePath);
+			return stat.isFile() && stat.size > 0;
+		} catch {
+			return false;
 		}
 	}
 
@@ -811,7 +915,9 @@ export class GitService {
 			if (options.noVerify) {
 				args.push("--no-verify");
 			}
-			await this.exec(repoRoot, args);
+			await this.execStreaming(repoRoot, args, {
+				onOutput: options.onOutput,
+			});
 		} finally {
 			await fs.unlink(msgPath).catch(() => undefined);
 		}

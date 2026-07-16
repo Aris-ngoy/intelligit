@@ -157,9 +157,13 @@ export interface WorkingTreeStatus {
 	lastCommitLikelyPushed: boolean;
 }
 
+export type GitOutputStream = "stdout" | "stderr";
+
 export interface CreateCommitOptions {
 	amend?: boolean;
 	noVerify?: boolean;
+	/** Live stdout/stderr chunks (hooks often write here while commit runs). */
+	onOutput?: (chunk: string, stream: GitOutputStream) => void;
 }
 
 /** A single entry from `git stash list`. */

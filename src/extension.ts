@@ -1033,7 +1033,54 @@ function registerMessageHandlers(messageRouter: MessageRouter): void {
 			}
 		}
 
-		await gitService.createCommit(repoRoot, message, { amend, noVerify });
+		const hasHooks = !noVerify && (await gitService.hasCommitHooks(repoRoot));
+		const progressMessage = hasHooks
+			? "Running commit (including pre-commit hooks)…"
+			: "Running git commit…";
+		messageRouter.broadcastEvent("gitCommandProgress", {
+			command: "createCommit",
+			phase: "running",
+			message: progressMessage,
+			hasHooks,
+		});
+		outputChannel.appendLine(
+			`$ git commit${amend ? " --amend" : ""}${noVerify ? " --no-verify" : ""}`,
+		);
+		if (hasHooks) {
+			outputChannel.appendLine(
+				"(Pre-commit / commit-msg hooks may run — output below)",
+			);
+		}
+
+		try {
+			await gitService.createCommit(repoRoot, message, {
+				amend,
+				noVerify,
+				onOutput: (chunk, stream) => {
+					outputChannel.append(chunk);
+					messageRouter.broadcastEvent("gitCommandOutput", {
+						command: "createCommit",
+						chunk,
+						stream,
+					});
+				},
+			});
+		} catch (err) {
+			messageRouter.broadcastEvent("gitCommandProgress", {
+				command: "createCommit",
+				phase: "failed",
+				message: "Commit failed — see output below.",
+				hasHooks,
+			});
+			throw err;
+		}
+
+		messageRouter.broadcastEvent("gitCommandProgress", {
+			command: "createCommit",
+			phase: "done",
+			message: amend ? "Last commit updated." : "Changes committed.",
+			hasHooks,
+		});
 		messageRouter.broadcastEvent("gitStateChanged", { scope: "all" });
 		void vscode.window.showInformationMessage(
 			amend ? "Last commit updated." : "Changes committed.",

@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useRef } from "react";
+import { type ReactNode, type RefObject, useEffect, useRef } from "react";
 import { isPreviewMode } from "../preview/previewBridge";
 import { bridge } from "../shared/bridge";
 import { fileStatusTone, statusLabel } from "../shared/format";
@@ -52,8 +52,12 @@ export function CommitApp() {
 	const unstageAll = useCommitStore((s) => s.unstageAll);
 	const openDiff = useCommitStore((s) => s.openDiff);
 	const commit = useCommitStore((s) => s.commit);
+	const commitOutput = useCommitStore((s) => s.commitOutput);
+	const commitPhase = useCommitStore((s) => s.commitPhase);
+	const clearCommitOutput = useCommitStore((s) => s.clearCommitOutput);
 
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
+	const outputRef = useRef<HTMLPreElement>(null);
 
 	useEffect(() => {
 		async function init() {
@@ -64,6 +68,18 @@ export function CommitApp() {
 		}
 		void init();
 	}, [load]);
+
+	useEffect(() => {
+		return useCommitStore.subscribe((state, prev) => {
+			if (state.commitOutput === prev.commitOutput) {
+				return;
+			}
+			const el = outputRef.current;
+			if (el) {
+				el.scrollTop = el.scrollHeight;
+			}
+		});
+	}, []);
 
 	const canCommit =
 		message.trim().length > 0 &&
@@ -264,6 +280,22 @@ export function CommitApp() {
 				)}
 			</div>
 
+			{(busy || commitOutput || commitPhase) && (
+				<CommitOutputPanel
+					phase={commitPhase}
+					output={commitOutput}
+					busy={busy}
+					outputRef={outputRef}
+					onDismiss={
+						busy
+							? undefined
+							: () => {
+									clearCommitOutput();
+								}
+					}
+				/>
+			)}
+
 			<TaskFooter
 				summary={<ReassuranceLine />}
 				left={
@@ -284,6 +316,64 @@ export function CommitApp() {
 					</PrimaryButton>
 				}
 			/>
+		</div>
+	);
+}
+
+function CommitOutputPanel({
+	phase,
+	output,
+	busy,
+	outputRef,
+	onDismiss,
+}: {
+	phase: string | null;
+	output: string;
+	busy: boolean;
+	outputRef: RefObject<HTMLPreElement | null>;
+	onDismiss?: () => void;
+}) {
+	return (
+		<div className="border-t border-[var(--color-border)] bg-[var(--color-input-bg)]/40 px-4 py-3">
+			<div className="mb-2 flex items-center justify-between gap-2">
+				<div className="min-w-0">
+					<div className="text-[11px] font-semibold uppercase tracking-wide text-[var(--color-muted)]">
+						Git output
+					</div>
+					{phase && (
+						<p
+							className={`mt-0.5 truncate text-xs ${busy ? "text-[var(--color-accent)]" : "text-[var(--color-muted)]"}`}
+							title={phase}
+						>
+							{busy && (
+								<span
+									className="mr-1.5 inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--color-accent)]"
+									aria-hidden
+								/>
+							)}
+							{phase}
+						</p>
+					)}
+				</div>
+				{onDismiss && (
+					<button
+						type="button"
+						onClick={onDismiss}
+						className="shrink-0 rounded-md border border-[var(--color-border)] px-2 py-0.5 text-[10px] font-medium transition hover:bg-[var(--color-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/50"
+					>
+						Dismiss
+					</button>
+				)}
+			</div>
+			<pre
+				ref={outputRef}
+				className="max-h-40 overflow-auto rounded-lg border border-[var(--color-border)] bg-[var(--vscode-editor-background,#1e1e1e)] px-3 py-2 font-mono text-[11px] leading-relaxed text-[var(--color-fg)] whitespace-pre-wrap break-words"
+				aria-live="polite"
+				aria-busy={busy}
+			>
+				{output ||
+					(busy ? "Waiting for git / hook output…" : "No output captured.")}
+			</pre>
 		</div>
 	);
 }
